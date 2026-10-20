@@ -6,10 +6,10 @@ A modern, original WebGL arcade-combat driving game inspired by the feel of earl
 
 ## Run locally
 
-Requires Node.js 20.19+ (Node 22 recommended).
+Requires Node.js 20.19+ (Node 22 recommended). Dependency versions are locked in the committed package-lock.json.
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 

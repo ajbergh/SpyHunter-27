@@ -16,7 +16,7 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] Create modular engine/world/entity/input/combat/UI/audio layout.
 - [x] Add build, type-check, unit-test scripts and CI workflow.
 - [x] Validate GitHub Actions type-check, all 5 unit tests and production build (2026-10-20).
-- [ ] Commit a resolved package-lock.json and switch CI from npm install to npm ci.
+- [x] Commit a resolved package-lock.json and use npm ci in CI for reproducible dependency installation.
 - [x] Add Playwright Chromium gameplay smoke suite (passed on GitHub Actions, 2026-10-20).
 - [x] Add Playwright screenshots of all five environments with development-only distance-seek harness (CI validated).
 - [ ] Approve reviewed screenshot baselines and extended manual play session.
@@ -131,7 +131,7 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 
 ## Next implementation batch
 
-1. Commit a dependency lockfile and switch CI to reproducible `npm ci`.
+1. Validate reproducible npm ci fresh installs and audit any security/dependency advisory changes.
 2. Implement fully interactive branching roads, bridges and more detailed boathouse transformations.
 3. Deepen pursuit AI, missile trails, visual destruction and fully authored music/engine audio.
 4. Add an attract-mode demonstration, tutorial, gamepad rebinding and broader accessibility review.
@@ -157,4 +157,4 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 
 ## Known limitations of current prototype
 
-The highway and river are continuous and curved, but do not yet have interactive forks, complex bridges or mission-specific set pieces. Vehicle and roadside art remains procedurally stylized rather than premium authored production art. Enemies support several distinct behaviors but lack full coordinated tactical AI. River transfers are graded for center alignment and speed but lack a detailed boathouse interior transformation. Gamepad rebinding, final soundtrack production, comprehensive accessibility validation, and multi-browser/real-hardware performance qualification remain unfinished. A dependency lockfile is not yet committed. Do not market this build as feature-complete or commercially cleared without completing the release checklist.
+The highway and river are continuous and curved, but do not yet have interactive forks, complex bridges or mission-specific set pieces. Vehicle and roadside art remains procedurally stylized rather than premium authored production art. Enemies support several distinct behaviors but lack full coordinated tactical AI. River transfers are graded for center alignment and speed but lack a detailed boathouse interior transformation. Gamepad rebinding, final soundtrack production, comprehensive accessibility validation, and multi-browser/real-hardware performance qualification remain unfinished. An npm dependency lockfile is now committed and enforced by CI. Do not market this build as feature-complete or commercially cleared without completing the release checklist.

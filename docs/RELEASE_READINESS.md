@@ -22,7 +22,8 @@ This project is **in active development**, not a signed-off release candidate. P
 - [ ] Inspect screenshots for road seams, contrast, speed readability and effects visibility; approve visual baselines.
 - [ ] Check accessible keyboard navigation, key rebinding, reduced motion, high-contrast HUD and mute.
 - [ ] Review third-party license notices, original art/audio provenance and product title legal clearance.
-- [ ] Generate and commit a version-locked package-lock.json, switch CI to npm ci, retest fresh install.
+- [x] Generate and commit package-lock.json from npm registry through GitHub Actions.
+- [ ] Confirm an end-to-end green npm ci run on GitHub Actions and retest from a fresh developer installation.
 
 ## Known limitations
 
