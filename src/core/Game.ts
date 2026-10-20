@@ -14,7 +14,7 @@ import { Player } from '../entities/Player';
 import { TrafficVehicle } from '../entities/Traffic';
 import { Projectiles } from '../combat/Projectiles';
 import { SpecialWeapons, type WeaponKind } from '../combat/SpecialWeapons';
-import { AirThreats } from '../combat/AirThreats';
+import { AirThreats, Helicopter } from '../combat/AirThreats';
 import { EnemyProjectiles } from '../combat/EnemyProjectiles';
 import { Interface, type Screen } from '../ui/Interface';
 import { AudioManager } from '../audio/Audio';
@@ -33,6 +33,7 @@ import { biomeAt } from '../world/WorldPlan';
 import { splitDangerous, splitMedianHalfWidth, upcomingSplit, escapeFromMedian } from '../world/SplitRoad';
 import { RouteDirector, ROUTE_CHOICES } from '../gameplay/RouteDirector';
 import { bridgeAhead } from '../world/BridgePlan';
+import { chooseHelicopterProfile } from '../combat/FlightDirector';
 import { planSquadTactics } from '../gameplay/SquadTactics';
 
 export class Game {
@@ -370,8 +371,11 @@ export class Game {
     this.airSpawnClock -= dt;
     if (!this.player.isBoat && this.distance > 260 && this.airSpawnClock <= 0) {
       if (this.air.helicopters.length === 0) {
-        this.air.spawn((this.random() - 0.5) * 9);
-        this.announce('AIR THREAT DETECTED — MISSILES RECOMMENDED');
+        const profile = chooseHelicopterProfile(this.distance, this.random);
+        this.air.spawn((this.random() - 0.5) * 9, profile);
+        this.announce(profile === 'ace'
+          ? 'ACE GUNSHIP DETECTED — EVASIVE STRAFING / ARMORED'
+          : 'AIR THREAT DETECTED — MISSILES RECOMMENDED');
       }
       this.airSpawnClock = 17 + this.random() * 8;
     }
@@ -456,7 +460,8 @@ export class Game {
         this.flash(impact.aircraft.x, impact.aircraft.z, 0.84, 0xffc65d);
         this.audio.explode();
         if (impact.aircraft.hp <= 0) {
-          const points = this.scoring.enemyDestroyed(750);
+          const points = this.scoring.enemyDestroyed(impact.aircraft instanceof Helicopter &&
+            impact.aircraft.profile === 'ace' ? 1250 : 750);
           this.announce(points ? `AIR THREAT NEUTRALIZED +${points}` : 'AIR THREAT NEUTRALIZED — NO POINTS');
         }
       } else if (impact.kind === 'missile') {

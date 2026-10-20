@@ -57,4 +57,33 @@ describe('air threats', () => {
     threats.reset();
   });
 
+  it('ace gunship has five armor points and an independent lateral strafe pattern', () => {
+    const scene = new THREE.Scene();
+    const threats = new AirThreats(scene);
+    const ace = threats.spawn(0, 'ace');
+    expect(ace.profile).toBe('ace');
+    expect(ace.hp).toBe(5);
+    let maxStrafe = 0;
+    for (let i=0;i<160;i++) {
+      threats.step(1/60, 0, 30, { x: 0, z: PLAYER_Z, halfWidth: 1, halfLength: 2 });
+      maxStrafe = Math.max(maxStrafe, Math.abs(ace.x));
+    }
+    expect(maxStrafe).toBeGreaterThan(0.1);
+    threats.reset();
+    expect(scene.children).toHaveLength(0);
+  });
+  it('ace bomb telegraph remains dodgeable and releases target offsets over time', () => {
+    const threats = new AirThreats(new THREE.Scene());
+    const ace = threats.spawn(0, 'ace');
+    const hitbox = { x: 6.4, z: PLAYER_Z, halfWidth: 1, halfLength: 2 };
+    const bombXs: number[] = [];
+    for (let i=0;i<590;i++) {
+      const events = threats.step(1/60, 0, 38, hitbox);
+      for (const event of events) if (event.kind === 'bomb-warning') bombXs.push(event.x);
+    }
+    expect(bombXs.length).toBeGreaterThanOrEqual(2);
+    expect(new Set(bombXs).size).toBeGreaterThan(1);
+    threats.reset();
+  });
+
 });

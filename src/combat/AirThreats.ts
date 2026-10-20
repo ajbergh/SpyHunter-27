@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { approach, clamp, intersects, PLAYER_Z, type RectHitbox } from '../core/logic';
+import { approach, intersects, PLAYER_Z, type RectHitbox } from '../core/logic';
+import { bombingLane, helicopterCooldown, helicopterTargetX, type HelicopterProfile } from './FlightDirector';
 
 export const BOMB_WARNING_SECONDS = 0.92;
 
@@ -26,20 +27,26 @@ function box(parent: THREE.Group, size: [number, number, number], pos: [number, 
 /** An original attack helicopter with an animated rotor, readable shadow and timed road bombs. */
 export class Helicopter implements AirTarget {
   readonly mesh = new THREE.Group();
-  readonly hpMax = 3;
-  hp = this.hpMax;
+  readonly hpMax: number;
+  readonly profile: HelicopterProfile;
+  hp: number;
   x: number;
   z: number;
   private readonly rotor = new THREE.Group();
   private fireClock = 1.4;
   private phase = 0;
+  private volley = 0;
 
-  constructor(private readonly scene: THREE.Scene, startX = 0, startZ = -85) {
+  constructor(private readonly scene: THREE.Scene, startX = 0, startZ = -85,
+              profile: HelicopterProfile = 'patrol') {
+    this.profile = profile;
+    this.hpMax = profile === 'ace' ? 5 : 3;
+    this.hp = this.hpMax;
     this.x = startX;
     this.z = startZ;
     const armor = new THREE.MeshStandardMaterial({ color: 0x475c6b, metalness: 0.7, roughness: 0.34 });
     const canopy = new THREE.MeshStandardMaterial({ color: 0x13293f, metalness: 0.75, roughness: 0.18 });
-    const hazard = new THREE.MeshBasicMaterial({ color: 0xffa23b });
+    const hazard = new THREE.MeshBasicMaterial({ color: profile === 'ace' ? 0xff525d : 0xffa23b });
     box(this.mesh, [3.2, 1.35, 6.1], [0, 0, 0], armor);
     box(this.mesh, [2.3, 0.85, 2.1], [0, 0.45, -1.5], canopy);
     box(this.mesh, [0.45, 0.5, 4.7], [0, 0.1, 4.5], armor);
@@ -50,6 +57,12 @@ export class Helicopter implements AirTarget {
     }
     box(this.rotor, [9.4, 0.08, 0.22], [0, 0, 0], canopy);
     box(this.rotor, [0.22, 0.08, 9.4], [0, 0, 0], canopy);
+    if (profile === 'ace') {
+      box(this.mesh, [2.8, 0.3, 1.2], [0, -0.6, 2], hazard);
+      for (const side of [-1, 1]) {
+        box(this.mesh, [0.24, 0.5, 1.0], [side * 1.2, 0.55, -2.1], hazard);
+      }
+    }
     this.rotor.position.y = 1.22;
     this.mesh.add(this.rotor);
     scene.add(this.mesh);
@@ -64,15 +77,19 @@ export class Helicopter implements AirTarget {
   step(dt: number, playerX: number, playerSpeed: number): { x: number; z: number } | null {
     this.phase += dt;
     this.z += Math.max(10, playerSpeed - 14) * dt;
-    if (this.z > -58 && this.z < -13) this.x = approach(this.x, clamp(playerX, -6, 6), 0.65, dt);
+    if (this.z > -58 && this.z < -13) {
+      this.x = approach(this.x, helicopterTargetX(this.profile, playerX, this.phase),
+        this.profile === 'ace' ? 1.65 : 0.65, dt);
+    }
     this.rotor.rotation.y += dt * 17;
     this.sync();
     this.fireClock -= dt;
     if (this.z > -49 && this.z < -8 && this.fireClock <= 0) {
-      this.fireClock = 2.9;
+      this.fireClock = helicopterCooldown(this.profile);
       // Target a predicted road position with over 0.9 seconds of notice;
       // braking or changing lanes after the warning provides a real escape.
-      return { x: clamp(playerX, -7.5, 7.5), z: PLAYER_Z - bombDropDistance(playerSpeed) };
+      return { x: bombingLane(this.profile, playerX, this.volley++),
+        z: PLAYER_Z - bombDropDistance(playerSpeed) };
     }
     return null;
   }
@@ -102,8 +119,8 @@ export class AirThreats {
 
   get activeBombs(): number { return this.bombs.length; }
 
-  spawn(x: number): Helicopter {
-    const helicopter = new Helicopter(this.scene, x, -85);
+  spawn(x: number, profile: HelicopterProfile = 'patrol'): Helicopter {
+    const helicopter = new Helicopter(this.scene, x, -85, profile);
     this.helicopters.push(helicopter);
     return helicopter;
   }

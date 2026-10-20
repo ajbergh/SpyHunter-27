@@ -47,7 +47,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] Original motorcycle geometry with fast slalom attacks and single-hit precision targeting.
 - [x] Paired hostile encounters with longitudinal separation and a reserved escape lane.
 - [x] Cohesive squad-ID pincer behavior: two hostile vehicles coordinate lateral targets, reserve a central escape corridor, stand down near road edges/civilians, and stop on smoke disruption.
-- [ ] More complex helicopter behaviors, squad retreat/escape maneuvers and long-session tuning.
+- [x] Post-1900-distance elite ace gunship profiles with strafing, 5 HP, alternating telegraphed attack lanes and increased takedown rewards.
+- [ ] Squad retreat/escape maneuvers, air combat long-session tuning and more aerial attack patterns.
 - [x] Initial guided hostile-target missiles, oil spinout hazards, smoke-based AI disruption, inventory and cooldown.
 - [x] Prioritize helicopter targets with altitude-aware guided missile interception and +750 aerial scoring.
 - [x] Improved helicopter bomb fairness: 0.92-second predictive warning, ramping target marker and brake/steer escape validation.
