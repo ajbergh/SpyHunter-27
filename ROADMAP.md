@@ -108,7 +108,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] Optional high-quality EffectComposer with subtle bloom and OutputPass.
 - [ ] Sophisticated color grading, advanced reflections and weather effects.
 - [x] Original adaptive synthesized espionage riff and speed-sensitive engine drone.
-- [ ] Multi-layer authored music, richer engine samples and environmental audio.
+- [x] Five distinct original synthesized biome arrangements with percussive pulses, threat-adaptive pace, dual-layer reactive engine audio, separate warning and resupply signals.
+- [ ] Richer authored/sample-based music production and environmental recordings.
 - [x] Persistent Low/Medium/High render quality, original music/effects volume and reduced-motion option.
 - [x] Persistent keyboard remapping for 10 actions with duplicate protection, Escape cancellation and reduced-motion display rules.
 - [x] Persistent high-contrast HUD and reduced-motion UI preferences.
@@ -142,7 +143,7 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 
 1. Verify npm ci on all CI jobs; review dependency advisories and run the manual Generate dependency lockfile workflow only when dependencies change.
 2. Implement fully interactive branching roads, bridges and more detailed boathouse transformations.
-3. Deepen pursuit AI, missile trails, visual destruction and fully authored music/engine audio.
+3. Expand gunship/evasive pursuit behavior, author fuller music and environmental audio, and polish vehicle destruction.
 4. Add an attract-mode demonstration, tutorial, gamepad rebinding and broader accessibility review.
 5. Run 10–30 minute manual/memory soaks, inspect screenshot artifacts, benchmark 1080p performance, and verify Firefox/Edge/Safari before a release candidate.
 

@@ -404,7 +404,7 @@ export class Game {
       this.dockingTimer = 1.3;
       this.announce(resupplyBonus ? 'DOCKING SUCCESS — WEAPONS REPLENISHED  +500'
         : 'WEAPONS REPLENISHED — NO POINTS DURING CIVILIAN PENALTY');
-      this.audio.confirm();
+      this.audio.resupply();
     } else if (vanEvent === 'missed') {
       this.announce('SUPPORT VAN MISSED');
     }
@@ -452,7 +452,10 @@ export class Game {
       this.damagePlayer('ENFORCER WEAPON IMPACT');
     }
     for (const event of this.air.step(dt, this.player.x, this.player.speed, this.player.hitbox())) {
-      if (event.kind === 'bomb-warning') this.announce('WARNING — INCOMING AERIAL BOMB');
+      if (event.kind === 'bomb-warning') {
+        this.announce('WARNING — INCOMING AERIAL BOMB');
+        this.audio.warning();
+      }
       if (event.kind === 'bomb-detonated') {
         this.flash(event.x, event.z, 0.76, 0xff7134);
         this.audio.explode();
@@ -518,7 +521,8 @@ export class Game {
       this.audio.confirm();
     }
     this.stepExplosions(dt);
-    this.audio.step(dt, this.player.speed, this.traffic.length + this.air.helicopters.length * 2, this.player.isBoat);
+    this.audio.step(dt, this.player.speed,
+      this.traffic.length + this.air.helicopters.length * 2, this.player.isBoat, this.road.biome);
     if (this.toastClock > 0) {
       this.toastClock -= dt;
       if (this.toastClock <= 0) this.ui.message('');

@@ -1,8 +1,14 @@
+import { SOUNDSCAPES, musicPace } from './Soundscape';
+import type { Biome } from '../world/WorldPlan';
+
 /** Original synthesized espionage score, reactive engine drone and arcade SFX. */
 export class AudioManager {
   private context: AudioContext | null = null;
   private engine: OscillatorNode | null = null;
   private engineGain: GainNode | null = null;
+  private overtone: OscillatorNode | null = null;
+  private overtoneGain: GainNode | null = null;
+  private previousBiome: Biome = 'forest';
   private muted = false;
   private effectsLevel = 0.7;
   private musicLevel = 0.45;
@@ -23,6 +29,12 @@ export class AudioManager {
         this.engineGain.gain.value = 0;
         this.engine.connect(filter).connect(this.engineGain).connect(this.context.destination);
         this.engine.start();
+        this.overtone = this.context.createOscillator();
+        this.overtone.type = 'triangle';
+        this.overtoneGain = this.context.createGain();
+        this.overtoneGain.gain.value = 0;
+        this.overtone.connect(this.overtoneGain).connect(this.context.destination);
+        this.overtone.start();
       }
     } catch { /* Audio is optional when blocked by browser policy. */ }
   }
@@ -45,27 +57,49 @@ export class AudioManager {
     this.tone(46, 0.42, 'triangle', 0.15, -15);
   }
   confirm(): void { this.tone(480, 0.12, 'sine', 0.1, 200); }
+  warning(): void {
+    this.tone(540, 0.14, 'square', 0.095, -145);
+    this.tone(880, 0.09, 'sine', 0.06, -180);
+  }
+  resupply(): void {
+    this.tone(392, 0.17, 'triangle', 0.11, 130);
+    this.tone(659, 0.28, 'sine', 0.085, 110);
+  }
 
-  /** Called once per fixed simulation step; does not use background timers. */
-  step(dt: number, speed: number, danger: number, inBoat = false): void {
+  /** Fixed-step original five-environment adaptive music and engine layers. */
+  step(dt: number, speed: number, danger: number, inBoat = false, biome: Biome = 'forest'): void {
     if (!this.context || this.context.state !== 'running') return;
+    const currentBiome = inBoat ? 'water' : biome;
+    if (currentBiome !== this.previousBiome) {
+      this.previousBiome = currentBiome;
+      this.beat = 0;
+      this.beatClock = 0;
+    }
+    const sound = SOUNDSCAPES[currentBiome];
     const now = this.context.currentTime;
     if (this.engine && this.engineGain) {
-      this.engine.frequency.setTargetAtTime((inBoat ? 58 : 48) + speed * (inBoat ? 2.8 : 3.5), now, 0.07);
+      this.engine.frequency.setTargetAtTime(sound.engineBase + speed * sound.engineRate, now, 0.07);
       this.engineGain.gain.setTargetAtTime(this.muted ? 0 : 0.014 * this.effectsLevel, now, 0.08);
+    }
+    if (this.overtone && this.overtoneGain) {
+      this.overtone.frequency.setTargetAtTime(sound.undercurrent + speed * 0.82, now, 0.1);
+      this.overtoneGain.gain.setTargetAtTime(this.muted ? 0 : 0.006 * this.effectsLevel, now, 0.08);
     }
     this.beatClock -= dt;
     if (this.beatClock <= 0) {
-      // Newly composed angular espionage ostinato, intentionally not the
-      // licensed theme associated with the historical arcade original.
-      const melody = [174.61, 0, 233.08, 220, 0, 196.0, 261.63, 0,
-        146.83, 174.61, 0, 293.66, 220, 0, 164.81, 196.0];
-      const note = melody[this.beat++ % melody.length];
-      const pace = danger > 4 ? 0.205 : 0.29;
+      const pace = musicPace(currentBiome, danger);
+      const position = this.beat++ % sound.score.length;
+      const note = sound.score[position];
       this.beatClock = pace;
-      if (note !== 0 && this.musicLevel > 0) {
+      if (note > 0 && this.musicLevel > 0) {
         this.tone(note, pace * 0.82, 'triangle', 0.09, -3, true);
-        if (this.beat % 4 === 1) this.tone(note / 2, pace * 1.5, 'sine', 0.06, -4, true);
+        if (position % 4 === 0) this.tone(note / 2, pace * 1.3, 'sine', 0.06, -4, true);
+        if (danger >= 5 && position % 4 === 2) {
+          this.tone(note * 1.5, pace * 0.48, 'sawtooth', 0.035, -9, true);
+        }
+      }
+      if (position % sound.percussionRate === 0 && this.musicLevel > 0) {
+        this.tone(currentBiome === 'city' ? 66 : 52, 0.095, 'triangle', 0.08, -25, true);
       }
     }
   }
@@ -73,6 +107,7 @@ export class AudioManager {
   silence(): void {
     if (this.context && this.engineGain) {
       this.engineGain.gain.setTargetAtTime(0, this.context.currentTime, 0.025);
+      this.overtoneGain?.gain.setTargetAtTime(0, this.context.currentTime, 0.025);
     }
     this.beatClock = 0;
   }

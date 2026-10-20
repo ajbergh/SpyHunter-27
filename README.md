@@ -2,7 +2,7 @@
 
 A modern, original WebGL arcade-combat driving game inspired by the feel of early 1980s vertical-scrolling highway games. Powered by **Three.js + TypeScript + Vite**.
 
-> **Project status:** Advanced playable browser prototype; Phases 1–5 have substantial implementations, but the master specification is **not yet complete**. Land/boat traversal across five biomes, helicopter and vehicle combat, special weapons, resupply truck docking, three arcade modes, scoring and result statistics, graphics/audio settings, keyboard remapping, reduced-motion and high-contrast options are working in automated browser tests. **Verified CI: 53 unit tests, 12 Chromium E2E tests, strict TypeScript and production build (2026-10-20).** Extended manual testing, visual/audio refinement, branching roads, multi-browser/hardware profiling and release clearance remain outstanding.
+> **Project status:** Advanced playable browser prototype, not feature-complete or commercially cleared. Five biomes, ground/boat combat, four arcade modes, enemy squad/aircraft systems, route choices, keyboard/gamepad remapping, accessible settings and original generated music are implemented. Consult the current [GitHub Actions CI](https://github.com/ajbergh/SpyHunter-27/actions) for test counts. Extended manual play, multi-browser/hardware profiling, additional audiovisual polish and release clearance remain outstanding.
 
 ## Run locally
 
@@ -42,7 +42,7 @@ npm run preview
 
 ### Graphics, audio and accessibility
 
-The **Settings** menu (also accessible while paused) saves High/Medium/Low graphics settings, music and effects volumes, reduced-motion preference, and an optional FPS/draw-call diagnostics overlay. Ten core keyboard actions can be rebound in Settings (with duplicate detection and persistent storage); Arrow keys and Escape remain available as fallbacks. Biome-specific GPU weather adds snow, dust, city rain and water mist at quality-dependent particle budgets. High quality enables restrained bloom through a Three.js EffectComposer pipeline. The soundtrack and speed-reactive engine audio are original synthesized Web Audio.
+The **Settings** menu (also accessible while paused) saves High/Medium/Low graphics settings, music and effects volumes, reduced-motion preference, and an optional FPS/draw-call diagnostics overlay. Ten core keyboard actions can be rebound in Settings (with duplicate detection and persistent storage); Arrow keys and Escape remain available as fallbacks. Biome-specific GPU weather adds snow, dust, city rain and water mist at quality-dependent particle budgets. High quality enables restrained bloom through a Three.js EffectComposer pipeline. The soundtrack and speed-reactive engine audio are original synthesized Web Audio. Each environment now has its own 16-step melodic arrangement, percussive rhythm and engine color; danger accelerates the pace, with separate incoming-bomb and resupply cues.
 
 ### Game modes and environment progression
 
