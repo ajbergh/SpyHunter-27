@@ -12,7 +12,7 @@ export class WeaponsVan {
   private dockTimer = 0;
   private readonly lane = 6.4;
 
-  constructor(private readonly scene: THREE.Scene) {
+  constructor(scene: THREE.Scene) {
     const white = new THREE.MeshStandardMaterial({ color: 0xdbe4eb, metalness: 0.58, roughness: 0.4 });
     const dark = new THREE.MeshStandardMaterial({ color: 0x182735, metalness: 0.48, roughness: 0.4 });
     const amber = new THREE.MeshStandardMaterial({ color: 0xffc26c, emissive: 0xff8b15, emissiveIntensity: 0.8 });
