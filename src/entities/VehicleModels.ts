@@ -172,28 +172,65 @@ export function makeMotorcycle(hostile: boolean, color: number): THREE.Group {
 /** Original low-poly speedboat: streamlined hull, glazed cockpit and wake fins. */
 export function makeSpeedboat(hostile: boolean, color = 0xe7f1f3): THREE.Group {
   const group = new THREE.Group();
-  const hull = new THREE.MeshStandardMaterial({
-    color, metalness: 0.58, roughness: 0.25, flatShading: true,
-  });
-  const deck = metal(hostile ? 0x29364c : 0x182639);
-  const glass = new THREE.MeshStandardMaterial({ color: hostile ? 0x522637 : 0x17618b, metalness: 0.6, roughness: 0.13 });
-  const shape = new THREE.CylinderGeometry(0.68, 1.55, 5.3, 5, 1, false);
-  const boatBody = new THREE.Mesh(shape, hull);
-  boatBody.rotation.x = Math.PI / 2;
-  boatBody.rotation.y = Math.PI / 2;
-  boatBody.scale.set(1, 0.66, 1);
-  boatBody.position.y = 0.42;
-  group.add(boatBody);
-  box(group, [2.3, 0.26, 4.2], [0, 0.66, 0.28], deck);
-  box(group, [1.5, 0.68, 1.55], [0, 1.01, 0.6], glass);
-  box(group, [1.5, 0.22, 1.0], [0, 0.77, -1.45], hull);
+  const hull = bodyPaint(color, true);
+  const dark = new THREE.MeshStandardMaterial({ color: 0x111e2d, metalness: 0.45, roughness: 0.43 });
+  const glass = glassPaint(hostile ? 0x452a3c : 0x1e6d90);
+  const chrome = metal(0x92c9d5, 0.19);
+  const accent = hostile ? 0xff3c64 : 0x4ff1f6;
+  // Sculpted waterline, flared chines, V-shaped keel and knife-like bow.
+  sculptMesh(group, [
+    { z: -3.12, halfWidth: 0.06, deck: 0.89, floor: 0.29 },
+    { z: -2.72, halfWidth: 0.49, deck: 0.94, floor: -0.03 },
+    { z: -2.10, halfWidth: 0.88, deck: 1.00, floor: -0.32 },
+    { z: -1.00, halfWidth: 1.13, deck: 1.03, floor: -0.49 },
+    { z: 0.50, halfWidth: 1.25, deck: 0.98, floor: -0.51 },
+    { z: 1.75, halfWidth: 1.23, deck: 0.89, floor: -0.45 },
+    { z: 2.55, halfWidth: 1.16, deck: 0.80, floor: -0.26 },
+    { z: 2.83, halfWidth: 1.06, deck: 0.75, floor: -0.18 },
+  ], hull);
+  sculptMesh(group, [
+    { z: -0.95, halfWidth: 0.60, deck: 1.04, floor: 0.96 },
+    { z: -0.60, halfWidth: 0.78, deck: 1.58, floor: 1.03 },
+    { z: 0.72, halfWidth: 0.81, deck: 1.62, floor: 1.03 },
+    { z: 1.26, halfWidth: 0.65, deck: 1.05, floor: 0.94 },
+  ], glass);
+  box(group, [0.98, 0.07, 1.64], [0, 1.01, -1.95], dark);
+  box(group, [1.16, 0.07, 1.26], [0, 1.09, 1.72], dark);
+  box(group, [0.12, 0.08, 2.0], [0, 1.65, 0.25], chrome);
   for (const side of [-1, 1]) {
-    box(group, [0.24, 0.17, 1.2], [side * 1.05, 0.8, -0.35], hull);
-    box(group, [0.15, 0.12, 0.42], [side * 0.75, 0.84, -2.05],
-      new THREE.MeshBasicMaterial({ color: hostile ? 0xff3946 : 0x82f0ff }));
-    box(group, [0.26, 0.38, 1.3], [side * 0.86, 0.41, 2.0], deck);
+    addDecalBar(group, [0.075, 0.065, 3.5],
+      [side * 1.16, 0.76, 0.42], accent, true);
+    addDecalBar(group, [0.07, 0.095, 2.1],
+      [side * 1.01, 1.08, -0.49], 0xaccdd5);
+    addDecalBar(group, [0.23, 0.11, 0.31],
+      [side * 0.37, 0.99, -2.87], side < 0 ? 0xff4c4b : 0x49ff99, true);
+    box(group, [0.35, 0.10, 0.8], [side * 0.74, 1.13, 1.49], dark);
+    // Raised safety stanchions alongside the gunwale.
+    for (const z of [-1.8, -0.6, 0.9]) {
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.034, 0.28, 7), chrome);
+      post.position.set(side * 1.10, 1.13, z);
+      group.add(post);
+    }
+    // Compact sculpted propulsion housings and luminous exhaust rings.
+    const motor = new THREE.Mesh(new THREE.CapsuleGeometry(0.34, 0.75, 5, 10), dark);
+    motor.rotation.x = Math.PI / 2;
+    motor.position.set(side * 0.69, 0.55, 3.04);
+    motor.castShadow = true;
+    group.add(motor);
+    const exhaust = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.23, 0.55, 10), dark);
+    exhaust.rotation.x = Math.PI / 2;
+    exhaust.position.set(side * 0.69, 0.46, 3.44);
+    group.add(exhaust);
+    const nozzle = new THREE.Mesh(new THREE.TorusGeometry(0.145, 0.03, 6, 15),
+      new THREE.MeshBasicMaterial({ color: accent }));
+    nozzle.position.set(side * 0.69, 0.46, 3.74);
+    group.add(nozzle);
   }
-  box(group, [0.9, 0.13, 0.8], [0, 0.5, 2.55], deck);
+  box(group, [2.15, 0.09, 0.64], [0, 0.80, 2.95], chrome);
+  const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.035, 1.3, 6), chrome);
+  antenna.position.set(0.56, 2.07, 1.05);
+  antenna.rotation.z = 0.15;
+  group.add(antenna);
   return group;
 }
 
