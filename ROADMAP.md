@@ -51,7 +51,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [ ] Refine missile contrails, air-combat visuals and balance.
 - [x] First deployable support truck with an animated ramp, approach/cooldown, alignment-based docking and inventory refill.
 - [x] Animate resupply van rear doors, ramp, beacons and brief vehicle-hide/docking camera choreography.
-- [ ] Add visible interceptor interior loading/exit sequence, near-miss feedback and collision-safe reentry.
+- [x] Animate visible interceptor moving into van and safe reentry with invulnerability and cleared deployment lane.
+- [ ] More detailed interior animation and feedback for near-miss docking.
 - [x] Five-second civilian casualty NO POINTS lockout with HUD warning and casualty counter.
 - [x] Initial lane reservation check at spawn horizon.
 - [x] Deterministic encounter-planning function with early-game gating and lane safety unit tests.
@@ -126,7 +127,7 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 2. Capture and inspect gameplay screenshots, then run a full manual play session.
 3. Make the truck docking sequence cinematic and detect near-misses clearly.
 4. Tune new motorcycle/paired encounter pacing in browser and improve bomb telegraph fairness.
-5. Add full weapons-van interior loading, vehicle reentry, and damage-safe docking.
+5. Improve weapons-van interior detailing and near-miss feedback; safe reentry is implemented.
 
 ## Architecture and quality gates
 

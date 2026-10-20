@@ -58,6 +58,7 @@ export class Game {
   private shotClock = 0;
   private grace = 0;
   private dockingTimer = 0;
+  private dockingEntryX = 0;
   private toastClock = 0;
 
   constructor(host: HTMLElement) {
@@ -154,6 +155,7 @@ export class Game {
     this.lives = GAME_MODES[mode].lives;
     this.grace = mode === 'modern' ? 5 : 3;
     this.dockingTimer = 0;
+    this.dockingEntryX = 0;
     this.spawnClock = 0.8;
     this.airSpawnClock = 9;
     this.shotClock = 0;
@@ -193,12 +195,26 @@ export class Game {
     if (this.screen !== 'playing') return;
 
     if (this.dockingTimer > 0) {
-      this.dockingTimer -= dt;
+      this.dockingTimer = Math.max(0, this.dockingTimer - dt);
       this.van.step(dt, this.player.speed, this.player.x);
-      this.camera.position.x += (this.player.x - this.camera.position.x) * Math.min(1, dt * 5);
-      if (this.dockingTimer <= 0) {
-        this.player.mesh.visible = true;
-        this.player.invulnerability = 2.5;
+      const progress = 1 - this.dockingTimer / 1.3;
+      // Move the visible car up the deployed ramp and into the support van.
+      this.player.mesh.position.x = this.dockingEntryX + (6.4 - this.dockingEntryX) * progress;
+      this.player.mesh.position.z = PLAYER_Z - progress * 7;
+      this.player.mesh.position.y = 0.12 + Math.sin(progress * Math.PI) * 0.68;
+      this.player.mesh.scale.setScalar(1 - progress * 0.13);
+      this.camera.position.x = approach(this.camera.position.x, 3.4, 5, dt);
+      if (this.dockingTimer === 0) {
+        this.player.mesh.position.set(this.player.x, 0.12, PLAYER_Z);
+        this.player.mesh.scale.setScalar(1);
+        this.player.invulnerability = 3.4;
+        this.grace = 2.2;
+        this.enemyShots.reset();
+        // The deployment zone must be clear before control is returned.
+        for (let i = this.traffic.length - 1; i >= 0; i--) {
+          const car = this.traffic[i];
+          if (Math.abs(car.z - PLAYER_Z) < 13 && Math.abs(car.x - this.player.x) < 3.4) this.removeVehicle(i);
+        }
         this.announce('INTERCEPTOR REDEPLOYED — WEAPONS ONLINE');
       }
       this.stepExplosions(dt);
@@ -253,7 +269,7 @@ export class Game {
     const vanEvent = this.player.isBoat ? null : this.van.step(dt, this.player.speed, this.player.x);
     if (vanEvent === 'docked') {
       this.specials.refill();
-      this.player.mesh.visible = false;
+      this.dockingEntryX = this.player.x;
       const resupplyBonus = this.scoring.bonus(500);
       this.player.invulnerability = 2.5;
       this.dockingTimer = 1.3;

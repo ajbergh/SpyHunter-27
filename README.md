@@ -66,7 +66,7 @@ The game also reads compatible gamepads (left stick to steer, right trigger to a
 - `src/entities/` owns original procedural vehicle meshes and traffic entities.
 - `src/combat/Projectiles.ts` handles pooled bullets and hit checks.
 - `src/combat/SpecialWeapons.ts` manages missile homing, oil/smoke hazard interactions, ammo and cooldown.
-- `src/gameplay/WeaponsVan.ts` implements roadside truck deployment, ramp alignment, animated docking and refill.
+- `src/gameplay/WeaponsVan.ts` implements roadside truck deployment, ramp alignment, animated visible vehicle loading, collision-safe redeployment and refill.
 - `src/combat/AirThreats.ts` owns aerial enemies, bomb telegraphs and blast hit detection.
 - `src/combat/EnemyProjectiles.ts` pools dodgeable enemy turret rounds.
 - `src/gameplay/Scoring.ts` implements civilian lockout, extra-life milestones and timed score combos.
