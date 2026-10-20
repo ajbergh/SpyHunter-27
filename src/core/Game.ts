@@ -144,6 +144,7 @@ export class Game {
     this.preferences = settings;
     this.audio.configure(settings.musicVolume, settings.effectsVolume);
     this.input.setBindings(settings.bindings);
+    this.input.setGamepadBindings(settings.gamepadBindings);
     this.weather.setQuality(settings.quality);
     const ratio = settings.quality === 'low' ? 1 : settings.quality === 'high' ? 2 : 1.5;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, ratio));

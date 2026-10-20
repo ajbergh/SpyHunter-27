@@ -1,4 +1,7 @@
-import { DEFAULT_BINDINGS, type KeyBindings } from '../gameplay/Settings';
+import {
+  DEFAULT_BINDINGS, DEFAULT_GAMEPAD_BINDINGS,
+  type KeyBindings, type GamepadBindings,
+} from '../gameplay/Settings';
 
 export interface Controls {
   steer: number;
@@ -18,6 +21,7 @@ export class Input {
   private keys = new Set<string>();
   private previous: Record<string, boolean> = {};
   private bindings: KeyBindings = { ...DEFAULT_BINDINGS };
+  private gamepadBindings: GamepadBindings = { ...DEFAULT_GAMEPAD_BINDINGS };
 
   constructor() {
     window.addEventListener('keydown', (e) => {
@@ -32,6 +36,11 @@ export class Input {
     this.bindings = { ...bindings };
     this.previous = {};
     this.keys.clear();
+  }
+
+  setGamepadBindings(bindings: GamepadBindings): void {
+    this.gamepadBindings = { ...bindings };
+    this.previous = {};
   }
 
   read(): Controls {
@@ -51,15 +60,15 @@ export class Input {
     };
     return {
       steer: Math.max(-1, Math.min(1, keyboardSteer || stick)),
-      throttle: bound('throttle') || key('ArrowUp') || pressed(7),
-      brake: bound('brake') || key('ArrowDown') || pressed(6),
-      fire: bound('fire') || pressed(0),
-      missilePressed: edge('missile', bound('missile') || pressed(1)),
-      oilPressed: edge('oil', bound('oil') || pressed(2)),
-      smokePressed: edge('smoke', bound('smoke') || pressed(3)),
-      vanPressed: edge('van', bound('van') || pressed(4)),
+      throttle: bound('throttle') || key('ArrowUp') || pressed(this.gamepadBindings.throttle),
+      brake: bound('brake') || key('ArrowDown') || pressed(this.gamepadBindings.brake),
+      fire: bound('fire') || pressed(this.gamepadBindings.fire),
+      missilePressed: edge('missile', bound('missile') || pressed(this.gamepadBindings.missile)),
+      oilPressed: edge('oil', bound('oil') || pressed(this.gamepadBindings.oil)),
+      smokePressed: edge('smoke', bound('smoke') || pressed(this.gamepadBindings.smoke)),
+      vanPressed: edge('van', bound('van') || pressed(this.gamepadBindings.van)),
       startPressed: edge('start', key('Enter')),
-      pausePressed: edge('pause', bound('pause') || key('Escape') || pressed(9)),
+      pausePressed: edge('pause', bound('pause') || key('Escape') || pressed(this.gamepadBindings.pause)),
       mutePressed: edge('mute', key('KeyM')),
     };
   }

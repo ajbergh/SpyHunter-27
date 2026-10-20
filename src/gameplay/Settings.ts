@@ -20,6 +20,26 @@ export function assignBinding(
   if (BINDING_ACTIONS.some((other) => other !== action && bindings[other] === code)) return null;
   return { ...bindings, [action]: code };
 }
+export const GAMEPAD_ACTIONS = [
+  'fire', 'missile', 'oil', 'smoke', 'van', 'pause', 'throttle', 'brake',
+] as const;
+export type GamepadAction = typeof GAMEPAD_ACTIONS[number];
+export type GamepadBindings = Record<GamepadAction, number>;
+export const DEFAULT_GAMEPAD_BINDINGS: GamepadBindings = {
+  fire: 0, missile: 1, oil: 2, smoke: 3,
+  van: 4, pause: 9, throttle: 7, brake: 6,
+};
+export function validGamepadButton(index: unknown): index is number {
+  return Number.isInteger(index) && typeof index === 'number' && index >= 0 && index <= 16;
+}
+export function assignGamepadBinding(
+  bindings: GamepadBindings, action: GamepadAction, button: number,
+): GamepadBindings | null {
+  if (!validGamepadButton(button)) return null;
+  if (GAMEPAD_ACTIONS.some(other => other !== action && bindings[other] === button)) return null;
+  return { ...bindings, [action]: button };
+}
+
 export interface GamePreferences {
   quality: Quality;
   effectsVolume: number;
@@ -28,10 +48,12 @@ export interface GamePreferences {
   highContrast: boolean;
   showFps: boolean;
   bindings: KeyBindings;
+  gamepadBindings: GamepadBindings;
 }
 export const DEFAULT_PREFERENCES: GamePreferences = {
   quality: 'medium', effectsVolume: 0.7, musicVolume: 0.45,
-  reducedMotion: false, highContrast: false, showFps: false, bindings: { ...DEFAULT_BINDINGS },
+  reducedMotion: false, highContrast: false, showFps: false,
+  bindings: { ...DEFAULT_BINDINGS }, gamepadBindings: { ...DEFAULT_GAMEPAD_BINDINGS },
 };
 const KEY = 'spyhunter27-settings';
 const isQuality = (value: unknown): value is Quality =>
@@ -50,8 +72,19 @@ export function parsePreferences(input: unknown): GamePreferences {
       if (assigned) Object.assign(bindings, assigned);
     }
   }
+  const storedPad = obj.gamepadBindings && typeof obj.gamepadBindings === 'object'
+    ? obj.gamepadBindings as Record<string, unknown> : {};
+  const gamepadBindings: GamepadBindings = { ...DEFAULT_GAMEPAD_BINDINGS };
+  for (const action of GAMEPAD_ACTIONS) {
+    const index = storedPad[action];
+    if (validGamepadButton(index)) {
+      const assigned = assignGamepadBinding(gamepadBindings, action, index);
+      if (assigned) Object.assign(gamepadBindings, assigned);
+    }
+  }
   return {
     bindings,
+    gamepadBindings,
     quality: isQuality(obj.quality) ? obj.quality : DEFAULT_PREFERENCES.quality,
     effectsVolume: volume(obj.effectsVolume, DEFAULT_PREFERENCES.effectsVolume),
     musicVolume: volume(obj.musicVolume, DEFAULT_PREFERENCES.musicVolume),

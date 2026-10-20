@@ -5,6 +5,7 @@ import type { Biome } from '../world/WorldPlan';
 import { formatMissionDistance, formatMissionTime } from '../gameplay/SessionMetrics';
 import {
   loadPreferences, savePreferences, assignBinding, BINDING_ACTIONS,
+  assignGamepadBinding, GAMEPAD_ACTIONS, type GamepadAction,
   type GamePreferences, type BindingAction,
 } from '../gameplay/Settings';
 
@@ -83,6 +84,9 @@ export class Interface {
           <div class="binding-heading">REMAP KEYBOARD CONTROLS</div>
           <div class="bindings-grid" id="bindings-grid"></div>
           <p class="binding-status" id="binding-status" aria-live="polite">Select a command to change its key. Escape cancels.</p>
+          <div class="binding-heading">GAMEPAD / STANDARD LAYOUT</div>
+          <div class="gamepad-grid" id="gamepad-grid"></div>
+          <p class="binding-status" id="gamepad-status" aria-live="polite">Reassign one gamepad button per action. Left stick steering stays available.</p>
           <button class="primary-button" id="close-settings">APPLY AND RETURN ↗</button>
         </section>
         <div class="fps-debug" id="fps-debug" hidden>FPS -- / DRAWS -- / VEH --</div>
@@ -155,6 +159,7 @@ export class Interface {
         highContrast: contrast.checked,
         showFps: fps.checked,
         bindings: this.preferences.bindings,
+        gamepadBindings: this.preferences.gamepadBindings,
       };
       savePreferences(this.preferences);
       this.onSettingsChange(this.preferences);
@@ -215,6 +220,44 @@ export class Interface {
       if (button) button.textContent = this.displayKey(event.code);
       this.refreshControlHints();
     }, true);
+    const gamepadLabels: Record<GamepadAction, string> = {
+      fire: 'MACHINE GUNS', missile: 'MISSILE', oil: 'OIL / FLAME',
+      smoke: 'SMOKE', van: 'SUPPORT VAN', pause: 'PAUSE',
+      throttle: 'THROTTLE', brake: 'BRAKE',
+    };
+    const padGrid = this.get<HTMLDivElement>('gamepad-grid');
+    for (const action of GAMEPAD_ACTIONS) {
+      const label = document.createElement('label');
+      label.className = 'gamepad-control';
+      label.textContent = gamepadLabels[action];
+      const select = document.createElement('select');
+      select.id = 'gamepad-' + action;
+      select.setAttribute('aria-label', 'Gamepad ' + gamepadLabels[action]);
+      for (let i = 0; i <= 16; i++) {
+        const option = document.createElement('option');
+        option.value = String(i);
+        option.textContent = 'Button ' + i;
+        select.appendChild(option);
+      }
+      select.value = String(this.preferences.gamepadBindings[action]);
+      select.addEventListener('change', () => {
+        const updated = assignGamepadBinding(
+          this.preferences.gamepadBindings, action, Number(select.value),
+        );
+        if (!updated) {
+          select.value = String(this.preferences.gamepadBindings[action]);
+          this.get('gamepad-status').textContent =
+            'That button is already assigned or unavailable. Choose a free button.';
+          return;
+        }
+        this.preferences = { ...this.preferences, gamepadBindings: updated };
+        savePreferences(this.preferences);
+        this.onSettingsChange(this.preferences);
+        this.get('gamepad-status').textContent = gamepadLabels[action] + ' assigned to Button ' + updated[action];
+      });
+      label.appendChild(select);
+      padGrid.appendChild(label);
+    }
     this.refreshControlHints();
     this.show('menu');
   }

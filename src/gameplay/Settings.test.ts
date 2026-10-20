@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   parsePreferences, DEFAULT_PREFERENCES, assignBinding, DEFAULT_BINDINGS,
+  assignGamepadBinding, DEFAULT_GAMEPAD_BINDINGS,
 } from './Settings';
 
 describe('durable graphics and audio preferences', () => {
@@ -31,4 +32,18 @@ describe('durable graphics and audio preferences', () => {
     expect(preferences.bindings.missile).toBe('KeyQ');
     expect(preferences.bindings.pause).toBe('KeyP');
   });
+  it('validates Gamepad API standard button mappings and blocks duplicate actions', () => {
+    expect(assignGamepadBinding(DEFAULT_GAMEPAD_BINDINGS, 'fire', 14)?.fire).toBe(14);
+    expect(assignGamepadBinding(DEFAULT_GAMEPAD_BINDINGS, 'fire', 1)).toBeNull();
+    expect(assignGamepadBinding(DEFAULT_GAMEPAD_BINDINGS, 'fire', -1)).toBeNull();
+    expect(assignGamepadBinding(DEFAULT_GAMEPAD_BINDINGS, 'fire', 22)).toBeNull();
+    expect(assignGamepadBinding(DEFAULT_GAMEPAD_BINDINGS, 'fire', 4.5)).toBeNull();
+  });
+  it('loads and safely rejects malformed persisted gamepad controls', () => {
+    const p = parsePreferences({ gamepadBindings: { fire: 12, missile: 0, oil: -4 } });
+    expect(p.gamepadBindings.fire).toBe(12);
+    expect(p.gamepadBindings.missile).toBe(1);
+    expect(p.gamepadBindings.oil).toBe(2);
+  });
+
 });

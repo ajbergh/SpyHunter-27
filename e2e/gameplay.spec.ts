@@ -212,3 +212,17 @@ test('squad pincer banner begins hidden before coordinated attacks arrive', asyn
   await expect(page.locator('#stage canvas')).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test('gamepad buttons can be reassigned and persist between sessions', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
+  await page.locator('#gamepad-fire').selectOption('14');
+  await expect(page.locator('#gamepad-fire')).toHaveValue('14');
+  await page.locator('#gamepad-missile').selectOption('14');
+  await expect(page.locator('#gamepad-missile')).toHaveValue('1');
+  await expect(page.locator('#gamepad-status')).toContainText('already assigned');
+  await page.getByRole('button', { name: /apply and return/i }).click();
+  await page.reload();
+  await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
+  await expect(page.locator('#gamepad-fire')).toHaveValue('14');
+});

@@ -110,7 +110,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] Persistent Low/Medium/High render quality, original music/effects volume and reduced-motion option.
 - [x] Persistent keyboard remapping for 10 actions with duplicate protection, Escape cancellation and reduced-motion display rules.
 - [x] Persistent high-contrast HUD and reduced-motion UI preferences.
-- [ ] Remappable gamepad buttons, additional accessibility review and broader graphics presets.
+- [x] Standard Gamepad API button rebinding for 8 actions, persistent duplicate-safe settings UI, and unit/browser coverage.
+- [ ] Additional accessibility and actual-device validation across controller layouts; broader graphics presets.
 
 **Exit:** cohesive premium look, responsive effects, no readability regressions.
 
@@ -124,7 +125,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [ ] Achievement hooks and daily challenge sharing/leaderboards.
 - [x] Persistent settings UI available on main and paused screens.
 - [x] Keyboard control rebinding with persisted help hints and optional reduced-motion interface treatment.
-- [ ] Gamepad button remapping and extended pause/focus/accessibility behavior.
+- [x] Gamepad button mapping UI and persistent input integration for throttle/brake/fire/specials/pause.
+- [ ] Extended pause/focus/accessibility behavior and actual-controller compatibility validation.
 - [x] Optional FPS, draw calls, active vehicle diagnostics overlay.
 - [ ] Profiling: verified 60 FPS at 1080p midrange GPU and integrated GPU tier.
 - [x] Chromium E2E game-over / full-life-cycle / redeploy test passed (2026-10-20).
