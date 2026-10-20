@@ -19,6 +19,8 @@ Open the local address shown by Vite. First open of the game requires a click/En
 npm run typecheck
 npm test
 npm run build
+npx playwright install chromium
+npm run test:e2e
 npm run preview
 ```
 

@@ -15,7 +15,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] Add build, type-check, unit-test scripts and CI workflow.
 - [x] Validate GitHub Actions type-check, all 5 unit tests and production build (2026-10-20).
 - [ ] Commit a resolved package-lock.json and switch CI from npm install to npm ci.
-- [ ] Add Playwright browser-level smoke tests and screenshot baselines.
+- [x] Add Playwright Chromium gameplay smoke suite (CI browser run pending).
+- [ ] Add visual screenshot baselines and extended manual play session.
 
 **Exit:** reproducible local setup, type-check/test/build green and CI green.
 
@@ -87,8 +88,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 
 ## Next implementation batch
 
-1. Verify new Phase 2 code in CI and run a full in-browser playthrough, including Q/E/R/F inputs.
-2. Add Playwright gameplay smoke test and collect screenshots for visual inspection.
+1. Review first Chromium smoke-test CI result and resolve browser-specific problems.
+2. Capture and inspect gameplay screenshots, then run a full manual play session.
 3. Make the truck docking sequence cinematic and detect near-misses clearly.
 4. Add helicopter AI, aerial bombs and missile-specific surface-to-air interactions.
 5. Add enemy ranged attacks and upgraded combat visual effects.
