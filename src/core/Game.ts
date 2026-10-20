@@ -189,10 +189,11 @@ export class Game {
     if (vanEvent === 'docked') {
       this.specials.refill();
       this.player.mesh.visible = false;
-      this.scoring.bonus(500);
+      const resupplyBonus = this.scoring.bonus(500);
       this.player.invulnerability = 2.5;
       this.dockingTimer = 1.3;
-      this.announce('DOCKING SUCCESS — WEAPONS REPLENISHED  +500');
+      this.announce(resupplyBonus ? 'DOCKING SUCCESS — WEAPONS REPLENISHED  +500'
+        : 'WEAPONS REPLENISHED — NO POINTS DURING CIVILIAN PENALTY');
       this.audio.confirm();
     } else if (vanEvent === 'missed') {
       this.announce('SUPPORT VAN MISSED');

@@ -2,7 +2,7 @@
 
 A modern, original WebGL arcade-combat driving game inspired by the feel of early 1980s vertical-scrolling highway games. Powered by **Three.js + TypeScript + Vite**.
 
-> **Project status:** Phase 2 in progress. Phase 1 driving, traffic and scoring are implemented; initial special weapons (missile, oil, smoke), civilian NO POINTS penalty, enemy roles and an alignment-based support truck are now added. Curved highways, watercraft, biome variety, watercraft, biome variety and premium art/audio remain roadmap items. Phase 2 now includes helicopter bombs, enforcer fire, motorcycle attackers, paired pursuits, timed combos, and pooled explosions. Automated Chromium WebGL start/control/pause smoke testing passed; the expanded Phase 2 suite has 27 passing unit tests. Extended manual gameplay and art-quality reviews remain outstanding.
+> **Project status:** Phase 2 in progress. Phase 1 driving, traffic and scoring are implemented; initial special weapons (missile, oil, smoke), civilian NO POINTS penalty, enemy roles and an alignment-based support truck are now added. Curved highways, watercraft, biome variety, watercraft, biome variety and premium art/audio remain roadmap items. Phase 2 now includes helicopter bombs, enforcer fire, motorcycle attackers, paired pursuits, timed combos, and pooled explosions. Automated Chromium WebGL start/control/pause smoke testing passed; the expanded Phase 2 suite has 30 passing unit tests. Extended manual gameplay and art-quality reviews remain outstanding.
 
 ## Run locally
 

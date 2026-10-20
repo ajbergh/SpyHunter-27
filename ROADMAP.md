@@ -4,7 +4,7 @@
 **Stack:** Three.js / WebGL2 / TypeScript / Vite  
 **Target:** Polished 60 FPS desktop browser arcade game
 
-**Latest CI verification (2026-10-20):** strict TypeScript passed, 27 unit tests passed, Vite production build passed, Chromium Playwright smoke test passed. Full manual session and visual inspection remain outstanding.
+**Latest CI verification (2026-10-20):** strict TypeScript passed, 30 unit tests passed across 10 files, Vite production build passed, Chromium Playwright smoke test passed. Newest Phase 2 increment covers motorcycles, paired pursuit encounters, timed combos and pooled explosion effects. Full manual session and visual inspection remain outstanding.
 
 ## North star
 
