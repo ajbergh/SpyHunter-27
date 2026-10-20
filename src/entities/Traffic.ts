@@ -4,7 +4,7 @@ import { makeTrafficVehicle } from './VehicleModels';
 import type { SquadOrder } from '../gameplay/SquadTactics';
 
 export type EnemyRole = 'civilian' | 'interceptor' | 'weaver' | 'blocker' | 'enforcer' | 'motorcycle' | 'boat' | 'switchblade';
-export type EnemyState = 'approach' | 'intercept' | 'disrupted' | 'spinning';
+export type EnemyState = 'approach' | 'intercept' | 'disrupted' | 'spinning' | 'retreating';
 
 export class TrafficVehicle {
   readonly mesh: THREE.Group;
@@ -51,7 +51,10 @@ export class TrafficVehicle {
     this.spinTimer = Math.max(0, this.spinTimer - dt);
     this.disruption = Math.max(0, this.disruption - dt);
     this.fireClock = Math.max(0, this.fireClock - dt);
-    this.z += Math.max(8, playerSpeed - this.speed * (this.disruption > 0 ? 0.5 : 1)) * dt;
+    const fleeing = (order?.type === 'retreat' || this.state === 'retreating') &&
+      this.spinTimer <= 0 && this.disruption <= 0;
+    if (fleeing) this.z -= Math.max(20, 19 + this.speed * 0.55) * dt;
+    else this.z += Math.max(8, playerSpeed - this.speed * (this.disruption > 0 ? 0.5 : 1)) * dt;
     if (this.spinTimer > 0) {
       this.state = 'spinning';
       this.x += this.spinDirection * 7.5 * dt;
@@ -60,6 +63,12 @@ export class TrafficVehicle {
     } else if (this.disruption > 0) {
       this.mesh.rotation.z = approach(this.mesh.rotation.z, 0, 5, dt);
       this.state = 'disrupted';
+      this.mesh.rotation.y = approach(this.mesh.rotation.y, 0, 4, dt);
+    } else if (fleeing) {
+      this.state = 'retreating';
+      const escapeSide = this.x < 0 ? -7.5 : 7.5;
+      this.x = approach(this.x, order?.targetX ?? escapeSide, 2.4, dt);
+      this.mesh.rotation.z = approach(this.mesh.rotation.z, 0, 5, dt);
       this.mesh.rotation.y = approach(this.mesh.rotation.y, 0, 4, dt);
     } else if (this.hostile && this.z > -48 && this.z < 8) {
       this.state = 'intercept';

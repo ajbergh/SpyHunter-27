@@ -103,3 +103,5 @@ Paired hostile encounters now share a squad identity. When both are close enough
 ### Gamepad control customization
 
 In Settings, standard Gamepad API controllers can remap eight button actions, including throttle, brake, guns, special weapons, resupply and pause. Left-stick steering remains analog. Mappings persist locally and reject duplicate button assignments; actual compatibility should still be tested on physical controllers.
+
+Squads now disengage after a wingman is destroyed: surviving attackers shift into an outward escape maneuver and retreat up the road rather than continuing a suicidal pursuit. The HUD distinguishes an active pincer from a retreat, and neutralized attackers stop firing during escape.

@@ -436,9 +436,14 @@ export class Game {
     }
     const squadOrders = planSquadTactics(this.traffic, this.player.x,
       this.player.isBoat || splitMedianHalfWidth(this.distance) > 0.1);
-    this.ui.tactics(squadOrders.size > 0);
+    const pincerActive = [...squadOrders.values()].some(order => order.type === 'pincer');
+    const retreatActive = [...squadOrders.values()].some(order => order.type === 'retreat');
+    this.ui.tactics(pincerActive, retreatActive);
     for (const car of this.traffic) {
+      const wasRetreating = car.state === 'retreating';
       car.step(dt, this.player.speed, this.player.x, squadOrders.get(car));
+      if (!wasRetreating && car.state === 'retreating')
+        this.announce('ENEMY SQUAD BROKEN — SURVIVOR DISENGAGING');
       if (splitDangerous(this.distance - car.z, car.x, car.halfWidth)) {
         car.x = escapeFromMedian(car.x, this.distance - car.z, car.halfWidth);
         car.mesh.position.x = car.x;
@@ -484,7 +489,10 @@ export class Game {
 
     for (let i = this.traffic.length - 1; i >= 0; i--) {
       const car = this.traffic[i];
-      if (car.z > 55) { this.removeVehicle(i); continue; }
+      if (car.z > 55 || (car.state === 'retreating' && car.z < -108)) {
+        this.removeVehicle(i);
+        continue;
+      }
       while (car.hp > 0 && this.bullets.hitTest(car.hitbox())) {
         car.hp--;
         this.roundsHit++;

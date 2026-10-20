@@ -53,4 +53,28 @@ describe('enforcer AI', () => {
     enemy.dispose(scene);
   });
 
+  it('retreating survivors accelerate away, do not shoot, and can exit the arena', () => {
+    const scene = new THREE.Scene();
+    const survivor = new TrafficVehicle(scene, -2.5, -19, true, 3, 0x881122, 12, 8);
+    survivor.step(1/60, 36, 0, { type: 'retreat', targetX: -7.5 });
+    expect(survivor.state).toBe('retreating');
+    expect(survivor.tryFire(0)).toBe(false);
+    const firstZ = survivor.z;
+    for (let i=0; i<225; i++) survivor.step(1/60, 36, 0);
+    expect(survivor.z).toBeLessThan(firstZ - 50);
+    expect(survivor.x).toBeLessThan(-6.5);
+    survivor.dispose(scene);
+  });
+  it('smoke temporarily interrupts retreat, then survivor disengages again', () => {
+    const scene = new THREE.Scene();
+    const survivor = new TrafficVehicle(scene, 2.5, -23, true, 0, 0x881122, 12, 4);
+    survivor.step(1/60, 32, 0, { type: 'retreat', targetX: 7.5 });
+    survivor.disrupt(0.4);
+    survivor.step(1/60, 32, 0);
+    expect(survivor.state).toBe('disrupted');
+    for(let i=0;i<35;i++) survivor.step(1/60,32,0, {type:'retreat',targetX:7.5});
+    expect(survivor.state).toBe('retreating');
+    survivor.dispose(scene);
+  });
+
 });

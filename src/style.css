@@ -134,3 +134,6 @@ h2 { font-size: 88px; line-height: .9; }
 .gamepad-control { display:flex; flex-direction:column; align-items:stretch; min-width:0; gap:2px; font-size:10px; color:#d4e5f0; }
 .gamepad-control select { display:block; min-width:0; width:100%; color:#ffe2a8; background:#0b273a; border:1px solid #587486; font:800 12px 'Rajdhani',sans-serif; padding:5px; }
 .gamepad-control select:focus-visible { outline:2px solid #ffce7e; }
+
+/* A separate cool-toned status reinforces that enemy retreat is non-attacking. */
+.tactic-status:has(b:not(:empty)) { transition: border-color .2s ease; }
