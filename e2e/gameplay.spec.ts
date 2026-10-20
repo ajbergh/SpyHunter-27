@@ -181,3 +181,24 @@ test('driver can deliberately choose the shadow bypass branch', async ({ page })
   await page.keyboard.up('a');
   await expect(page.locator('#route-status')).toBeVisible();
 });
+
+test('renders curved desert canyon bridge with no runtime errors', async ({ page }) => {
+  const crashes: string[] = [];
+  page.on('pageerror', error => crashes.push(error.message));
+  await page.goto('/?testDistance=1360');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#environment-name')).toContainText('DESERT');
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  await page.screenshot({ path: 'test-results/bridge-canyon.png' });
+  expect(crashes).toEqual([]);
+});
+
+test('warns before the distinct city viaduct bridge', async ({ page }) => {
+  const crashes: string[] = [];
+  page.on('pageerror', error => crashes.push(error.message));
+  await page.goto('/?testDistance=3200');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#toast')).toContainText('VIADUCT', { timeout: 4500 });
+  await expect(page.locator('#environment-name')).toContainText('NEON CITY');
+  expect(crashes).toEqual([]);
+});

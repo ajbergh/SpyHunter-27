@@ -74,7 +74,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] First divided-highway encounter: continuous center median, two navigable routes, reflective barriers, signs, warnings, collision recovery and clean-pass score.
 - [x] Consequential left/right fork selection: stealth bypass vs high-risk pursuit, route-specific traffic pressure, ammo/score rewards, branch HUD and completion statistics.
 - [ ] Separate world destinations, terrain-diverging branch geometry and advanced merge AI.
-- [ ] Advanced bridges and ramps, separate route destinations, and extended corridor collision validation.
+- [x] Curved desert-canyon and neon-city viaduct bridge sections, terrain drop-offs, deck undersides, piers, rail posts and proximity warnings.
+- [ ] Complex ramps, alternate-route destinations, bridge-specific enemy AI and extended corridor collision validation.
 - [x] Five visually distinct biomes: forest, desert, snow, neon city and waterways.
 - [x] Distinct snow/ice lateral traction, speedboat lateral inertia and mode-adjusted speed ranges.
 - [x] GPU particle snow, desert dust, urban rain and river mist.

@@ -32,6 +32,7 @@ import { boundaryStrike, gradeBoathouseEntry } from '../gameplay/Boundary';
 import { biomeAt } from '../world/WorldPlan';
 import { splitDangerous, splitMedianHalfWidth, upcomingSplit, escapeFromMedian } from '../world/SplitRoad';
 import { RouteDirector, ROUTE_CHOICES } from '../gameplay/RouteDirector';
+import { bridgeAhead } from '../world/BridgePlan';
 
 export class Game {
   private readonly scene = new THREE.Scene();
@@ -76,6 +77,7 @@ export class Game {
   private boundaryCooldown = 0;
   private gateWarned = false;
   private splitWarnAt = -1;
+  private bridgeWarnAt = -1;
   private splitInProgress = false;
   private splitClean = true;
   private toastClock = 0;
@@ -192,6 +194,7 @@ export class Game {
     this.boundaryCooldown = 0;
     this.gateWarned = false;
     this.splitWarnAt = -1;
+    this.bridgeWarnAt = -1;
     this.splitInProgress = false;
     this.splitClean = true;
     this.spawnClock = 0.8;
@@ -308,6 +311,13 @@ export class Game {
     this.wake.step(dt, this.player.speed, this.player.x, this.player.isBoat);
     this.weather.step(dt, this.player.speed, this.road.biome);
     this.distance += this.player.speed * dt;
+    const bridge = bridgeAhead(this.distance);
+    if (bridge && bridge.start !== this.bridgeWarnAt) {
+      this.bridgeWarnAt = bridge.start;
+      this.announce(bridge.type === 'canyon'
+        ? 'CANYON BRIDGE AHEAD — STAY BETWEEN GUARDRAILS'
+        : 'CITY VIADUCT AHEAD — KEEP SPEED & WATCH TRAFFIC');
+    }
     const forkWarning = upcomingSplit(this.distance);
     if (forkWarning !== null) {
       const marker = Math.round(this.distance + forkWarning);

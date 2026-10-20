@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { biomeAt, roadCenterAt, seededRandom, type Biome } from './WorldPlan';
 import { PLAYER_Z } from '../core/logic';
 import { splitMedianHalfWidth, SPLIT_PERIOD, SPLIT_START } from './SplitRoad';
+import { bridgeZone, groundHeightAt } from './BridgePlan';
 
 const LENGTH = 30;
 const COUNT = 10;
@@ -14,12 +15,13 @@ const ROAD_COLOR: Record<Biome, number> = {
 };
 type Tile = { anchor: number; group: THREE.Group; biome: Biome };
 
-function strip(anchor: number, halfWidth: number, fromZ: number, toZ: number, y: number, steps = 20): THREE.BufferGeometry {
+function strip(anchor: number, halfWidth: number, fromZ: number, toZ: number, y: number, steps = 20, heightAt?: (distance: number) => number): THREE.BufferGeometry {
   const vertices: number[] = [], indices: number[] = [];
   for (let i = 0; i <= steps; i++) {
     const z = fromZ + (toZ - fromZ) * i / steps;
     const center = roadCenterAt(anchor - z) - roadCenterAt(anchor);
-    vertices.push(center - halfWidth, y, z, center + halfWidth, y, z);
+    const surfaceY = heightAt ? heightAt(anchor - z) : y;
+    vertices.push(center - halfWidth, surfaceY, z, center + halfWidth, surfaceY, z);
     if (i < steps) {
       const n = i * 2;
       indices.push(n, n + 2, n + 1, n + 1, n + 2, n + 3);
@@ -99,7 +101,7 @@ export class Road {
   private makeTile(anchor: number): THREE.Group {
     const biome = biomeAt(anchor);
     const group = new THREE.Group();
-    const earth = new THREE.Mesh(strip(anchor, 85, -15, 15, -0.22),
+    const earth = new THREE.Mesh(strip(anchor, 85, -15, 15, -0.22, 24, groundHeightAt),
       new THREE.MeshStandardMaterial({ color: BACKGROUND[biome], roughness: 1, side: THREE.DoubleSide }));
     group.add(earth);
     const lane = new THREE.Mesh(strip(anchor, ROAD_HALF, -15.07, 15.07, -0.055),
@@ -152,6 +154,37 @@ export class Road {
           const sign = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.75, 0.16), signMaterial);
           sign.position.set(pole.position.x, 3.2, localZ);
           group.add(sign);
+        }
+      }
+    }
+    if (Array.from({ length: 9 }, (_, i) => bridgeZone(anchor - (-15 + i * 30 / 8)))
+      .some(zone => zone !== null)) {
+      const deckMaterial = new THREE.MeshStandardMaterial({
+        color: biome === 'city' ? 0x415267 : 0x68594e, metalness: 0.45, roughness: 0.6,
+        side: THREE.DoubleSide,
+      });
+      const railMaterial = new THREE.MeshStandardMaterial({
+        color: biome === 'city' ? 0xa3d7e5 : 0xcba77f, metalness: 0.72, roughness: 0.31,
+      });
+      const deck = new THREE.Mesh(strip(anchor, 10.3, -15.1, 15.1, -0.16), deckMaterial);
+      group.add(deck);
+      for (const side of [-1, 1]) {
+        group.add(this.line(anchor, side * 10.45, -15, 15, 1.25, 0.24, railMaterial));
+        for (const z of [-12, -6, 0, 6, 12]) {
+          const world = anchor - z;
+          if (!bridgeZone(world)) continue;
+          const offsetX = roadCenterAt(world) - roadCenterAt(anchor);
+          const post = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1.4, 0.24), railMaterial);
+          post.position.set(side * 10.45 + offsetX, 0.6, z);
+          group.add(post);
+          if (z === 0) {
+            const supportHeight = Math.max(0.2, -0.11 - groundHeightAt(world));
+            const support = new THREE.Mesh(
+              new THREE.BoxGeometry(0.58, supportHeight, 0.64), deckMaterial,
+            );
+            support.position.set(side * 9.7 + offsetX, -0.11 - supportHeight / 2, z);
+            group.add(support);
+          }
         }
       }
     }
