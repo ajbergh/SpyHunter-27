@@ -29,7 +29,14 @@ export class WeaponsVan {
       this.mesh.add(m);
       return m;
     };
-    add([3.6, 2.65, 7.8], [0, 1.64, 0], white);
+    // Hollow loading compartment: independent wall panels rather than an
+    // opaque solid box, so the illuminated interior is visible through the
+    // opening doors and past the deployable loading ramp.
+    add([3.52, 0.14, 7.8], [0, 0.39, 0], white);
+    add([0.13, 2.49, 7.8], [-1.76, 1.69, 0], white);
+    add([0.13, 2.49, 7.8], [1.76, 1.69, 0], white);
+    add([3.52, 0.16, 7.8], [0, 3.0, 0], white);
+    add([3.52, 2.49, 0.14], [0, 1.69, -3.87], white);
     // Fully sculpted tractor cab and panoramic glass over a contoured hood.
     sculptMesh(this.mesh, [
       { z: -6.0, halfWidth: 1.04, deck: 1.20, floor: 0.52 },
