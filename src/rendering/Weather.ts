@@ -13,7 +13,6 @@ export class Weather {
     transparent: true, opacity: 0.6, depthWrite: false,
   });
   readonly points: THREE.Points;
-  private quality: Quality = 'medium';
   private biome: Biome = 'forest';
   private tick = 0;
 
@@ -27,7 +26,6 @@ export class Weather {
   }
 
   setQuality(quality: Quality): void {
-    this.quality = quality;
     this.geometry.setDrawRange(0, quality === 'low' ? 55 : quality === 'medium' ? 160 : TOTAL);
   }
 
