@@ -3,6 +3,8 @@ import { biomeAt, roadCenterAt, seededRandom, type Biome } from './WorldPlan';
 import { PLAYER_Z } from '../core/logic';
 import { splitMedianHalfWidth, SPLIT_PERIOD, SPLIT_START } from './SplitRoad';
 import { bridgeZone, groundHeightAt } from './BridgePlan';
+import { PavementMaterials } from '../rendering/PavementMaterials';
+import type { Quality } from '../gameplay/Settings';
 
 const LENGTH = 30;
 const COUNT = 10;
@@ -16,12 +18,13 @@ const ROAD_COLOR: Record<Biome, number> = {
 type Tile = { anchor: number; group: THREE.Group; biome: Biome };
 
 function strip(anchor: number, halfWidth: number, fromZ: number, toZ: number, y: number, steps = 20, heightAt?: (distance: number) => number): THREE.BufferGeometry {
-  const vertices: number[] = [], indices: number[] = [];
+  const vertices: number[] = [], indices: number[] = [], uv: number[] = [];
   for (let i = 0; i <= steps; i++) {
     const z = fromZ + (toZ - fromZ) * i / steps;
     const center = roadCenterAt(anchor - z) - roadCenterAt(anchor);
     const surfaceY = heightAt ? heightAt(anchor - z) : y;
     vertices.push(center - halfWidth, surfaceY, z, center + halfWidth, surfaceY, z);
+    uv.push(-halfWidth / 6, (anchor - z) / 6, halfWidth / 6, (anchor - z) / 6);
     if (i < steps) {
       const n = i * 2;
       indices.push(n, n + 2, n + 1, n + 1, n + 2, n + 3);
@@ -30,6 +33,7 @@ function strip(anchor: number, halfWidth: number, fromZ: number, toZ: number, y:
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
   geometry.setIndex(indices);
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
   geometry.computeVertexNormals();
   return geometry;
 }
@@ -65,14 +69,26 @@ function medianRibbon(anchor: number, side: -1 | 0 | 1, width = 0): THREE.Buffer
 
 export class Road {
   readonly root = new THREE.Group();
+  private readonly pavement = new PavementMaterials();
+  private quality: Quality = 'medium';
   readonly waterMaterial = new THREE.ShaderMaterial({
     uniforms: { uTime: { value: 0 } },
-    vertexShader: 'varying vec3 p; void main(){ p=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }',
-    fragmentShader: `uniform float uTime; varying vec3 p;
+    vertexShader: `varying vec3 p; varying vec2 vUv;
+      void main(){ p=position; vUv=uv;
+      gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
+    fragmentShader: `uniform float uTime; varying vec3 p; varying vec2 vUv;
       void main() {
-        float wave=sin(p.z*.55+uTime*2.)*.055+sin(p.x*1.4-p.z*.19-uTime*1.6)*.04;
-        vec3 c=mix(vec3(.035,.21,.29),vec3(.08,.43,.51),.42+wave*2.7);
-        gl_FragColor=vec4(c,1.);
+        float a=sin(vUv.y*27.0-uTime*2.4+sin(vUv.x*9.0))*0.5+0.5;
+        float b=sin(vUv.x*33.0+vUv.y*17.0+uTime*1.7)*0.5+0.5;
+        float c=sin(vUv.y*68.0-uTime*3.2+vUv.x*6.0)*0.5+0.5;
+        vec3 deep=vec3(0.018,0.115,0.19);
+        vec3 light=vec3(0.052,0.34,0.43);
+        float bands=clamp(a*0.36+b*0.28+c*0.15,0.0,1.0);
+        vec3 tint=mix(deep,light,bands);
+        float sunGlint=pow(max(0.0,1.0-abs(vUv.x*0.6+
+          sin(vUv.y*5.0+uTime*0.7)*0.17)),8.0)*pow(b,8.0);
+        vec3 color=tint+vec3(0.32,0.43,0.43)*sunGlint;
+        gl_FragColor=vec4(color,1.0);
       }`,
     side: THREE.DoubleSide,
   });
@@ -93,6 +109,19 @@ export class Road {
   }
 
   get biome(): Biome { return biomeAt(this.travelled - PLAYER_Z); }
+
+  setQuality(quality: Quality): void {
+    this.pavement.setQuality(quality === 'high');
+    if (this.quality === quality) return;
+    this.quality = quality;
+    for (const tile of this.tiles) {
+      this.root.remove(tile.group);
+      this.disposeTile(tile.group);
+      tile.group = this.makeTile(tile.anchor);
+      this.root.add(tile.group);
+    }
+    this.applyPositions();
+  }
   get distance(): number { return this.travelled; }
   centerAt(z: number): number {
     return roadCenterAt(this.travelled - z) - roadCenterAt(this.travelled - PLAYER_Z);
@@ -105,8 +134,7 @@ export class Road {
       new THREE.MeshStandardMaterial({ color: BACKGROUND[biome], roughness: 1, side: THREE.DoubleSide }));
     group.add(earth);
     const lane = new THREE.Mesh(strip(anchor, ROAD_HALF, -15.07, 15.07, -0.055),
-      biome === 'water' ? this.waterMaterial :
-        new THREE.MeshStandardMaterial({ color: ROAD_COLOR[biome], roughness: 0.84, side: THREE.DoubleSide }));
+      biome === 'water' ? this.waterMaterial : this.pavement.get(biome, ROAD_COLOR[biome]));
     lane.receiveShadow = true;
     group.add(lane);
     const white = new THREE.MeshBasicMaterial({ color: biome === 'water' ? 0x7ad2e2 : biome === 'snow' ? 0xe8f2f6 : 0xbccfd2, side: THREE.DoubleSide });
@@ -211,7 +239,8 @@ export class Road {
         barrier.position.set(side * 10.6, 0.31, 0);
         group.add(barrier);
       }
-      for (let i = 0; i < 4; i++) {
+      const propCount = this.quality === 'high' ? 4 : this.quality === 'medium' ? 3 : 2;
+      for (let i = 0; i < propCount; i++) {
         const z = -11 + 7.3 * i;
         const seed = seededRandom(Math.floor(anchor * 100) + i * 197 + (side + 2) * 211);
         const x = side * (13.5 + 11 * seed);
@@ -322,7 +351,7 @@ export class Road {
         item.geometry.dispose();
         const materials = Array.isArray(item.material) ? item.material : [item.material];
         for (const material of materials) {
-          if (material !== this.waterMaterial) material.dispose();
+          if (material !== this.waterMaterial && !this.pavement.owns(material)) material.dispose();
         }
       }
     });

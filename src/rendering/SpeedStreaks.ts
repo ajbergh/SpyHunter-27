@@ -18,7 +18,6 @@ export class SpeedStreaks {
   });
   private distance = 0;
   private quality: Quality = 'medium';
-  private reducedMotion = false;
 
   constructor(scene: THREE.Scene) {
     this.geometry.setAttribute('position', new THREE.BufferAttribute(this.positions, 3)
@@ -32,7 +31,6 @@ export class SpeedStreaks {
 
   setPreferences(quality: Quality, reducedMotion: boolean): void {
     this.quality = quality;
-    this.reducedMotion = reducedMotion;
     this.lines.visible = quality !== 'low' && !reducedMotion;
   }
 
