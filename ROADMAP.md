@@ -131,7 +131,7 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 
 ## Next implementation batch
 
-1. Validate reproducible npm ci fresh installs and audit any security/dependency advisory changes.
+1. Verify npm ci on all CI jobs; review dependency advisories and run the manual Generate dependency lockfile workflow only when dependencies change.
 2. Implement fully interactive branching roads, bridges and more detailed boathouse transformations.
 3. Deepen pursuit AI, missile trails, visual destruction and fully authored music/engine audio.
 4. Add an attract-mode demonstration, tutorial, gamepad rebinding and broader accessibility review.

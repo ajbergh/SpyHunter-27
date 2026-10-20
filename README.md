@@ -6,7 +6,7 @@ A modern, original WebGL arcade-combat driving game inspired by the feel of earl
 
 ## Run locally
 
-Requires Node.js 20.19+ (Node 22 recommended). Dependency versions are locked in the committed package-lock.json.
+Requires Node.js 20.19+ (Node 22 recommended). Dependency versions are locked in the committed package-lock.json; CI installs them with `npm ci`. To update dependencies, change package.json and run the manual GitHub Actions workflow **Generate dependency lockfile**, then review the lockfile diff.
 
 ```bash
 npm ci

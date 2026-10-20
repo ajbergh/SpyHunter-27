@@ -1,10 +1,5 @@
 name: Generate dependency lockfile
 on:
-  push:
-    branches: [main]
-    paths:
-      - package.json
-      - .github/workflows/lockfile.yml
   workflow_dispatch:
 permissions:
   contents: write
