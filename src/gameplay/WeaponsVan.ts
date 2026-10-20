@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { PLAYER_Z } from '../core/logic';
+import { sculptMesh, bodyPaint, glassPaint, addDecalBar, addWheelAssembly } from '../entities/VehicleSculpt';
 
 export type VanState = 'idle' | 'approaching' | 'docking';
 export type VanEvent = 'docked' | 'missed' | 'align-lane' | 'adjust-speed' | null;
@@ -19,7 +20,7 @@ export class WeaponsVan {
   private readonly lane = 6.4;
 
   constructor(scene: THREE.Scene) {
-    const white = new THREE.MeshStandardMaterial({ color: 0xdbe4eb, metalness: 0.58, roughness: 0.4 });
+    const white = bodyPaint(0xdbe4eb, true);
     const dark = new THREE.MeshStandardMaterial({ color: 0x182735, metalness: 0.48, roughness: 0.4 });
     const amber = new THREE.MeshStandardMaterial({ color: 0xffc26c, emissive: 0xff8b15, emissiveIntensity: 0.8 });
     const add = (size: [number, number, number], pos: [number, number, number], material: THREE.Material): THREE.Mesh => {
@@ -29,19 +30,67 @@ export class WeaponsVan {
       return m;
     };
     add([3.6, 2.65, 7.8], [0, 1.64, 0], white);
-    add([3.3, 1.55, 2.3], [0, 1.2, -4.35], dark);
+    // Fully sculpted tractor cab and panoramic glass over a contoured hood.
+    sculptMesh(this.mesh, [
+      { z: -6.0, halfWidth: 1.04, deck: 1.20, floor: 0.52 },
+      { z: -5.68, halfWidth: 1.52, deck: 1.54, floor: 0.44 },
+      { z: -5.05, halfWidth: 1.67, deck: 2.35, floor: 0.42 },
+      { z: -4.33, halfWidth: 1.68, deck: 2.88, floor: 0.45 },
+      { z: -3.35, halfWidth: 1.68, deck: 2.85, floor: 0.47 },
+    ], white);
+    sculptMesh(this.mesh, [
+      { z: -5.37, halfWidth: 1.18, deck: 2.12, floor: 2.04 },
+      { z: -5.08, halfWidth: 1.40, deck: 2.68, floor: 2.04 },
+      { z: -4.21, halfWidth: 1.42, deck: 2.70, floor: 2.08 },
+      { z: -3.96, halfWidth: 1.28, deck: 2.45, floor: 2.08 },
+    ], glassPaint(0x163957));
+    // Cargo body is intentionally rectangular, but acquires segmented,
+    // pressed-metal walls rather than a single plain cuboid.
+    add([3.52, 0.12, 7.9], [0, 3.02, 0], dark);
+    add([3.28, 0.08, 7.55], [0, 3.12, 0], white);
+    for (const side of [-1, 1]) {
+      for (let z = -3.35; z <= 3.4; z += 0.75) {
+        addDecalBar(this.mesh, [0.07, 2.22, 0.065],
+          [side * 1.805, 1.77, z], z < -2.5 ? 0x77c4df : 0x93a7b5);
+      }
+      addDecalBar(this.mesh, [0.085, 0.12, 7.4], [side * 1.83, 2.83, 0], 0x25b6e0, true);
+      addDecalBar(this.mesh, [0.085, 0.13, 7.4], [side * 1.83, 0.52, 0], 0x1e3545);
+      addDecalBar(this.mesh, [0.36, 0.21, 0.15], [side * 1.22, 1.20, -5.99], 0xe5fbff, true);
+      addDecalBar(this.mesh, [0.18, 0.12, 0.15], [side * 1.55, 0.84, -5.63], 0xffb945, true);
+      for (const z of [-3.10, 2.90]) addWheelAssembly(this.mesh, side * 1.87, z, 0.65);
+      add([0.23, 0.90, 0.26], [side * 1.72, 1.13, -4.68], dark);
+      add([0.32, 0.10, 0.45], [side * 1.80, 1.52, -4.73], dark);
+    }
+    add([2.65, 0.22, 0.23], [0, 0.83, -6.10], dark);
+    for (let x = -0.92; x <= 0.92; x += 0.31)
+      add([0.075, 0.31, 0.09], [x, 1.13, -6.09], dark);
+    add([1.9, 0.08, 0.34], [0, 2.97, -4.28], dark);
+    // Self-illuminating cargo bay is visible during the door opening sequence.
+    add([2.85, 0.06, 5.9], [0, 0.43, 0.61], dark);
+    add([2.55, 0.07, 5.4], [0, 2.88, 0.6],
+      new THREE.MeshStandardMaterial({
+        color: 0x7ce8ff, emissive: 0x15b8e9, emissiveIntensity: 2.8,
+      }));
+    for (const side of [-1, 1]) {
+      add([0.075, 1.65, 5.8], [side * 1.56, 1.56, 0.47],
+        new THREE.MeshStandardMaterial({ color: 0x3c6a79, metalness: 0.8, roughness: 0.23 }));
+    }
+
     add([2.75, 0.25, 0.3], [0, 2.9, 3.83], amber);
     add([2.8, 0.25, 0.3], [0, 0.95, 3.86], dark);
     const wheels = new THREE.MeshStandardMaterial({ color: 0x121821, roughness: 0.9 });
     for (const x of [-1.84, 1.84]) {
-      for (const z of [-3.15, 2.9]) {
-        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.65, 0.31, 12), wheels);
-        wheel.rotation.z = Math.PI / 2;
-        wheel.position.set(x, 0.74, z);
-        this.mesh.add(wheel);
-      }
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.66, 0.66, 0.25, 18), wheels);
+      wheel.rotation.z = Math.PI / 2;
+      wheel.position.set(x, 0.74, 1.58);
+      wheel.castShadow = true;
+      this.mesh.add(wheel);
     }
     this.ramp = add([3.05, 0.15, 3.2], [0, 0.58, 5.35], dark);
+    // Crosshatched reflective loading ramp with grip strips and edge lighting.
+    for (let z = 4.18; z < 6.7; z += 0.32) {
+      addDecalBar(this.mesh, [2.72, 0.014, 0.075], [0, 0.66, z], 0x7896a0);
+    }
     this.ramp.rotation.x = -0.06;
     this.doorLeft = add([1.45, 1.9, 0.12], [-0.76, 1.63, 3.91], dark);
     this.doorRight = add([1.45, 1.9, 0.12], [0.76, 1.63, 3.91], dark);
