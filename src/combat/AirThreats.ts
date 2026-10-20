@@ -1,6 +1,13 @@
 import * as THREE from 'three';
 import { approach, clamp, intersects, PLAYER_Z, type RectHitbox } from '../core/logic';
 
+export const BOMB_WARNING_SECONDS = 0.92;
+
+/** Time-matched telegraph reaches the player plane only if speed is maintained. */
+export function bombDropDistance(speed: number): number {
+  return Math.max(15, Math.max(0, speed) * BOMB_WARNING_SECONDS);
+}
+
 export interface AirTarget { x: number; z: number; hp: number; }
 export interface AirEvent { kind: 'bomb-warning' | 'bomb-detonated' | 'helicopter-escaped'; x: number; z: number; playerHit?: boolean; }
 
@@ -63,9 +70,9 @@ export class Helicopter implements AirTarget {
     this.fireClock -= dt;
     if (this.z > -49 && this.z < -8 && this.fireClock <= 0) {
       this.fireClock = 2.9;
-      // Warning advances in the road's coordinate space. At average speed the
-      // player has nearly a full second to change lanes before detonation.
-      return { x: clamp(playerX, -7.5, 7.5), z: PLAYER_Z - Math.max(14, playerSpeed * 0.75) };
+      // Target a predicted road position with over 0.9 seconds of notice;
+      // braking or changing lanes after the warning provides a real escape.
+      return { x: clamp(playerX, -7.5, 7.5), z: PLAYER_Z - bombDropDistance(playerSpeed) };
     }
     return null;
   }
@@ -131,8 +138,11 @@ export class AirThreats {
       bomb.group.position.z = bomb.z;
       if (!bomb.resolved) {
         bomb.warning -= dt;
-        const indicator = bomb.group.children[0];
+        const indicator = bomb.group.children[0] as THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>;
         indicator.scale.setScalar(1 + Math.sin(bomb.warning * 14) * 0.11);
+        // The ring becomes visibly brighter as the blast approaches.
+        indicator.material.opacity = Math.min(1, 0.5 + 0.5 *
+          (1 - Math.max(0, bomb.warning) / BOMB_WARNING_SECONDS));
         if (bomb.warning <= 0) {
           bomb.resolved = true;
           bomb.blast = 0.42;
@@ -171,7 +181,7 @@ export class AirThreats {
     group.add(marker);
     group.position.set(x, 0, z);
     this.scene.add(group);
-    this.bombs.push({ group, x, z, warning: 0.7, blast: 0, resolved: false });
+    this.bombs.push({ group, x, z, warning: BOMB_WARNING_SECONDS, blast: 0, resolved: false });
   }
 
   private disposeBomb(bomb: Bomb): void {
