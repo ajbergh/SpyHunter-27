@@ -45,7 +45,7 @@ export const VISUAL_PROFILES: Record<Biome, VisualProfile> = {
 };
 
 export function shadowResolution(quality: Quality): number {
-  return quality === 'high' ? 2048 : quality === 'medium' ? 1024 : 0;
+  return quality === 'high' ? 2048 : quality === 'medium' ? 512 : 0;
 }
 
 /** The graphics director owns the scene lights, fog and cinematic shadow quality. */

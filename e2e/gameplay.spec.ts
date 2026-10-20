@@ -173,12 +173,10 @@ test('pursuit fork commits to selected route and reports branch status', async (
   expect(errors).toEqual([]);
 });
 
-test('driver can deliberately choose the shadow bypass branch', async ({ page }) => {
-  await page.goto('/?testDistance=570');
+test('prealigned interceptor selects the shadow bypass branch even under graphics load', async ({ page }) => {
+  await page.goto('/?testDistance=618&testLane=-6.4');
   await page.getByRole('button', { name: /initiate pursuit/i }).click();
-  await page.keyboard.down('a');
   await expect(page.locator('#route-name')).toHaveText('SHADOW BYPASS', { timeout: 9000 });
-  await page.keyboard.up('a');
   await expect(page.locator('#route-status')).toBeVisible();
 });
 

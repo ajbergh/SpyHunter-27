@@ -200,6 +200,15 @@ export class Game {
         this.distance = seek;
         this.player.setBoat(this.road.biome === 'water');
       }
+      // Deterministic E2E fork setup: align a test vehicle before simulation.
+      const laneParam = new URLSearchParams(window.location.search).get('testLane');
+      if (laneParam !== null) {
+        const lane = Number(laneParam);
+        if (Number.isFinite(lane)) {
+          this.player.x = Math.max(-7.1, Math.min(7.1, lane));
+          this.player.mesh.position.x = this.player.x;
+        }
+      }
     }
     this.lives = GAME_MODES[mode].lives;
     this.grace = mode === 'modern' ? 5 : 3;

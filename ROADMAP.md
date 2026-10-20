@@ -107,7 +107,7 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [ ] Real-time lighting, reflection approximations and optional shadows.
 - [x] Single-draw-call GPU weather particles (snow, dust, city rain, river mist) with quality budgets.
 - [ ] Skid marks, more physical debris and atmospheric grading.
-- [x] High-quality EffectComposer bloom, cinematic color/exposure grading, five smoothly blended biome light rigs and fog palettes, scalable 0/1024/2048 soft shadows.
+- [x] High-quality EffectComposer bloom, cinematic color/exposure grading, five smoothly blended biome light rigs and fog palettes, scalable 0/512/2048 soft shadows.
 - [x] Seamless seeded asphalt microtextures, clearcoat hero paint and windshields, ground-contact shadows, city neon facades, layered forest canopy, and animated multilayer water glints.
 - [x] Bounded one-draw-call edge speed streaks with quality/reduced-motion safeguards.
 - [ ] Human-approved art direction and real-GPU frame time validation, especially on high.

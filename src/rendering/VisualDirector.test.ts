@@ -19,7 +19,7 @@ describe('cinematic world grades', () => {
   });
   it('scales soft shadow budgets to the graphics setting', () => {
     expect(shadowResolution('low')).toBe(0);
-    expect(shadowResolution('medium')).toBe(1024);
+    expect(shadowResolution('medium')).toBe(512);
     expect(shadowResolution('high')).toBe(2048);
   });
 });
