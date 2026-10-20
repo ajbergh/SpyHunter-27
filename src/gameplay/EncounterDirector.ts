@@ -26,7 +26,7 @@ export function planEncounter(
   const hostile = random() < 0.66;
   const variantRoll = random();
   const variant = hostile
-    ? variantRoll < 0.16 ? 4 : variantRoll < 0.34 ? 3 : variantRoll < 0.53 ? 2 : variantRoll < 0.72 ? 1 : 0
+    ? variantRoll < 0.11 ? 6 : variantRoll < 0.27 ? 4 : variantRoll < 0.44 ? 3 : variantRoll < 0.6 ? 2 : variantRoll < 0.76 ? 1 : 0
     : variantRoll < 0.08 ? 4 : variantRoll < 0.17 ? 2 : 0;
   const firstSpawn: EncounterSpawn = { x: first, z: startZ, hostile, variant };
 
@@ -40,7 +40,7 @@ export function planEncounter(
   const second = available[Math.min(available.length - 1, Math.floor(random() * available.length))];
   const reinforcement: EncounterSpawn = {
     x: second, z: startZ - 12, hostile: true,
-    variant: random() < 0.55 ? 4 : 0,
+    variant: random() < 0.35 ? 6 : random() < 0.6 ? 4 : 0,
   };
   return { type: 'pursuit-pair', spawns: [firstSpawn, reinforcement] };
 }

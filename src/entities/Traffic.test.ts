@@ -27,4 +27,14 @@ describe('enforcer AI', () => {
     expect(Math.abs(bike.x)).toBeGreaterThan(0.1);
     bike.dispose(scene);
   });
+
+  it('switchblade car carries wide blades and aggressively follows a target', () => {
+    const scene = new THREE.Scene();
+    const car = new TrafficVehicle(scene, -6.4, -25, true, 6, 0x682735, 13);
+    expect(car.role).toBe('switchblade');
+    expect(car.hitbox().halfWidth).toBeGreaterThan(1.5);
+    for (let i = 0; i < 40; i++) car.step(1 / 60, 40, 6.4);
+    expect(car.x).toBeGreaterThan(-6.4);
+    car.dispose(scene);
+  });
 });

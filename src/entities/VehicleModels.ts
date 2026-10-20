@@ -42,6 +42,7 @@ export function makeInterceptor(): THREE.Group {
 export function makeTrafficVehicle(hostile: boolean, color: number, variant = 0): THREE.Group {
   if (variant === 4) return makeMotorcycle(hostile, color);
   if (variant === 5) return makeSpeedboat(hostile, color);
+  if (variant === 6) return makeSwitchblade(color);
   const group = new THREE.Group();
   const body = metal(color, 0.49);
   const dark = metal(0x151b27);
@@ -124,5 +125,21 @@ export function makeSpeedboat(hostile: boolean, color = 0xe7f1f3): THREE.Group {
     box(group, [0.26, 0.38, 1.3], [side * 0.86, 0.41, 2.0], deck);
   }
   box(group, [0.9, 0.13, 0.8], [0, 0.5, 2.55], deck);
+  return group;
+}
+
+/** Original blade-car silhouette. Broad deployable-looking armored side blades. */
+export function makeSwitchblade(color: number): THREE.Group {
+  const group = makeTrafficVehicle(true, color, 0);
+  const steel = new THREE.MeshStandardMaterial({ color: 0xa6c6cf, metalness: 0.88, roughness: 0.24 });
+  for (const side of [-1, 1]) {
+    box(group, [1.45, 0.15, 0.64], [side * 1.53, 0.64, -0.4], steel);
+    const blade = new THREE.Mesh(new THREE.ConeGeometry(0.42, 2.2, 4), steel);
+    blade.rotation.z = side * Math.PI / 2;
+    blade.position.set(side * 2.13, 0.62, -0.4);
+    group.add(blade);
+  }
+  box(group, [1.25, 0.13, 0.4], [0, 1.58, -0.7],
+    new THREE.MeshBasicMaterial({ color: 0xff4469 }));
   return group;
 }

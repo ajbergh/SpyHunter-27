@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { approach, clamp, type RectHitbox } from '../core/logic';
 import { makeTrafficVehicle } from './VehicleModels';
 
-export type EnemyRole = 'civilian' | 'interceptor' | 'weaver' | 'blocker' | 'enforcer' | 'motorcycle' | 'boat';
+export type EnemyRole = 'civilian' | 'interceptor' | 'weaver' | 'blocker' | 'enforcer' | 'motorcycle' | 'boat' | 'switchblade';
 export type EnemyState = 'approach' | 'intercept' | 'disrupted' | 'spinning';
 
 export class TrafficVehicle {
@@ -24,12 +24,12 @@ export class TrafficVehicle {
 
   constructor(scene: THREE.Scene, x: number, z: number, hostile: boolean, variant: number, color: number, speed: number) {
     this.hostile = hostile;
-    this.role = !hostile ? 'civilian' : variant === 5 ? 'boat' : variant === 4 ? 'motorcycle' : variant === 3 ? 'enforcer' : variant === 2 ? 'blocker' : variant === 1 ? 'weaver' : 'interceptor';
+    this.role = !hostile ? 'civilian' : variant === 6 ? 'switchblade' : variant === 5 ? 'boat' : variant === 4 ? 'motorcycle' : variant === 3 ? 'enforcer' : variant === 2 ? 'blocker' : variant === 1 ? 'weaver' : 'interceptor';
     this.x = x;
     this.z = z;
     this.speed = speed;
     this.spinDirection = x >= 0 ? 1 : -1;
-    this.halfWidth = variant === 5 ? 1.1 : variant === 4 ? 0.63 : variant === 2 ? 1.4 : variant === 1 ? 0.95 : 1.13;
+    this.halfWidth = variant === 6 ? 1.82 : variant === 5 ? 1.1 : variant === 4 ? 0.63 : variant === 2 ? 1.4 : variant === 1 ? 0.95 : 1.13;
     this.halfLength = variant === 5 ? 2.52 : variant === 4 ? 1.65 : variant === 3 ? 3.32 : variant === 2 ? 3.05 : variant === 1 ? 1.98 : 2.37;
     this.hp = hostile && variant === 2 ? 4 : hostile && variant === 4 ? 1 : hostile ? 2 : 1;
     this.mesh = makeTrafficVehicle(hostile, color, variant);
@@ -67,6 +67,10 @@ export class TrafficVehicle {
         this.x = approach(this.x, clamp(playerX, -6.4, 6.4), 0.15, dt);
       } else if (this.role === 'weaver') {
         this.x = clamp(this.x + Math.sin(this.sway * 5.0) * dt * 6, -7.4, 7.4);
+      } else if (this.role === 'switchblade') {
+        const target = clamp(playerX + Math.sin(this.sway * 4.1) * 0.5, -7.0, 7.0);
+        this.x = approach(this.x, target, 1.3, dt);
+        this.mesh.rotation.z = approach(this.mesh.rotation.z, Math.sin(this.sway * 4.1) * 0.04, 5, dt);
       } else if (this.role === 'boat') {
         this.x = clamp(this.x + Math.sin(this.sway * 3.2) * dt * 4.4, -7.1, 7.1);
         this.mesh.position.y = 0.16 + Math.sin(this.sway * 6.5) * 0.1;
