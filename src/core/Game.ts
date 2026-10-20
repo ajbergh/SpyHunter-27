@@ -25,6 +25,9 @@ import { WeaponsVan } from '../gameplay/WeaponsVan';
 import { planEncounter } from '../gameplay/EncounterDirector';
 import { ExplosionEffects } from '../combat/ExplosionEffects';
 import { accuracyPercent } from '../gameplay/SessionMetrics';
+import {
+  challengeDate, challengeSeed, dailyRecordKey, seededGenerator, bestDailyScore,
+} from '../gameplay/DailyChallenge';
 import { boundaryStrike, gradeBoathouseEntry } from '../gameplay/Boundary';
 import { biomeAt } from '../world/WorldPlan';
 
@@ -55,6 +58,9 @@ export class Game {
   private readonly effects: ExplosionEffects;
   private screen: Screen = 'menu';
   private mode: GameMode = 'classic';
+  private random: () => number = Math.random;
+  private dailyDate = '';
+  private dailyBest = 0;
   private best = 0;
   private lives = MAX_LIVES;
   private distance = 0;
@@ -142,6 +148,13 @@ export class Game {
 
   private start(mode: GameMode = this.mode): void {
     this.mode = mode;
+    this.dailyDate = mode === 'daily' ? challengeDate() : '';
+    this.random = mode === 'daily' ? seededGenerator(challengeSeed(this.dailyDate)) : Math.random;
+    this.dailyBest = 0;
+    if (this.dailyDate) {
+      try { this.dailyBest = Number(localStorage.getItem(dailyRecordKey(this.dailyDate))) || 0; }
+      catch { /* Storage optional. */ }
+    }
     void this.audio.unlock();
     for (const car of this.traffic) car.dispose(this.scene);
     this.traffic.length = 0;
@@ -297,16 +310,16 @@ export class Game {
     this.airSpawnClock -= dt;
     if (!this.player.isBoat && this.distance > 260 && this.airSpawnClock <= 0) {
       if (this.air.helicopters.length === 0) {
-        this.air.spawn((Math.random() - 0.5) * 9);
+        this.air.spawn((this.random() - 0.5) * 9);
         this.announce('AIR THREAT DETECTED — MISSILES RECOMMENDED');
       }
-      this.airSpawnClock = 17 + Math.random() * 8;
+      this.airSpawnClock = 17 + this.random() * 8;
     }
     this.grace = Math.max(0, this.grace - dt);
     this.spawnClock -= dt;
     if (this.spawnClock <= 0) {
       this.spawnEncounter();
-      this.spawnClock += spawnInterval(this.distance) * GAME_MODES[this.mode].spawnScale * (0.8 + Math.random() * 0.4);
+      this.spawnClock += spawnInterval(this.distance) * GAME_MODES[this.mode].spawnScale * (0.8 + this.random() * 0.4);
     }
 
     this.handleWeapons(controls.missilePressed, controls.oilPressed, controls.smokePressed);
@@ -447,16 +460,16 @@ export class Game {
   }
 
   private spawnEncounter(): void {
-    const encounter = planEncounter(this.traffic, this.distance, Math.random);
+    const encounter = planEncounter(this.traffic, this.distance, this.random);
     if (encounter.type === 'pursuit-pair') this.announce('COORDINATED PURSUIT — TWO HOSTILES');
     for (const spawn of encounter.spawns) {
       const variant = this.player.isBoat ? 5 : spawn.variant;
       const colors = spawn.hostile
         ? [0x902d3e, 0x4c182b, 0x9e553e, 0xaf3048]
         : [0x7495a7, 0xc5bda9, 0x647c73, 0x8e9bae];
-      const color = colors[Math.floor(Math.random() * colors.length)];
-      const speed = variant === 4 ? 16 + Math.random() * 9
-        : spawn.hostile ? 8 + Math.random() * 7 : 12 + Math.random() * 7;
+      const color = colors[Math.floor(this.random() * colors.length)];
+      const speed = variant === 4 ? 16 + this.random() * 9
+        : spawn.hostile ? 8 + this.random() * 7 : 12 + this.random() * 7;
       this.traffic.push(new TrafficVehicle(
         this.scene, spawn.x, spawn.z, spawn.hostile, variant, color, speed,
       ));
@@ -494,6 +507,7 @@ export class Game {
     this.ui.threats(this.air.helicopters.length, this.enemyShots.activeCount);
     this.ui.combo(this.scoring.comboMultiplier, this.scoring.comboRemaining);
     this.ui.environment(this.road.biome, this.player.isBoat);
+    this.ui.dailyChallenge(this.dailyDate, this.dailyBest);
   }
 
   private gameOver(): void {
@@ -501,9 +515,15 @@ export class Game {
     this.audio.silence();
     this.best = Math.max(this.best, Math.floor(this.scoring.score));
     try { localStorage.setItem('spyhunter27-best', String(this.best)); } catch { /* optional persistence */ }
+    if (this.dailyDate) {
+      this.dailyBest = bestDailyScore(this.dailyBest, this.scoring.score);
+      try { localStorage.setItem(dailyRecordKey(this.dailyDate), String(this.dailyBest)); }
+      catch { /* Storage optional. */ }
+    }
     this.ui.result(this.scoring.score, this.best, this.scoring.hostileEliminations,
       this.scoring.civilianCasualties, this.scoring.bestCombo, this.distance,
       this.survivalSeconds, accuracyPercent(this.roundsFired, this.roundsHit));
+    this.ui.dailyChallenge(this.dailyDate, this.dailyBest);
     this.ui.show(this.screen);
   }
 

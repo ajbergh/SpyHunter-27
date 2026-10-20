@@ -114,7 +114,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [ ] Sophisticated autonomous attract-mode demo, more accessible tutorial and credits.
 - [x] Functional HUD for weapons, ammunition, speed, lives, scoring lockout, combo and resupply readiness.
 - [x] Results statistics: enemies eliminated, civilian casualties, best combo, distance, elapsed time and gun accuracy.
-- [ ] Achievements and seeded daily challenge (optional).
+- [x] Seeded UTC daily challenge mode with deterministic encounter generation and date-specific personal best.
+- [ ] Achievement hooks and daily challenge sharing/leaderboards.
 - [x] Persistent settings UI available on main and paused screens.
 - [x] Keyboard control rebinding with persisted help hints and optional reduced-motion interface treatment.
 - [ ] Gamepad button remapping and extended pause/focus/accessibility behavior.

@@ -140,3 +140,13 @@ test('reaches mission terminated from real collisions and supports clean redeplo
   await expect(page.locator('#lives')).toHaveText('●●●');
   expect(crashes).toEqual([]);
 });
+
+test('daily challenge shows UTC date and seeded session identity', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#mode-select').selectOption('daily');
+  await expect(page.locator('#mode-description')).toContainText('UTC');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#daily-stamp')).toBeVisible();
+  await expect(page.locator('#daily-date')).toContainText(/^\d{4}-\d{2}-\d{2}$/);
+  await expect(page.locator('#lives')).toHaveText('●●●');
+});

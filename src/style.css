@@ -112,3 +112,7 @@ h2 { font-size: 88px; line-height: .9; }
 .cabinet.high-contrast .hud-block .micro,
 .cabinet.high-contrast .environment-name { color:#ffffff; text-shadow:0 1px 2px #000; }
 .cabinet.high-contrast .penalty { background:#1b0000; color:#fff7bd; border:2px solid #fff7bd; }
+
+.daily-stamp { position:absolute; top:142px; right:9px; z-index:4; color:#ffe1ad; background:#0b273ae8; border:1px solid #897353; padding:6px 9px; letter-spacing:.1em; font:700 10px 'Rajdhani',sans-serif; pointer-events:none; }
+.daily-stamp[hidden], #daily-result[hidden] { display:none; }
+.daily-stamp b { color:#ffffff; }

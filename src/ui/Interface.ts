@@ -37,6 +37,7 @@ export class Interface {
         </header>
         <div class="toast" id="toast" aria-live="polite"></div>
         <div class="environment-name" id="environment-name">FOREST HIGHWAY</div>
+        <div class="daily-stamp" id="daily-stamp" hidden>DAILY <b id="daily-date">—</b></div>
         <div class="special-hud" id="special-hud">
           <div class="special-line">[Q] MISSILE <b id="ammo-missile">03</b></div>
           <div class="special-line">[E] OIL <b id="ammo-oil">02</b></div>
@@ -54,7 +55,7 @@ export class Interface {
           <div class="panel-rule"></div>
           <p class="intro">INTERCEPT HOSTILES. PROTECT CIVILIANS.<br />SURVIVE THE HIGHWAY.</p>
           <label class="mode-label" for="mode-select">MISSION PROTOCOL</label>
-          <select id="mode-select" class="mode-select" aria-label="Game mode"><option value="classic">CLASSIC ARCADE</option><option value="modern">MODERN ARCADE</option><option value="endless">ENDLESS PURSUIT</option></select>
+          <select id="mode-select" class="mode-select" aria-label="Game mode"><option value="classic">CLASSIC ARCADE</option><option value="modern">MODERN ARCADE</option><option value="endless">ENDLESS PURSUIT</option><option value="daily">DAILY CHALLENGE</option></select>
           <p class="mode-description" id="mode-description">Three lives. Fast enemies. Every impact counts.</p>
           <button id="start-button" class="primary-button">INITIATE PURSUIT <span>↗</span></button>
           <div class="keys" id="control-keys">A / D <span>STEER</span> · W / S <span>SPEED</span> · SPACE <span>FIRE</span><div>Q <span>MISSILE</span> · E <span>OIL</span> · R <span>SMOKE</span> · F <span>RESUPPLY</span></div></div>
@@ -92,6 +93,7 @@ export class Interface {
           <div class="eyebrow">INTERCEPTOR LOST</div><h2>MISSION<br />TERMINATED</h2>
           <p class="intro">FINAL SCORE</p><div class="final-score" id="final-score">000000</div>
           <p class="intro">BEST <span id="final-best">000000</span></p>
+          <p class="intro" id="daily-result" hidden>DAILY BEST <strong id="daily-result-best">000000</strong></p>
           <div class="mission-results">
             <span>HOSTILES <b id="result-hostiles">0</b></span>
             <span>CIVILIANS <b id="result-civilians">0</b></span>
@@ -260,6 +262,15 @@ export class Interface {
   threats(helicopters: number, enemyRounds: number): void {
     this.get('air-count').textContent = String(helicopters).padStart(2, '0');
     this.get('enemy-round-count').textContent = String(enemyRounds).padStart(2, '0');
+  }
+
+  dailyChallenge(day: string, best: number): void {
+    this.get('daily-stamp').hidden = day.length === 0;
+    this.get('daily-result').hidden = day.length === 0;
+    if (day) {
+      this.get('daily-date').textContent = day;
+      this.get('daily-result-best').textContent = Math.floor(best).toString().padStart(6, '0');
+    }
   }
 
   diagnostics(fps: number, drawCalls: number, vehicles: number): void {
