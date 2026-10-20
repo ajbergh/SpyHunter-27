@@ -239,19 +239,46 @@ export class Road {
       group.add(object);
     };
     if (biome === 'forest' || biome === 'snow') {
-      mesh(new THREE.CylinderGeometry(0.18, 0.27, 2.3, 5),
+      mesh(new THREE.CylinderGeometry(0.18, 0.27, 2.3, 6),
         new THREE.MeshStandardMaterial({ color: 0x554537 }), 0, 1.15);
+      const canopy = biome === 'snow' ? 0xbed9d9 : seed > 0.5 ? 0x315943 : 0x254d3c;
       mesh(new THREE.ConeGeometry(1.6 + seed * 0.6, 5.5 + seed * 2, 7),
-        new THREE.MeshStandardMaterial({ color: biome === 'snow' ? 0xbed9d9 : seed > 0.5 ? 0x315943 : 0x254d3c, roughness: 1 }), 0, 4.2);
+        new THREE.MeshStandardMaterial({ color: canopy, roughness: 1, flatShading: true }), 0, 4.2);
+      if (this.quality === 'high') {
+        mesh(new THREE.ConeGeometry(1.05 + seed * 0.3, 3.2, 7),
+          new THREE.MeshStandardMaterial({
+            color: biome === 'snow' ? 0xe7f4fa : 0x436e57,
+            roughness: 1, flatShading: true,
+          }), 0, 6.55);
+      }
     } else if (biome === 'desert') {
       mesh(new THREE.DodecahedronGeometry(1.5 + seed, 0),
-        new THREE.MeshStandardMaterial({ color: seed > 0.5 ? 0x996747 : 0xb08059 }), 0, 0.8);
+        new THREE.MeshStandardMaterial({ color: seed > 0.5 ? 0x996747 : 0xb08059,
+          roughness: 0.95, flatShading: true }), 0, 0.8);
+      if (this.quality === 'high') {
+        mesh(new THREE.DodecahedronGeometry(0.75 + seed * 0.7, 0),
+          new THREE.MeshStandardMaterial({ color: 0xd29a68, roughness: 1 }), 1.45, 0.45);
+      }
     } else if (biome === 'city') {
       const h = 5 + 13 * seed;
       mesh(new THREE.BoxGeometry(5, h, 5),
-        new THREE.MeshStandardMaterial({ color: index % 2 ? 0x263548 : 0x344354, roughness: 0.8 }), 0, h / 2);
-      mesh(new THREE.BoxGeometry(3.8, 0.14, 0.15),
-        new THREE.MeshBasicMaterial({ color: 0x3daccb }), 0, h * 0.6, -2.59);
+        new THREE.MeshStandardMaterial({
+          color: index % 2 ? 0x263548 : 0x344354,
+          roughness: 0.48, metalness: 0.32,
+        }), 0, h / 2);
+      const lightColor = seed > 0.48 ? 0x18cdf0 : 0xfd5396;
+      const facade = new THREE.MeshStandardMaterial({
+        color: lightColor, emissive: lightColor, emissiveIntensity: 2.8,
+        metalness: 0.35, roughness: 0.24,
+      });
+      mesh(new THREE.BoxGeometry(4.35, 0.13, 0.16), facade, 0, h * 0.66, -2.59);
+      if (this.quality !== 'low') {
+        mesh(new THREE.BoxGeometry(3.35, 0.11, 0.16), facade, 0, h * 0.36, -2.59);
+        if (this.quality === 'high') {
+          mesh(new THREE.BoxGeometry(0.16, Math.max(2.2, h * 0.72), 0.18),
+            facade, -2.46, h * 0.50, -2.52);
+        }
+      }
     } else {
       mesh(new THREE.ConeGeometry(0.8, 2.5, 5),
         new THREE.MeshStandardMaterial({ color: 0x66885a }), 0, 1.2);

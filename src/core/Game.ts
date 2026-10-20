@@ -10,6 +10,8 @@ import { Road } from '../world/Road';
 import { BoatWake } from '../world/BoatWake';
 import { WaterHazards } from '../world/WaterHazards';
 import { Weather } from '../rendering/Weather';
+import { VisualDirector } from '../rendering/VisualDirector';
+import { SpeedStreaks } from '../rendering/SpeedStreaks';
 import { Player } from '../entities/Player';
 import { TrafficVehicle } from '../entities/Traffic';
 import { Projectiles } from '../combat/Projectiles';
@@ -52,6 +54,8 @@ export class Game {
   private readonly wake: BoatWake;
   private readonly waterHazards: WaterHazards;
   private readonly weather: Weather;
+  private readonly visuals: VisualDirector;
+  private readonly streaks: SpeedStreaks;
   private readonly player: Player;
   private readonly bullets: Projectiles;
   private readonly specials: SpecialWeapons;
@@ -98,17 +102,14 @@ export class Game {
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.26;
     this.ui.stage.appendChild(this.renderer.domElement);
-    this.scene.background = new THREE.Color(0x091923);
-    this.scene.fog = new THREE.FogExp2(0x091923, 0.006);
     this.camera.position.set(0, 66, 38);
     this.camera.lookAt(0, 0, -19);
-    const sun = new THREE.DirectionalLight(0xb5e8ff, 2.25);
-    sun.position.set(-18, 47, -28);
-    this.scene.add(sun, new THREE.HemisphereLight(0x6fa8c8, 0x182526, 2.2));
+    this.visuals = new VisualDirector(this.scene, this.renderer);
     this.road = new Road(this.scene);
     this.wake = new BoatWake(this.scene);
     this.waterHazards = new WaterHazards(this.scene);
     this.weather = new Weather(this.scene);
+    this.streaks = new SpeedStreaks(this.scene);
     this.player = new Player(this.scene);
     this.bullets = new Projectiles(this.scene);
     this.specials = new SpecialWeapons(this.scene);
@@ -150,6 +151,9 @@ export class Game {
     this.input.setBindings(settings.bindings);
     this.input.setGamepadBindings(settings.gamepadBindings);
     this.weather.setQuality(settings.quality);
+    this.road.setQuality(settings.quality);
+    this.visuals.configure(settings.quality);
+    this.streaks.setPreferences(settings.quality, settings.reducedMotion);
     const ratio = settings.quality === 'low' ? 1 : settings.quality === 'high' ? 2 : 1.5;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, ratio));
     if (settings.quality === 'high' && !this.composer) {
@@ -184,6 +188,7 @@ export class Game {
     this.road.reset();
     this.wake.reset();
     this.waterHazards.reset();
+    this.streaks.reset();
     this.player.reset();
     this.scoring.reset();
     this.routes.reset();
@@ -277,6 +282,7 @@ export class Game {
     }
 
     this.player.step(dt, controls, this.road.biome, GAME_MODES[this.mode].speedScale);
+    this.streaks.step(dt, this.player.speed);
     this.boundaryCooldown = Math.max(0, this.boundaryCooldown - dt);
     if (this.boundaryCooldown === 0 && boundaryStrike(
       this.player.x, controls.steer, this.player.speed, this.player.isBoat
@@ -319,6 +325,7 @@ export class Game {
     }
     this.wake.step(dt, this.player.speed, this.player.x, this.player.isBoat);
     this.weather.step(dt, this.player.speed, this.road.biome);
+    this.visuals.step(dt, this.road.biome, this.distance / 22, this.preferences.reducedMotion);
     this.distance += this.player.speed * dt;
     const bridge = bridgeAhead(this.distance);
     if (bridge && bridge.start !== this.bridgeWarnAt) {
@@ -653,6 +660,7 @@ export class Game {
     this.debris.renderAt(center);
     this.wake.renderAt(center);
     this.waterHazards.renderAt(center);
+    this.streaks.renderAt(center);
     this.van.mesh.position.x = 6.4 + center(this.van.mesh.position.z);
     if (this.preferences.quality === 'high' && this.composer) this.composer.render();
     else this.renderer.render(this.scene, this.camera);

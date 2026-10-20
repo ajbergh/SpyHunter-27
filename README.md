@@ -107,3 +107,9 @@ In Settings, standard Gamepad API controllers can remap eight button actions, in
 Squads now disengage after a wingman is destroyed: surviving attackers shift into an outward escape maneuver and retreat up the road rather than continuing a suicidal pursuit. The HUD distinguishes an active pincer from a retreat, and neutralized attackers stop firing during escape.
 
 The resupply van now provides **one-shot docking guidance** if the ramp passes while the driver is out of alignment or outside its safe 15–49 speed range. Misaligned approaches can still recover until the truck leaves the encounter.
+
+### Visual refresh — cinematic world rendering
+
+The refreshed art direction adds distinct warm forest sun, dusty golden desert, cool alpine light, violet/cyan neon city, and blue-green water palettes. Lighting, exponential distance haze, bloom exposure and rim color blend continuously during biome transitions. **High** enables 2048² soft shadows and bloom, **Medium** uses 1024² soft shadows, and **Low** disables real-time shadow maps and speed streaks. All presets retain the reusable asphalt microtexture, painted vehicle reflections, and improved animated water shader. Road tiles share pavement materials and texture assets, avoiding GPU-texture creation on every recycled segment. Reduced Motion disables peripheral speed streaks and reactive city-light pulsing.
+
+Chromium CI captures high-preset city and water reference screenshots. These are technical smoke tests, **not approval of art quality or proof of 60 FPS** on real discrete or integrated GPUs. Benchmark performance and review visual consistency before treating the game as a finished graphics release.

@@ -3,6 +3,21 @@ import * as THREE from 'three';
 const metal = (color: number, roughness = 0.38): THREE.MeshStandardMaterial =>
   new THREE.MeshStandardMaterial({ color, metalness: 0.68, roughness });
 
+function addGroundShadow(group: THREE.Group, width: number, length: number): void {
+  const shadow = new THREE.Mesh(
+    new THREE.CircleGeometry(1, 24),
+    new THREE.MeshBasicMaterial({
+      color: 0x01070d, transparent: true, opacity: 0.24,
+      depthWrite: false, fog: true,
+    }),
+  );
+  shadow.rotation.x = -Math.PI / 2;
+  shadow.scale.set(width, length, 1);
+  shadow.position.y = -0.015;
+  shadow.renderOrder = 1;
+  group.add(shadow);
+}
+
 function box(group: THREE.Group, size: [number, number, number], pos: [number, number, number], material: THREE.Material): THREE.Mesh {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), material);
   mesh.position.set(...pos);
@@ -14,16 +29,32 @@ function box(group: THREE.Group, size: [number, number, number], pos: [number, n
 /** Original low-poly interceptor silhouette, built entirely from geometry. Front is -Z. */
 export function makeInterceptor(): THREE.Group {
   const group = new THREE.Group();
-  const paint = metal(0xe9edf2, 0.26);
+  const paint = new THREE.MeshPhysicalMaterial({
+    color: 0xe5f0f7, metalness: 0.75, roughness: 0.24,
+    clearcoat: 0.94, clearcoatRoughness: 0.12,
+  });
+  const chrome = metal(0x8db9ca, 0.19);
+  const accent = new THREE.MeshStandardMaterial({
+    color: 0x2a627c, emissive: 0x1190bc, emissiveIntensity: 0.82,
+    metalness: 0.7, roughness: 0.28,
+  });
   const black = metal(0x101723);
-  const glass = new THREE.MeshStandardMaterial({ color: 0x163657, metalness: 0.52, roughness: 0.13, emissive: 0x061828 });
+  const glass = new THREE.MeshPhysicalMaterial({
+    color: 0x16496c, metalness: 0.43, roughness: 0.09,
+    clearcoat: 1, clearcoatRoughness: 0.09, emissive: 0x051e2f,
+  });
   const light = new THREE.MeshStandardMaterial({ color: 0x6beaff, emissive: 0x24a9fa, emissiveIntensity: 2 });
   const tail = new THREE.MeshStandardMaterial({ color: 0xff3549, emissive: 0xe51233, emissiveIntensity: 2 });
   box(group, [2.45, 0.48, 5.2], [0, 0.55, 0], paint);
+  // Flush lower diffuser and asymmetric illuminated shoulder lines.
+  box(group, [2.4, 0.11, 5.22], [0, 0.37, 0], black);
+  box(group, [1.85, 0.15, 2.0], [0, 0.91, -1.26], paint);
   box(group, [1.94, 0.11, 4.65], [0, 0.84, 0.02], black);
   box(group, [1.9, 0.68, 2.1], [0, 1.05, 0.22], glass);
   box(group, [1.75, 0.1, 1.05], [0, 1.01, -1.46], paint);
   for (const side of [-1, 1]) {
+    box(group, [0.10, 0.075, 3.6], [side * 1.18, 0.88, -0.3], accent);
+    box(group, [0.42, 0.12, 0.93], [side * 0.61, 0.91, -1.43], chrome);
     box(group, [0.36, 0.37, 1.15], [side * 1.03, 0.68, -1.65], paint);
     box(group, [0.3, 0.32, 0.28], [side * 1.05, 0.55, -2.58], light);
     box(group, [0.3, 0.2, 0.25], [side * 1.06, 0.65, 2.6], tail);
@@ -36,6 +67,10 @@ export function makeInterceptor(): THREE.Group {
     }
   }
   box(group, [2.2, 0.13, 0.6], [0, 0.74, 2.28], black);
+  box(group, [1.62, 0.18, 0.22], [0, 0.8, -2.61], chrome);
+  box(group, [1.82, 0.11, 0.16], [0, 0.78, 2.65], tail);
+  box(group, [1.2, 0.08, 0.45], [0, 1.43, 1.08], chrome);
+  addGroundShadow(group, 1.45, 2.9);
   return group;
 }
 
@@ -64,6 +99,14 @@ export function makeTrafficVehicle(hostile: boolean, color: number, variant = 0)
     group.add(lamp);
   }
   if (hostile) box(group, [width * 0.72, 0.13, 0.65], [0, 1.4, length * 0.15], dark);
+  for (const side of [-1, 1]) {
+    box(group, [0.09, 0.07, length * 0.64], [side * (width / 2 - 0.12), 0.91, 0],
+      new THREE.MeshStandardMaterial({
+        color: hostile ? 0xb34955 : 0x91bcc9,
+        metalness: 0.79, roughness: 0.28,
+      }));
+  }
+  addGroundShadow(group, width * 0.66, length * 0.59);
   if (variant === 3 && hostile) {
     const red = new THREE.MeshBasicMaterial({ color: 0xff514a });
     box(group, [0.65, 0.35, 1.25], [0, 1.52, -0.5], dark);

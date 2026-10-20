@@ -72,7 +72,7 @@ export class Interface {
           <select id="quality-select" aria-label="Rendering quality">
             <option value="low">LOW // PERFORMANCE</option>
             <option value="medium">MEDIUM // BALANCED</option>
-            <option value="high">HIGH // CINEMATIC BLOOM</option>
+            <option value="high">HIGH // CINEMATIC LIGHTING + BLOOM</option>
           </select>
           <label for="music-volume">ORIGINAL MUSIC VOLUME</label>
           <input type="range" id="music-volume" min="0" max="100" step="5" />

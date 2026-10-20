@@ -107,8 +107,12 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [ ] Real-time lighting, reflection approximations and optional shadows.
 - [x] Single-draw-call GPU weather particles (snow, dust, city rain, river mist) with quality budgets.
 - [ ] Skid marks, more physical debris and atmospheric grading.
-- [x] Optional high-quality EffectComposer with subtle bloom and OutputPass.
-- [ ] Sophisticated color grading, advanced reflections and weather effects.
+- [x] High-quality EffectComposer bloom, cinematic color/exposure grading, five smoothly blended biome light rigs and fog palettes, scalable 0/1024/2048 soft shadows.
+- [x] Seamless seeded asphalt microtextures, clearcoat hero paint and windshields, ground-contact shadows, city neon facades, layered forest canopy, and animated multilayer water glints.
+- [x] Bounded one-draw-call edge speed streaks with quality/reduced-motion safeguards.
+- [ ] Human-approved art direction and real-GPU frame time validation, especially on high.
+- [x] Scene-wide biome-specific filmic grade and environmental reflections via wet material response and procedural rippled highlights.
+- [ ] Probe-based true environment reflections, authored decals and advanced volumetric lighting.
 - [x] Original adaptive synthesized espionage riff and speed-sensitive engine drone.
 - [x] Five distinct original synthesized biome arrangements with percussive pulses, threat-adaptive pace, dual-layer reactive engine audio, separate warning and resupply signals.
 - [ ] Richer authored/sample-based music production and environmental recordings.
@@ -133,7 +137,7 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] Gamepad button mapping UI and persistent input integration for throttle/brake/fire/specials/pause.
 - [ ] Extended pause/focus/accessibility behavior and actual-controller compatibility validation.
 - [x] Optional FPS, draw calls, active vehicle diagnostics overlay.
-- [ ] Profiling: verified 60 FPS at 1080p midrange GPU and integrated GPU tier.
+- [ ] Profiling: independently verified 60 FPS at 1080p midrange GPU and integrated GPU tier. High preset now scales shadows and details; optimize if needed.
 - [x] Chromium E2E game-over / full-life-cycle / redeploy test passed (2026-10-20).
 - [ ] 10-minute memory soak, collision fuzzing, fixed-step consistency and cross-browser tests.
 - [x] Document asset provenance, font dependencies, QA and release validation gates.

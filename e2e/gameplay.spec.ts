@@ -236,3 +236,31 @@ test('elite air combat and debris renderer initialize without WebGL exceptions',
   await expect(page.locator('#stage canvas')).toBeVisible();
   expect(crashes).toEqual([]);
 });
+
+test('cinematic high preset renders neon lighting, reflective surfaces and soft shadows', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/?testDistance=3310');
+  await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
+  await page.locator('#quality-select').selectOption('high');
+  await page.getByRole('button', { name: /apply and return/i }).click();
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#environment-name')).toContainText('NEON CITY');
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  await page.screenshot({ path: 'test-results/cinematic-city-high.png' });
+  expect(errors).toEqual([]);
+});
+
+test('upgraded animated water shader works on high-quality WebGL2', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/?testDistance=4350');
+  await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
+  await page.locator('#quality-select').selectOption('high');
+  await page.getByRole('button', { name: /apply and return/i }).click();
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#environment-name')).toContainText('WATERWAY');
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  await page.screenshot({ path: 'test-results/cinematic-water-high.png' });
+  expect(errors).toEqual([]);
+});
