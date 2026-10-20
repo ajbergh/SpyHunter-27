@@ -87,9 +87,15 @@ export class WeaponsVan {
       this.mesh.add(wheel);
     }
     this.ramp = add([3.05, 0.15, 3.2], [0, 0.58, 5.35], dark);
-    // Crosshatched reflective loading ramp with grip strips and edge lighting.
-    for (let z = 4.18; z < 6.7; z += 0.32) {
-      addDecalBar(this.mesh, [2.72, 0.014, 0.075], [0, 0.66, z], 0x7896a0);
+    // Raised tread grips are children of the moving ramp, so they animate
+    // with its hinge instead of floating after deployment.
+    const gripMaterial = new THREE.MeshStandardMaterial({
+      color: 0x7896a0, metalness: 0.86, roughness: 0.32,
+    });
+    for (let z = -1.35; z < 1.45; z += 0.31) {
+      const tread = new THREE.Mesh(new THREE.BoxGeometry(2.72, 0.019, 0.075), gripMaterial);
+      tread.position.set(0, 0.087, z);
+      this.ramp.add(tread);
     }
     this.ramp.rotation.x = -0.06;
     this.doorLeft = add([1.45, 1.9, 0.12], [-0.76, 1.63, 3.91], dark);
