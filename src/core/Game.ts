@@ -250,6 +250,14 @@ export class Game {
     this.wake.step(dt, this.player.speed, this.player.x, this.player.isBoat);
     this.weather.step(dt, this.player.speed, this.road.biome);
     this.distance += this.player.speed * dt;
+    const toGate = 1000 - (this.distance % 1000);
+    const nextBiome = biomeAt(this.distance + toGate + 1);
+    const waterTransfer = this.road.biome === 'water' || nextBiome === 'water';
+    if (toGate > 125) this.gateWarned = false;
+    if (toGate < 85 && waterTransfer && !this.gateWarned) {
+      this.gateWarned = true;
+      this.announce('BOATHOUSE AHEAD — ALIGN CENTER & MAINTAIN 11–52 SPEED');
+    }
     this.scoring.tick(dt, distancePoints(this.player.speed, dt));
     this.airSpawnClock -= dt;
     if (!this.player.isBoat && this.distance > 260 && this.airSpawnClock <= 0) {

@@ -92,14 +92,14 @@ export class Road {
     if (biomeAt(anchor - LENGTH / 2) !== biomeAt(anchor + LENGTH / 2) &&
       (biomeAt(anchor - LENGTH / 2) === 'water' || biomeAt(anchor + LENGTH / 2) === 'water')) {
       const frame = new THREE.MeshStandardMaterial({ color: 0x718896, metalness: 0.58, roughness: 0.5 });
-      const roof = new THREE.Mesh(new THREE.BoxGeometry(22, 1.6, 7), frame);
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(14.8, 1.6, 7), frame);
       const crossing = Math.round(anchor / 1000) * 1000;
       const zCross = anchor - crossing;
       roof.position.set(roadCenterAt(crossing) - roadCenterAt(anchor), 6.2, zCross);
       group.add(roof);
       for (const side of [-1, 1]) {
         const post = new THREE.Mesh(new THREE.BoxGeometry(1.8, 6, 7), frame);
-        post.position.set(side * 10.3 + roadCenterAt(crossing) - roadCenterAt(anchor), 2.8, zCross);
+        post.position.set(side * 6.55 + roadCenterAt(crossing) - roadCenterAt(anchor), 2.8, zCross);
         group.add(post);
       }
     }

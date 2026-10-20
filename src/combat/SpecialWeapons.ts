@@ -5,9 +5,9 @@ import type { AirTarget } from './AirThreats';
 
 export type WeaponKind = 'missile' | 'oil' | 'smoke';
 export type WeaponCounts = Readonly<Record<WeaponKind, number>>;
-export type Impact = { vehicle: TrafficVehicle; kind: WeaponKind } | { aircraft: AirTarget; kind: 'missile' };
+export type Impact = { vehicle: TrafficVehicle; kind: WeaponKind | 'flame' } | { aircraft: AirTarget; kind: 'missile' };
 type Missile = { mesh: THREE.Group; x: number; z: number };
-type Hazard = { mesh: THREE.Group; kind: 'oil' | 'smoke'; x: number; z: number; life: number; affected: Set<TrafficVehicle> };
+type Hazard = { mesh: THREE.Group; kind: 'oil' | 'smoke' | 'flame'; x: number; z: number; life: number; affected: Set<TrafficVehicle> };
 
 const MAX_AMMO: Record<WeaponKind, number> = { missile: 3, oil: 2, smoke: 2 };
 
@@ -33,7 +33,7 @@ export class SpecialWeapons {
 
   refill(): void { this.ammo = { ...MAX_AMMO }; }
 
-  use(kind: WeaponKind, x: number): boolean {
+  use(kind: WeaponKind, x: number, water = false): boolean {
     if (this.ammo[kind] === 0 || this.cooldown > 0) return false;
     this.ammo[kind]--;
     this.cooldown = kind === 'missile' ? 0.65 : 0.95;
@@ -43,11 +43,15 @@ export class SpecialWeapons {
       this.scene.add(mesh);
       this.missiles.push({ mesh, x, z: PLAYER_Z - 3.8 });
     } else {
-      const mesh = this.makeHazard(kind);
+      const hazardKind = water && kind === 'oil' ? 'flame' : kind;
+      const mesh = this.makeHazard(hazardKind);
       const z = PLAYER_Z + 6;
       mesh.position.set(x, 0.22, z);
       this.scene.add(mesh);
-      this.hazards.push({ mesh, kind, x, z, life: kind === 'oil' ? 6 : 4, affected: new Set() });
+      this.hazards.push({
+        mesh, kind: hazardKind, x, z,
+        life: hazardKind === 'smoke' ? 4 : 6, affected: new Set(),
+      });
     }
     return true;
   }
@@ -108,6 +112,7 @@ export class SpecialWeapons {
         if (Math.abs(car.x - hazard.x) < 3.3 && Math.abs(car.z - hazard.z) < 4.4) {
           hazard.affected.add(car);
           if (hazard.kind === 'oil') car.spinOut(2.8);
+          else if (hazard.kind === 'flame') car.hp -= 3;
           else car.disrupt(3.4);
           impacts.push({ vehicle: car, kind: hazard.kind });
         }
@@ -136,16 +141,16 @@ export class SpecialWeapons {
     return group;
   }
 
-  private makeHazard(kind: 'oil' | 'smoke'): THREE.Group {
+  private makeHazard(kind: 'oil' | 'smoke' | 'flame'): THREE.Group {
     const group = new THREE.Group();
-    if (kind === 'oil') {
+    if (kind === 'oil' || kind === 'flame') {
       const slick = new THREE.Mesh(new THREE.CircleGeometry(3.1, 32),
-        new THREE.MeshStandardMaterial({ color: 0x080e19, roughness: 0.07, metalness: 0.55, transparent: true, opacity: 0.88, side: THREE.DoubleSide }));
+        new THREE.MeshStandardMaterial({ color: kind === 'flame' ? 0xfb5427 : 0x080e19, roughness: 0.07, metalness: 0.55, transparent: true, opacity: 0.88, side: THREE.DoubleSide }));
       slick.rotation.x = -Math.PI / 2;
       slick.scale.set(1, 1.35, 1);
       group.add(slick);
       const rim = new THREE.Mesh(new THREE.RingGeometry(2.8, 3.12, 32),
-        new THREE.MeshBasicMaterial({ color: 0x21a7d6, transparent: true, opacity: 0.35, side: THREE.DoubleSide }));
+        new THREE.MeshBasicMaterial({ color: kind === 'flame' ? 0xffdc76 : 0x21a7d6, transparent: true, opacity: 0.35, side: THREE.DoubleSide }));
       rim.rotation.x = -Math.PI / 2;
       rim.scale.set(1, 1.35, 1);
       rim.position.y = 0.01;

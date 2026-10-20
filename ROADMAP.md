@@ -68,7 +68,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 ## Phase 3 — Living world and watercraft (in progress)
 
 - [x] Smooth deterministic curved centerline with continuous streamed road/water strips and markings.
-- [ ] Advanced curve-aware guardrails, branching road geometry and collision boundaries.
+- [x] Guardrail and riverbank contact damage with rate limiting and recovery.
+- [ ] Advanced curve-aware guardrail geometry and branching road topology.
 - [ ] Validated road splits, bridges, ramps, guardrails and collision constraints.
 - [x] Five visually distinct biomes: forest, desert, snow, neon city and waterways.
 - [x] Distinct snow/ice lateral traction, speedboat lateral inertia and mode-adjusted speed ranges.
@@ -77,11 +78,13 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [ ] Authorable seeded set pieces and biome-specific encounter scripts.
 - [x] Original low-poly speedboat model, water handling and automatic land/water transformation.
 - [x] Boathouse portal geometry at land/water stage boundaries.
-- [ ] Collision-driven boathouse docking, active steering alignment and full transformation sequence.
+- [x] Boathouse alignment/speed grading, narrow visible gate, clean-transfer bonus and wall-impact penalty/recovery.
+- [ ] Interactive boathouse entry animation and complete interior transformation sequence.
 - [x] Animated original water shader and boat enemy encounters.
 - [x] Speedboat wake rings and enemy boat-fired torpedo projectiles.
 - [x] Floating explosive barrels with bullet destruction, bonus points and player damage.
-- [ ] Shore collision hazards, dedicated barrel-dumper enemy and more sophisticated torpedo behavior.
+- [x] Riverbank contact damage, flaming oil-wake damage to pursuing boats.
+- [ ] Dedicated barrel-dumper enemy, riverbank obstacle meshes and improved torpedo tracking.
 
 **Exit:** 15-minute play session with seamless road/water traversal.
 

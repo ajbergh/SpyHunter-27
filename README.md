@@ -48,7 +48,7 @@ The **Settings** menu (also accessible while paused) saves High/Medium/Low graph
 
 Choose **Classic Arcade**, **Modern Arcade**, or **Endless Pursuit** on the title screen. Modern starts with five lives and lighter traffic; Classic has three lives; Endless has a higher encounter rate.
 
-The deterministic streamed world progresses through forest, desert, snow, neon city and waterway regions. The interceptor transforms into a speedboat in the water region, where hostile patrol boats appear. Snow and water have distinct arcade handling, with extra steering inertia on ice. This is an early functional biome/boat transition; animated boathouse gates, boat wakes, explosive floating barrels and enemy torpedo fire are implemented. Collision-driven boathouse entry/exit and shoreline hazards still require refinement.
+The deterministic streamed world progresses through forest, desert, snow, neon city and waterway regions. The interceptor transforms into a speedboat in the water region, where hostile patrol boats appear. Snow and water have distinct arcade handling, with extra steering inertia on ice. This is an early functional biome/boat transition; animated boathouse gates, boat wakes, explosive floating barrels and enemy torpedo fire are implemented. Boathouse entry now requires alignment with the center opening and appropriate speed; a clean transition earns bonus points, while hitting the narrow gate causes a collision. Riverbanks and guardrails penalize high-speed outward impacts.
 
 The game also reads compatible gamepads (left stick to steer, right trigger to accelerate, left trigger to brake, main button to shoot, face buttons for specials, left shoulder to call truck, Start to pause).
 

@@ -46,4 +46,20 @@ describe('special weapon inventory', () => {
     helicopter.dispose();
     weapons.reset();
   });
+  it('converts oil into a damaging flaming wake in watercraft mode', () => {
+    const scene = new THREE.Scene();
+    const weapons = new SpecialWeapons(scene);
+    expect(weapons.use('oil', 0, true)).toBe(true);
+    const hostile = {
+      x: 0, z: 17, hp: 2, hostile: true,
+      spinOut: () => { throw new Error('flames should not spin out targets'); },
+      disrupt: () => { throw new Error('flames should not just disrupt targets'); },
+    };
+    const impacts = weapons.step(0, 30, [hostile as never], []);
+    expect(impacts).toHaveLength(1);
+    expect(impacts[0].kind).toBe('flame');
+    expect(hostile.hp).toBeLessThan(0);
+    weapons.reset();
+  });
+
 });
