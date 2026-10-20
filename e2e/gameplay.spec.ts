@@ -61,3 +61,23 @@ test('persists renderer preferences and diagnostics across reload', async ({ pag
   await expect(page.locator('#quality-select')).toHaveValue('low');
   await expect(page.locator('#show-fps')).toBeChecked();
 });
+
+for (const [label, distance] of [
+  ['FOREST', 300], ['DESERT', 1300], ['ARCTIC', 2300],
+  ['NEON CITY', 3300], ['WATERWAY', 4300],
+] as const) {
+  test('renders biome: ' + label, async ({ page }) => {
+    const crashes: string[] = [];
+    page.on('pageerror', (e) => crashes.push(e.message));
+    await page.goto('/?testDistance=' + distance);
+    await page.getByRole('button', { name: /initiate pursuit/i }).click();
+    await expect(page.locator('#environment-name')).toContainText(label);
+    if (label === 'WATERWAY') {
+      await expect(page.locator('#environment-name')).toContainText('SPEEDBOAT');
+      await expect(page.locator('#van-status')).toContainText('NO VAN');
+    }
+    await expect(page.locator('#stage canvas')).toBeVisible();
+    await page.screenshot({ path: 'test-results/biome-' + label.replaceAll(' ', '-').toLowerCase() + '.png' });
+    expect(crashes).toEqual([]);
+  });
+}

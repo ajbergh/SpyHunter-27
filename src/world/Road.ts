@@ -200,13 +200,14 @@ export class Road {
     });
   }
 
-  reset(): void {
-    this.travelled = 0;
+  /** Deterministic seek for development-only biome/transition acceptance tests. */
+  seek(distance: number): void {
+    this.travelled = Math.max(0, distance);
     this.time = 0;
-    this.lastBiome = 'forest';
+    this.lastBiome = this.biome;
     for (let i = 0; i < this.tiles.length; i++) {
       const tile = this.tiles[i];
-      tile.anchor = 145 - i * LENGTH;
+      tile.anchor = this.travelled + 145 - i * LENGTH;
       this.root.remove(tile.group);
       this.disposeTile(tile.group);
       tile.biome = biomeAt(tile.anchor);
@@ -215,4 +216,6 @@ export class Road {
     }
     this.applyPositions();
   }
+
+  reset(): void { this.seek(0); }
 }

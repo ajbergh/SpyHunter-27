@@ -139,6 +139,14 @@ export class Game {
     this.player.reset();
     this.scoring.reset();
     this.distance = 0;
+    if (import.meta.env.DEV) {
+      const seek = Number(new URLSearchParams(window.location.search).get('testDistance') ?? 0);
+      if (Number.isFinite(seek) && seek >= 0 && seek <= 100000 && seek > 0) {
+        this.road.seek(seek);
+        this.distance = seek;
+        this.player.setBoat(this.road.biome === 'water');
+      }
+    }
     this.lives = GAME_MODES[mode].lives;
     this.grace = mode === 'modern' ? 5 : 3;
     this.dockingTimer = 0;

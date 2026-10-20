@@ -18,7 +18,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] Validate GitHub Actions type-check, all 5 unit tests and production build (2026-10-20).
 - [ ] Commit a resolved package-lock.json and switch CI from npm install to npm ci.
 - [x] Add Playwright Chromium gameplay smoke suite (passed on GitHub Actions, 2026-10-20).
-- [ ] Add visual screenshot baselines and extended manual play session.
+- [x] Add Playwright screenshots of all five environments with development-only distance-seek harness (pending CI validation).
+- [ ] Approve reviewed screenshot baselines and extended manual play session.
 
 **Exit:** reproducible local setup, type-check/test/build green and CI green.
 
@@ -111,7 +112,7 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 
 ## Next implementation batch
 
-1. Validate five-biome progression and boat mode in extended Playwright coverage.
+1. Validate the five-biome/boat Playwright screenshot suite in CI, then inspect visual accuracy.
 2. Add boathouse portal geometry with interactive alignment/docking and safe return to driving.
 3. Implement torpedoes, river hazards, actual bank collisions, boat wakes and biome-dependent traction.
 4. Refine premium art, settings accessibility, dynamic lighting and fuller original audio soundtrack.
