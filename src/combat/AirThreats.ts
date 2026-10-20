@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { sculptMesh, bodyPaint, glassPaint, addDecalBar } from '../entities/VehicleSculpt';
 import { approach, intersects, PLAYER_Z, type RectHitbox } from '../core/logic';
 import { bombingLane, helicopterCooldown, helicopterTargetX, type HelicopterProfile } from './FlightDirector';
 
@@ -33,6 +34,7 @@ export class Helicopter implements AirTarget {
   x: number;
   z: number;
   private readonly rotor = new THREE.Group();
+  private readonly tailRotor = new THREE.Group();
   private fireClock = 1.4;
   private phase = 0;
   private volley = 0;
@@ -44,24 +46,112 @@ export class Helicopter implements AirTarget {
     this.hp = this.hpMax;
     this.x = startX;
     this.z = startZ;
-    const armor = new THREE.MeshStandardMaterial({ color: 0x475c6b, metalness: 0.7, roughness: 0.34 });
-    const canopy = new THREE.MeshStandardMaterial({ color: 0x13293f, metalness: 0.75, roughness: 0.18 });
-    const hazard = new THREE.MeshBasicMaterial({ color: profile === 'ace' ? 0xff525d : 0xffa23b });
-    box(this.mesh, [3.2, 1.35, 6.1], [0, 0, 0], armor);
-    box(this.mesh, [2.3, 0.85, 2.1], [0, 0.45, -1.5], canopy);
-    box(this.mesh, [0.45, 0.5, 4.7], [0, 0.1, 4.5], armor);
-    box(this.mesh, [3.1, 0.22, 0.8], [0, 0.1, 6.45], armor);
+    const armor = bodyPaint(profile === 'ace' ? 0x374451 : 0x536878);
+    const dark = new THREE.MeshStandardMaterial({
+      color: 0x13212d, metalness: 0.64, roughness: 0.31,
+    });
+    const canopy = glassPaint(profile === 'ace' ? 0x712b40 : 0x193c5a);
+    const steel = new THREE.MeshStandardMaterial({
+      color: 0x8daab6, metalness: 0.85, roughness: 0.24,
+    });
+    const signal = new THREE.MeshStandardMaterial({
+      color: profile === 'ace' ? 0xff405c : 0xffb04a,
+      emissive: profile === 'ace' ? 0xff123e : 0xfa741a,
+      emissiveIntensity: 2.5, roughness: 0.24,
+    });
+    // Faceted aerodynamic helicopter fuselage with tailored shoulders and
+    // tapered tail boom; geometry remains fully original and disposable.
+    sculptMesh(this.mesh, [
+      { z: -3.25, halfWidth: 0.28, deck: 0.13, floor: -0.40 },
+      { z: -2.65, halfWidth: 1.10, deck: 0.71, floor: -0.65 },
+      { z: -1.70, halfWidth: 1.56, deck: 0.99, floor: -0.85 },
+      { z: 0.25, halfWidth: 1.72, deck: 1.06, floor: -0.93 },
+      { z: 1.75, halfWidth: 1.36, deck: 0.78, floor: -0.71 },
+      { z: 3.10, halfWidth: 0.63, deck: 0.46, floor: -0.33 },
+      { z: 4.0, halfWidth: 0.35, deck: 0.20, floor: -0.22 },
+    ], armor);
+    sculptMesh(this.mesh, [
+      { z: -3.05, halfWidth: 0.39, deck: 0.18, floor: 0.06 },
+      { z: -2.65, halfWidth: 0.88, deck: 0.71, floor: 0.08 },
+      { z: -1.82, halfWidth: 1.12, deck: 0.87, floor: 0.11 },
+      { z: -0.88, halfWidth: 1.05, deck: 0.78, floor: 0.12 },
+      { z: -0.52, halfWidth: 0.86, deck: 0.62, floor: 0.10 },
+    ], canopy);
+    sculptMesh(this.mesh, [
+      { z: 2.48, halfWidth: 0.47, deck: 0.37, floor: -0.34 },
+      { z: 4.6, halfWidth: 0.33, deck: 0.31, floor: -0.20 },
+      { z: 6.26, halfWidth: 0.19, deck: 0.20, floor: -0.14 },
+    ], armor);
+    // Tail boom stabilizer, segmented armor, sensor nose and turbines.
+    box(this.mesh, [3.25, 0.12, 1.12], [0, -0.08, 5.49], armor);
+    box(this.mesh, [0.17, 1.55, 1.38], [0, 0.76, 5.65], armor);
+    box(this.mesh, [1.16, 0.38, 0.64], [0, -0.36, -3.21], steel);
+    box(this.mesh, [0.70, 0.52, 1.64], [0, 1.05, 0.65], dark);
+    const optic = new THREE.Mesh(new THREE.SphereGeometry(0.30, 12, 10), dark);
+    optic.position.set(0, -0.55, -3.38);
+    this.mesh.add(optic);
+    const lens = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 9),
+      new THREE.MeshStandardMaterial({
+        color: 0x1aa7d8, emissive: 0x1b83ca, emissiveIntensity: 2.2,
+        metalness: 0.65, roughness: 0.17,
+      }));
+    lens.position.set(0, -0.58, -3.64);
+    this.mesh.add(lens);
     for (const side of [-1, 1]) {
-      box(this.mesh, [1.15, 0.5, 2], [side * 2.1, -0.35, 0.45], armor);
-      box(this.mesh, [0.36, 0.22, 1.1], [side * 2.1, -0.38, -0.9], hazard);
-    }
-    box(this.rotor, [9.4, 0.08, 0.22], [0, 0, 0], canopy);
-    box(this.rotor, [0.22, 0.08, 9.4], [0, 0, 0], canopy);
-    if (profile === 'ace') {
-      box(this.mesh, [2.8, 0.3, 1.2], [0, -0.6, 2], hazard);
-      for (const side of [-1, 1]) {
-        box(this.mesh, [0.24, 0.5, 1.0], [side * 1.2, 0.55, -2.1], hazard);
+      // Powered weapon pylons, radome pods and guided-launch tubes.
+      box(this.mesh, [2.10, 0.23, 2.05], [side * 2.05, -0.28, 0.40], armor);
+      const pod = new THREE.Mesh(new THREE.CapsuleGeometry(0.43, 1.95, 4, 12), dark);
+      pod.rotation.x = Math.PI / 2;
+      pod.position.set(side * 2.27, -0.47, 0.32);
+      pod.castShadow = true;
+      this.mesh.add(pod);
+      for (let i = 0; i < 3; i++) {
+        const bore = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.03, 5, 10), steel);
+        bore.position.set(side * 2.27 + (i - 1) * 0.14, -0.47, -0.91);
+        this.mesh.add(bore);
       }
+      addDecalBar(this.mesh, [0.19, 0.23, 0.45],
+        [side * 2.23, -0.21, -0.85], signal.color.getHex(), true);
+      for (const z of [-1.55, 1.80]) {
+        const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.085, 1.05, 8), steel);
+        strut.position.set(side * 1.34, -1.11, z);
+        strut.castShadow = true;
+        this.mesh.add(strut);
+      }
+      const skid = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.11, 4.28, 10), steel);
+      skid.rotation.x = Math.PI / 2;
+      skid.position.set(side * 1.35, -1.72, 0.23);
+      skid.castShadow = true;
+      this.mesh.add(skid);
+      // Original active dorsal and aft navigation indicators.
+      addDecalBar(this.mesh, [0.10, 0.11, 0.74],
+        [side * 1.40, 0.56, 0.30], signal.color.getHex(), true);
+    }
+    // Rotor assembly supports spinning animation without reallocations.
+    box(this.rotor, [7.1, 0.065, 0.28], [0, 0, 0], dark);
+    box(this.rotor, [0.28, 0.065, 7.1], [0, 0, 0], dark);
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.43, 0.28, 12), steel);
+    this.rotor.add(hub);
+    for (const angle of [0, Math.PI / 2, Math.PI, Math.PI * 1.5]) {
+      const tip = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.08, 0.9), signal);
+      tip.position.set(Math.cos(angle) * 3.45, 0, Math.sin(angle) * 3.45);
+      tip.rotation.y = -angle;
+      this.rotor.add(tip);
+    }
+    // Independently spinning tail rotor with visible protective housing.
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.71, 0.09, 6, 24), steel);
+    ring.rotation.y = Math.PI / 2;
+    this.tailRotor.add(ring);
+    box(this.tailRotor, [0.09, 0.16, 1.28], [0, 0, 0], dark);
+    box(this.tailRotor, [0.09, 1.28, 0.16], [0, 0, 0], dark);
+    const tailHub = new THREE.Mesh(new THREE.SphereGeometry(0.17, 10, 8), signal);
+    this.tailRotor.add(tailHub);
+    this.tailRotor.position.set(0.23, 0.95, 6.07);
+    this.mesh.add(this.tailRotor);
+    if (profile === 'ace') {
+      box(this.mesh, [2.45, 0.22, 0.65], [0, -0.62, 1.92], signal);
+      for (const side of [-1, 1])
+        box(this.mesh, [0.18, 0.36, 0.64], [side * 1.26, 0.83, -1.95], signal);
     }
     this.rotor.position.y = 1.22;
     this.mesh.add(this.rotor);
@@ -82,6 +172,7 @@ export class Helicopter implements AirTarget {
         this.profile === 'ace' ? 1.65 : 0.65, dt);
     }
     this.rotor.rotation.y += dt * 17;
+    this.tailRotor.rotation.x += dt * 29;
     this.sync();
     this.fireClock -= dt;
     if (this.z > -49 && this.z < -8 && this.fireClock <= 0) {
