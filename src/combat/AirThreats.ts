@@ -147,6 +147,8 @@ export class Helicopter implements AirTarget {
     const tailHub = new THREE.Mesh(new THREE.SphereGeometry(0.17, 10, 8), signal);
     this.tailRotor.add(tailHub);
     this.tailRotor.position.set(0.23, 0.95, 6.07);
+    this.rotor.name = 'mainRotor';
+    this.tailRotor.name = 'tailRotor';
     this.mesh.add(this.tailRotor);
     if (profile === 'ace') {
       box(this.mesh, [2.45, 0.22, 0.65], [0, -0.62, 1.92], signal);

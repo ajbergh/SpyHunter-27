@@ -6,6 +6,7 @@ import { bridgeZone, groundHeightAt } from './BridgePlan';
 import { PavementMaterials } from '../rendering/PavementMaterials';
 import type { Quality } from '../gameplay/Settings';
 import { buildTerrain, terrainRelief } from './TerrainDetail';
+import { landmarkAt, makeLandmark } from './Landmarks';
 
 const LENGTH = 30;
 const COUNT = 10;
@@ -253,6 +254,18 @@ export class Road {
           groundHeightAt(world) + terrainRelief(biome, world, x) + 0.22, z);
         group.add(prop);
       }
+    }
+    if (landmarkAt(anchor, this.quality)) {
+      // Unique silhouette every few hundred metres, on the terrain rather
+      // than colliding with the playable road/guardrail corridor.
+      const seed = seededRandom(Math.round(anchor) * 109 + 17);
+      const side = seed < 0.5 ? -1 : 1;
+      const x = side * (30 + seed * 6);
+      const world = anchor;
+      const landmark = makeLandmark(biome, seed);
+      landmark.position.set(x + roadCenterAt(world) - roadCenterAt(anchor),
+        groundHeightAt(world) + terrainRelief(biome, world, x) + 0.22, 0);
+      group.add(landmark);
     }
     return group;
   }

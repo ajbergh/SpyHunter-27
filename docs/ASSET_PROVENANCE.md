@@ -20,3 +20,7 @@
 - Review soundtrack originality and audiovisual similarity to any protected source material.
 
 Document every new external asset with source URL, author, license, and modifications before merging.
+
+## Second-pass model provenance (2026-10-20)
+
+Detailed helicopter, weapons van, speedboat, landing gear, wheel/cab, rotor and five environmental landmark models are newly constructed using native Three.js geometries and original source code. No external reference image, extracted videogame model, photogrammetry data, or copyrighted franchise asset is bundled. Sculpted surface/prop materials use original procedural PBR values. Production modeling, UV baking and art clearance remain future sign-off requirements.

@@ -88,7 +88,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] GPU particle snow, desert dust, urban rain and river mist.
 - [ ] Substantial biome art/weather polish.
 - [x] Seeded deterministic roadside props and biome transitions on cumulative distance.
-- [ ] Authorable seeded set pieces and biome-specific encounter scripts.
+- [x] Deterministic landmark set-piece geometry and quality-scaled placement.
+- [ ] Biome-specific encounter scripting and authorable art assets.
 - [x] Original low-poly speedboat model, water handling and automatic land/water transformation.
 - [x] Boathouse portal geometry at land/water stage boundaries.
 - [x] Boathouse alignment/speed grading, narrow visible gate, clean-transfer bonus and wall-impact penalty/recovery.
@@ -106,7 +107,9 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] Sculpted interceptor and road-car primary hull geometry, enhanced cockpit clearcoat, detailed wheel assemblies, reflective original procedural PMREM lighting and dramatic perspective driving camera.
 - [x] Procedural biome terrain heightfields with canyon mesas/snow peaks/forested ridges, high-rise city facades and instanced emissive window grids.
 - [x] High-preset filmic vignette, subtle optical separation and grain (reduced-motion aware).
-- [ ] Authored production-grade interceptor/truck/boat/aircraft meshes, baked details and original hero set-piece assets.
+- [x] Sculpted support-van cab, segmented illuminated cargo bay, animated-ramp tread grips; tactical helicopter fuselage/weapon pods/landing skids, independent tail rotor; streamlined marine hull and twin engines.
+- [x] Sparse biome-specific hero landmarks: ranger towers, desert oil derricks, alpine radome stations, neon digital monoliths, navigation beacons. Quality-based placement and deterministic tile streaming.
+- [ ] High-resolution artist-authored glTF hero meshes, dedicated UV/baked normal/roughness maps, authentic vehicle wear, unique modular level sets and art-direction approval.
 - [ ] Real-time lighting, reflection approximations and optional shadows.
 - [x] Single-draw-call GPU weather particles (snow, dust, city rain, river mist) with quality budgets.
 - [ ] Skid marks, more physical debris and atmospheric grading.
