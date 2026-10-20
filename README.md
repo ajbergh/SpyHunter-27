@@ -48,7 +48,7 @@ The **Settings** menu (also accessible while paused) saves High/Medium/Low graph
 
 Choose **Classic Arcade**, **Modern Arcade**, or **Endless Pursuit** on the title screen. Modern starts with five lives and lighter traffic; Classic has three lives; Endless has a higher encounter rate.
 
-The deterministic streamed world progresses through forest, desert, snow, neon city and waterway regions. The interceptor transforms into a speedboat in the water region, where hostile patrol boats appear. This is an early functional biome/boat transition; animated boathouse gates, boat wakes and enemy torpedo fire are implemented. Collision-driven boathouse entry/exit and shoreline hazards still require refinement.
+The deterministic streamed world progresses through forest, desert, snow, neon city and waterway regions. The interceptor transforms into a speedboat in the water region, where hostile patrol boats appear. Snow and water have distinct arcade handling, with extra steering inertia on ice. This is an early functional biome/boat transition; animated boathouse gates, boat wakes, explosive floating barrels and enemy torpedo fire are implemented. Collision-driven boathouse entry/exit and shoreline hazards still require refinement.
 
 The game also reads compatible gamepads (left stick to steer, right trigger to accelerate, left trigger to brake, main button to shoot, face buttons for specials, left shoulder to call truck, Start to pause).
 
@@ -60,6 +60,7 @@ The game also reads compatible gamepads (left stick to steer, right trigger to a
 - `src/world/Road.ts` streams curved road and river segments and biome-specific roadside scenery.
 - `src/world/WorldPlan.ts` defines the deterministic five-biome world, smooth centerline and seeded layout.
 - `src/world/BoatWake.ts` animates generated watercraft wakes.
+- `src/world/WaterHazards.ts` creates destructible floating barrels with physical damage.
 - `src/gameplay/Settings.ts` validates and persists quality/audio/accessibility choices.
 - `src/gameplay/GameModes.ts` defines Classic, Modern and Endless Arcade behavior.
 - `src/entities/` owns original procedural vehicle meshes and traffic entities.

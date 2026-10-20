@@ -8,6 +8,7 @@ import { Input } from './Input';
 import { MAX_LIVES, PLAYER_Z, approach, distancePoints, intersects, scoreForTarget, spawnInterval } from './logic';
 import { Road } from '../world/Road';
 import { BoatWake } from '../world/BoatWake';
+import { WaterHazards } from '../world/WaterHazards';
 import { Player } from '../entities/Player';
 import { TrafficVehicle } from '../entities/Traffic';
 import { Projectiles } from '../combat/Projectiles';
@@ -36,6 +37,7 @@ export class Game {
   private readonly audio = new AudioManager();
   private readonly road: Road;
   private readonly wake: BoatWake;
+  private readonly waterHazards: WaterHazards;
   private readonly player: Player;
   private readonly bullets: Projectiles;
   private readonly specials: SpecialWeapons;
@@ -75,6 +77,7 @@ export class Game {
     this.scene.add(sun, new THREE.HemisphereLight(0x6fa8c8, 0x182526, 2.2));
     this.road = new Road(this.scene);
     this.wake = new BoatWake(this.scene);
+    this.waterHazards = new WaterHazards(this.scene);
     this.player = new Player(this.scene);
     this.bullets = new Projectiles(this.scene);
     this.specials = new SpecialWeapons(this.scene);
@@ -136,6 +139,7 @@ export class Game {
     this.van.reset();
     this.road.reset();
     this.wake.reset();
+    this.waterHazards.reset();
     this.player.reset();
     this.scoring.reset();
     this.distance = 0;
@@ -202,7 +206,7 @@ export class Game {
       return;
     }
 
-    this.player.step(dt, controls);
+    this.player.step(dt, controls, this.road.biome, GAME_MODES[this.mode].speedScale);
     this.camera.position.x = approach(this.camera.position.x, this.player.x * 0.13, 3.2, dt);
     const biomeChanged = this.road.step(this.player.speed, dt);
     if (biomeChanged) {
@@ -218,6 +222,7 @@ export class Game {
       this.enemyShots.reset();
       this.bullets.reset();
       this.van.reset();
+      this.waterHazards.reset();
       this.announce(onWater
         ? 'BOATHOUSE TRANSFER — SPEEDBOAT DEPLOYED'
         : 'BOATHOUSE TRANSFER — INTERCEPTOR RESTORED');
@@ -266,6 +271,19 @@ export class Game {
       this.shotClock = 0.115;
     }
     this.bullets.step(dt);
+    if (this.player.isBoat) {
+      for (const event of this.waterHazards.step(
+        dt, this.player.speed, this.player.hitbox(), (target) => this.bullets.hitTest(target)
+      )) {
+        this.flash(event.x, event.z, 0.57, 0xff6a31);
+        this.audio.explode();
+        if (event.kind === 'barrel-impact') this.damagePlayer('EXPLOSIVE BARREL IMPACT');
+        else {
+          const points = this.scoring.bonus(100);
+          if (points) this.announce('WATER HAZARD NEUTRALIZED +100');
+        }
+      }
+    }
     for (const car of this.traffic) {
       car.step(dt, this.player.speed, this.player.x);
       if (car.tryFire(this.player.x)) {
@@ -427,6 +445,7 @@ export class Game {
     this.enemyShots.renderAt(center);
     this.effects.renderAt(center);
     this.wake.renderAt(center);
+    this.waterHazards.renderAt(center);
     this.van.mesh.position.x = 6.4 + center(this.van.mesh.position.z);
     if (this.preferences.quality === 'high' && this.composer) this.composer.render();
     else this.renderer.render(this.scene, this.camera);

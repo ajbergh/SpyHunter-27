@@ -70,7 +70,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [ ] Advanced curve-aware guardrails, branching road geometry and collision boundaries.
 - [ ] Validated road splits, bridges, ramps, guardrails and collision constraints.
 - [x] Five visually distinct biomes: forest, desert, snow, neon city and waterways.
-- [ ] Biome weather, driving traction differences and substantial art refinement.
+- [x] Distinct snow/ice lateral traction, speedboat lateral inertia and mode-adjusted speed ranges.
+- [ ] Biome weather and substantial visual art refinement.
 - [x] Seeded deterministic roadside props and biome transitions on cumulative distance.
 - [ ] Authorable seeded set pieces and biome-specific encounter scripts.
 - [x] Original low-poly speedboat model, water handling and automatic land/water transformation.
@@ -78,7 +79,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [ ] Collision-driven boathouse docking, active steering alignment and full transformation sequence.
 - [x] Animated original water shader and boat enemy encounters.
 - [x] Speedboat wake rings and enemy boat-fired torpedo projectiles.
-- [ ] Shore collision hazards, barrel dumpers and more sophisticated torpedo behavior.
+- [x] Floating explosive barrels with bullet destruction, bonus points and player damage.
+- [ ] Shore collision hazards, dedicated barrel-dumper enemy and more sophisticated torpedo behavior.
 
 **Exit:** 15-minute play session with seamless road/water traversal.
 

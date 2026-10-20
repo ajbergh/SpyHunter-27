@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { Controls } from '../core/Input';
 import { approach, clamp, PLAYER_Z, ROAD_HALF_WIDTH, type RectHitbox } from '../core/logic';
 import { makeInterceptor, makeSpeedboat } from './VehicleModels';
+import type { Biome } from '../world/WorldPlan';
 
 export class Player {
   readonly mesh = new THREE.Group();
@@ -9,6 +10,7 @@ export class Player {
   private readonly boat = makeSpeedboat(false);
   isBoat = false;
   private elapsed = 0;
+  private lateralVelocity = 0;
   x = 0;
   speed = 25;
   invulnerability = 0;
@@ -26,6 +28,7 @@ export class Player {
     this.invulnerability = 0;
     this.mesh.visible = true;
     this.elapsed = 0;
+    this.lateralVelocity = 0;
     this.setBoat(false);
     this.mesh.position.set(0, 0.12, PLAYER_Z);
   }
@@ -36,14 +39,19 @@ export class Player {
     this.boat.visible = enabled;
   }
 
-  step(dt: number, controls: Controls): void {
+  step(dt: number, controls: Controls, surface: Biome = 'forest', speedScale = 1): void {
     this.elapsed += dt;
     const desired = this.isBoat
       ? controls.brake ? 13 : controls.throttle ? 46 : 29
       : controls.brake ? 10 : controls.throttle ? 54 : 30;
-    this.speed = approach(this.speed, desired, controls.brake ? 4.2 : 1.6, dt);
+    this.speed = approach(this.speed, desired * speedScale, controls.brake ? 4.2 : 1.6, dt);
     const steerSpeed = (this.isBoat ? 8.0 : 10.0) + this.speed * 0.065;
-    this.x = clamp(this.x + controls.steer * steerSpeed * dt, -ROAD_HALF_WIDTH + 1.45, ROAD_HALF_WIDTH - 1.45);
+    // Icy roads retain lateral momentum; boats bank more softly than cars.
+    const traction = surface === 'snow' ? 2.2 : this.isBoat ? 5.5 : 19;
+    this.lateralVelocity = approach(this.lateralVelocity, controls.steer * steerSpeed, traction, dt);
+    const nextX = clamp(this.x + this.lateralVelocity * dt, -ROAD_HALF_WIDTH + 1.45, ROAD_HALF_WIDTH - 1.45);
+    if (nextX !== this.x + this.lateralVelocity * dt) this.lateralVelocity = 0;
+    this.x = nextX;
     this.mesh.position.x = approach(this.mesh.position.x, this.x, 24, dt);
     this.mesh.rotation.z = approach(this.mesh.rotation.z, -controls.steer * 0.075, 9, dt);
     this.mesh.rotation.y = approach(this.mesh.rotation.y, controls.steer * (this.isBoat ? 0.09 : 0.035), 8, dt);
