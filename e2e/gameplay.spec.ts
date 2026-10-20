@@ -117,3 +117,23 @@ test('custom keyboard mappings persist and update visible control hints', async 
   await expect(page.locator('#reduced-motion')).toBeChecked();
   await expect(page.locator('.cabinet')).toHaveClass(/reduced-motion/);
 });
+
+test('reaches mission terminated from real collisions and supports clean redeploy', async ({ page }) => {
+  test.setTimeout(50000);
+  const crashes: string[] = [];
+  page.on('pageerror', e => crashes.push(e.message));
+  await page.goto('/');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await page.keyboard.down('d');
+  await page.keyboard.down('w');
+  await expect(page.locator('#gameover')).toBeVisible({ timeout: 35000 });
+  await page.keyboard.up('d');
+  await page.keyboard.up('w');
+  await expect(page.locator('#result-time')).toContainText(/\d\d:\d\d/);
+  await expect(page.locator('#result-distance')).toContainText('KM');
+  await expect(page.locator('#result-accuracy')).toContainText('%');
+  await page.getByRole('button', { name: /redeploy/i }).click();
+  await expect(page.locator('#gameover')).toBeHidden();
+  await expect(page.locator('#lives')).toHaveText('●●●');
+  expect(crashes).toEqual([]);
+});

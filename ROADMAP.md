@@ -4,7 +4,7 @@
 **Stack:** Three.js / WebGL2 / TypeScript / Vite  
 **Target:** Polished 60 FPS desktop browser arcade game
 
-**Latest CI verification (2026-10-20):** strict TypeScript passed, 30 unit tests passed across 10 files, Vite production build passed, Chromium Playwright smoke test passed. Newest Phase 2 increment covers motorcycles, paired pursuit encounters, timed combos and pooled explosion effects. Full manual session and visual inspection remain outstanding.
+**Last verified green baseline (2026-10-20):** strict TypeScript, 51 unit tests, Vite production build, 11 Chromium Playwright browser tests. Subsequent controller and session-results work is under validation. Full manual play session and visual review remain outstanding. Full manual session and visual inspection remain outstanding.
 
 ## North star
 
@@ -116,7 +116,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [ ] Gamepad button remapping and extended pause/focus/accessibility behavior.
 - [x] Optional FPS, draw calls, active vehicle diagnostics overlay.
 - [ ] Profiling: verified 60 FPS at 1080p midrange GPU and integrated GPU tier.
-- [ ] Memory soak, collision fuzzing, fixed-step consistency, cross-browser tests.
+- [x] Chromium E2E game-over / full-life-cycle / redeploy test added (awaiting CI).
+- [ ] 10-minute memory soak, collision fuzzing, fixed-step consistency and cross-browser tests.
 - [ ] Document asset provenance; resolve final name and trademark review.
 
 **Exit:** release candidate with tests, production bundle and deployment instructions.
