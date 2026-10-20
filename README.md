@@ -2,7 +2,7 @@
 
 A modern, original WebGL arcade-combat driving game inspired by the feel of early 1980s vertical-scrolling highway games. Powered by **Three.js + TypeScript + Vite**.
 
-> **Project status:** Phase 2 in progress. Phase 1 driving, traffic and scoring are implemented; initial special weapons (missile, oil, smoke), civilian NO POINTS penalty, enemy roles and an alignment-based support truck are now added. Curved highways, watercraft, biome variety, watercraft, biome variety and premium art/audio remain roadmap items. Phase 2 now includes helicopter bombs, enforcer fire, motorcycle attackers, paired pursuits, timed combos, and pooled explosions. Automated Chromium WebGL start/control/pause smoke testing passed; the expanded Phase 2 suite has 30 passing unit tests. Extended manual gameplay and art-quality reviews remain outstanding.
+> **Project status:** Phase 2 in progress. Phase 1 driving, traffic and scoring are implemented; initial special weapons (missile, oil, smoke), civilian NO POINTS penalty, enemy roles and an alignment-based support truck are now added. Curved highways, watercraft, biome variety, watercraft, biome variety and premium art/audio remain roadmap items. Phase 2 includes helicopter bombs, enforcer fire, motorcycle attackers, paired pursuits, timed combos and pooled explosions. Initial Phase 3 curve/biome/watercraft traversal and game mode selection are implemented. Automated Chromium WebGL start/control/pause smoke testing passed; the expanded Phase 2 suite has 30 passing unit tests. Extended manual gameplay and art-quality reviews remain outstanding.
 
 ## Run locally
 
@@ -40,6 +40,12 @@ npm run preview
 | Start / retry | Enter |
 | Mute | M |
 
+### Game modes and environment progression
+
+Choose **Classic Arcade**, **Modern Arcade**, or **Endless Pursuit** on the title screen. Modern starts with five lives and lighter traffic; Classic has three lives; Endless has a higher encounter rate.
+
+The deterministic streamed world progresses through forest, desert, snow, neon city and waterway regions. The interceptor transforms into a speedboat in the water region, where hostile patrol boats appear. This is an early functional biome/boat transition; interactive boathouse entry/exit, torpedoes and water collision remain future work.
+
 The game also reads compatible gamepads (left stick to steer, right trigger to accelerate, left trigger to brake, main button to shoot, face buttons for specials, left shoulder to call truck, Start to pause).
 
 ## Architecture
@@ -47,7 +53,9 @@ The game also reads compatible gamepads (left stick to steer, right trigger to a
 - `src/core/Game.ts` coordinates the game state, fixed-step simulation, collisions, scoring and render lifecycle.
 - `src/core/GameLoop.ts` implements a capped 60 Hz simulation accumulator and independent rendering.
 - `src/core/Input.ts` normalizes keyboard/gamepad controls.
-- `src/world/Road.ts` streams recyclable three-dimensional highway segments and roadside scenery.
+- `src/world/Road.ts` streams curved road and river segments and biome-specific roadside scenery.
+- `src/world/WorldPlan.ts` defines the deterministic five-biome world, smooth centerline and seeded layout.
+- `src/gameplay/GameModes.ts` defines Classic, Modern and Endless Arcade behavior.
 - `src/entities/` owns original procedural vehicle meshes and traffic entities.
 - `src/combat/Projectiles.ts` handles pooled bullets and hit checks.
 - `src/combat/SpecialWeapons.ts` manages missile homing, oil/smoke hazard interactions, ammo and cooldown.

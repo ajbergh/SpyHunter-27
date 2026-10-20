@@ -49,6 +49,12 @@ export class Projectiles {
     return false;
   }
 
+  renderAt(center: (z: number) => number): void {
+    for (const bullet of this.bullets) {
+      if (bullet.active) bullet.mesh.position.x = bullet.x + center(bullet.z);
+    }
+  }
+
   reset(): void { for (const bullet of this.bullets) this.deactivate(bullet); }
 
   private deactivate(bullet: Bullet): void {

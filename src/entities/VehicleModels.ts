@@ -41,6 +41,7 @@ export function makeInterceptor(): THREE.Group {
 
 export function makeTrafficVehicle(hostile: boolean, color: number, variant = 0): THREE.Group {
   if (variant === 4) return makeMotorcycle(hostile, color);
+  if (variant === 5) return makeSpeedboat(hostile, color);
   const group = new THREE.Group();
   const body = metal(color, 0.49);
   const dark = metal(0x151b27);
@@ -95,5 +96,33 @@ export function makeMotorcycle(hostile: boolean, color: number): THREE.Group {
     new THREE.MeshBasicMaterial({ color: hostile ? 0xff344f : 0xffb96e }));
   lamp.position.set(0, 0.92, 1.4);
   group.add(lamp);
+  return group;
+}
+
+/** Original low-poly speedboat: streamlined hull, glazed cockpit and wake fins. */
+export function makeSpeedboat(hostile: boolean, color = 0xe7f1f3): THREE.Group {
+  const group = new THREE.Group();
+  const hull = new THREE.MeshStandardMaterial({
+    color, metalness: 0.58, roughness: 0.25, flatShading: true,
+  });
+  const deck = metal(hostile ? 0x29364c : 0x182639);
+  const glass = new THREE.MeshStandardMaterial({ color: hostile ? 0x522637 : 0x17618b, metalness: 0.6, roughness: 0.13 });
+  const shape = new THREE.CylinderGeometry(0.68, 1.55, 5.3, 5, 1, false);
+  const boatBody = new THREE.Mesh(shape, hull);
+  boatBody.rotation.x = Math.PI / 2;
+  boatBody.rotation.y = Math.PI / 2;
+  boatBody.scale.set(1, 0.66, 1);
+  boatBody.position.y = 0.42;
+  group.add(boatBody);
+  box(group, [2.3, 0.26, 4.2], [0, 0.66, 0.28], deck);
+  box(group, [1.5, 0.68, 1.55], [0, 1.01, 0.6], glass);
+  box(group, [1.5, 0.22, 1.0], [0, 0.77, -1.45], hull);
+  for (const side of [-1, 1]) {
+    box(group, [0.24, 0.17, 1.2], [side * 1.05, 0.8, -0.35], hull);
+    box(group, [0.15, 0.12, 0.42], [side * 0.75, 0.84, -2.05],
+      new THREE.MeshBasicMaterial({ color: hostile ? 0xff3946 : 0x82f0ff }));
+    box(group, [0.26, 0.38, 1.3], [side * 0.86, 0.41, 2.0], deck);
+  }
+  box(group, [0.9, 0.13, 0.8], [0, 0.5, 2.55], deck);
   return group;
 }

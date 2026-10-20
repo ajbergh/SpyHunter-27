@@ -151,6 +151,13 @@ export class AirThreats {
     return events;
   }
 
+  renderAt(center: (z: number) => number): void {
+    for (const helicopter of this.helicopters) {
+      helicopter.mesh.position.x = helicopter.x + center(helicopter.z);
+    }
+    for (const bomb of this.bombs) bomb.group.position.x = bomb.x + center(bomb.z);
+  }
+
   private dropBomb(x: number, z: number): void {
     const group = new THREE.Group();
     const ring = new THREE.Mesh(new THREE.RingGeometry(1.65, 2.35, 28),

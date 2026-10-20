@@ -8,6 +8,7 @@ type Instance = {
   life: number;
   duration: number;
   strength: number;
+  laneX: number;
 };
 
 /**
@@ -50,7 +51,7 @@ export class ExplosionEffects {
     }
     group.visible = false;
     this.scene.add(group);
-    return { group, core, ring, sparks, life: 0, duration: 1, strength: 1 };
+    return { group, core, ring, sparks, life: 0, duration: 1, strength: 1, laneX: 0 };
   }
 
   emit(x: number, z: number, duration = 0.5, color = 0xffaa44): void {
@@ -59,6 +60,7 @@ export class ExplosionEffects {
     effect.life = duration;
     effect.duration = duration;
     effect.strength = Math.max(0.4, duration * 2.5);
+    effect.laneX = x;
     effect.group.position.set(x, 1.1, z);
     effect.group.visible = true;
     effect.core.material.color.setHex(color);
@@ -91,6 +93,12 @@ export class ExplosionEffects {
         spark.rotation.y = angle;
         spark.material.opacity = fade;
       }
+    }
+  }
+
+  renderAt(center: (z: number) => number): void {
+    for (const effect of this.pool) {
+      if (effect.group.visible) effect.group.position.x = effect.laneX + center(effect.group.position.z);
     }
   }
 

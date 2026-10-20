@@ -37,3 +37,12 @@ test('boots WebGL and plays the fundamental arcade loop', async ({ page }) => {
   await page.screenshot({ path: 'test-results/phase2-gameplay.png' });
   expect(crashes).toEqual([]);
 });
+
+test('modern arcade mode configures lives and begins at forest biome', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#mode-select').selectOption('modern');
+  await expect(page.locator('#mode-description')).toContainText('Extra protection');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#lives')).toHaveText('●●●●●');
+  await expect(page.locator('#environment-name')).toContainText('FOREST');
+});

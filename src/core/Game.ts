@@ -12,6 +12,7 @@ import { EnemyProjectiles } from '../combat/EnemyProjectiles';
 import { Interface, type Screen } from '../ui/Interface';
 import { AudioManager } from '../audio/Audio';
 import { Scoring } from '../gameplay/Scoring';
+import { GAME_MODES, type GameMode } from '../gameplay/GameModes';
 import { WeaponsVan } from '../gameplay/WeaponsVan';
 import { planEncounter } from '../gameplay/EncounterDirector';
 import { ExplosionEffects } from '../combat/ExplosionEffects';
@@ -35,6 +36,7 @@ export class Game {
   private readonly traffic: TrafficVehicle[] = [];
   private readonly effects: ExplosionEffects;
   private screen: Screen = 'menu';
+  private mode: GameMode = 'classic';
   private best = 0;
   private lives = MAX_LIVES;
   private distance = 0;
@@ -70,7 +72,7 @@ export class Game {
     this.van = new WeaponsVan(this.scene);
     try { this.best = Number(localStorage.getItem('spyhunter27-best') || 0) || 0; } catch { /* private browsing may deny storage */ }
     this.refreshHUD();
-    this.ui.onStart = () => this.start();
+    this.ui.onStart = (mode) => this.start(mode);
     this.ui.onResume = () => this.resume();
     this.loop = new GameLoop((dt) => this.update(dt), () => this.render());
     new ResizeObserver(() => this.resize()).observe(this.ui.stage);
@@ -92,7 +94,8 @@ export class Game {
     this.camera.updateProjectionMatrix();
   }
 
-  private start(): void {
+  private start(mode: GameMode = this.mode): void {
+    this.mode = mode;
     void this.audio.unlock();
     for (const car of this.traffic) car.dispose(this.scene);
     this.traffic.length = 0;
@@ -106,8 +109,8 @@ export class Game {
     this.player.reset();
     this.scoring.reset();
     this.distance = 0;
-    this.lives = MAX_LIVES;
-    this.grace = 3;
+    this.lives = GAME_MODES[mode].lives;
+    this.grace = mode === 'modern' ? 5 : 3;
     this.dockingTimer = 0;
     this.spawnClock = 0.8;
     this.airSpawnClock = 9;
@@ -162,11 +165,28 @@ export class Game {
 
     this.player.step(dt, controls);
     this.camera.position.x = approach(this.camera.position.x, this.player.x * 0.13, 3.2, dt);
-    this.road.step(this.player.speed, dt);
+    const biomeChanged = this.road.step(this.player.speed, dt);
+    if (biomeChanged) {
+      const onWater = this.road.biome === 'water';
+      this.player.setBoat(onWater);
+      this.player.invulnerability = 3.5;
+      this.grace = 2;
+      // Road/river portals are momentary level transitions: clear the old
+      // encounter, player bullets and aerial bombs before entering the new mode.
+      for (const car of this.traffic) car.dispose(this.scene);
+      this.traffic.length = 0;
+      this.air.reset();
+      this.enemyShots.reset();
+      this.bullets.reset();
+      this.van.reset();
+      this.announce(onWater
+        ? 'BOATHOUSE TRANSFER — SPEEDBOAT DEPLOYED'
+        : 'BOATHOUSE TRANSFER — INTERCEPTOR RESTORED');
+    }
     this.distance += this.player.speed * dt;
     this.scoring.tick(dt, distancePoints(this.player.speed, dt));
     this.airSpawnClock -= dt;
-    if (this.distance > 260 && this.airSpawnClock <= 0) {
+    if (!this.player.isBoat && this.distance > 260 && this.airSpawnClock <= 0) {
       if (this.air.helicopters.length === 0) {
         this.air.spawn((Math.random() - 0.5) * 9);
         this.announce('AIR THREAT DETECTED — MISSILES RECOMMENDED');
@@ -177,15 +197,15 @@ export class Game {
     this.spawnClock -= dt;
     if (this.spawnClock <= 0) {
       this.spawnEncounter();
-      this.spawnClock += spawnInterval(this.distance) * (0.8 + Math.random() * 0.4);
+      this.spawnClock += spawnInterval(this.distance) * GAME_MODES[this.mode].spawnScale * (0.8 + Math.random() * 0.4);
     }
 
     this.handleWeapons(controls.missilePressed, controls.oilPressed, controls.smokePressed);
     if (controls.vanPressed) {
-      if (this.van.call()) this.announce('SUPPORT VAN INBOUND — ALIGN WITH REAR RAMP');
+      if (!this.player.isBoat && this.van.call()) this.announce('SUPPORT VAN INBOUND — ALIGN WITH REAR RAMP');
       else this.announce('SUPPORT VAN NOT READY');
     }
-    const vanEvent = this.van.step(dt, this.player.speed, this.player.x);
+    const vanEvent = this.player.isBoat ? null : this.van.step(dt, this.player.speed, this.player.x);
     if (vanEvent === 'docked') {
       this.specials.refill();
       this.player.mesh.visible = false;
@@ -299,14 +319,15 @@ export class Game {
     const encounter = planEncounter(this.traffic, this.distance, Math.random);
     if (encounter.type === 'pursuit-pair') this.announce('COORDINATED PURSUIT — TWO HOSTILES');
     for (const spawn of encounter.spawns) {
+      const variant = this.player.isBoat ? 5 : spawn.variant;
       const colors = spawn.hostile
         ? [0x902d3e, 0x4c182b, 0x9e553e, 0xaf3048]
         : [0x7495a7, 0xc5bda9, 0x647c73, 0x8e9bae];
       const color = colors[Math.floor(Math.random() * colors.length)];
-      const speed = spawn.variant === 4 ? 16 + Math.random() * 9
+      const speed = variant === 4 ? 16 + Math.random() * 9
         : spawn.hostile ? 8 + Math.random() * 7 : 12 + Math.random() * 7;
       this.traffic.push(new TrafficVehicle(
-        this.scene, spawn.x, spawn.z, spawn.hostile, spawn.variant, color, speed,
+        this.scene, spawn.x, spawn.z, spawn.hostile, variant, color, speed,
       ));
     }
   }
@@ -338,9 +359,10 @@ export class Game {
 
   private refreshHUD(): void {
     this.ui.stats(this.scoring.score, Math.max(this.best, this.scoring.score), this.lives, this.player.speed);
-    this.ui.armory(this.specials.counts, this.van.status, this.scoring.lockoutRemaining);
+    this.ui.armory(this.specials.counts, this.player.isBoat ? 'NO VAN / WATER' : this.van.status, this.scoring.lockoutRemaining);
     this.ui.threats(this.air.helicopters.length, this.enemyShots.activeCount);
     this.ui.combo(this.scoring.comboMultiplier, this.scoring.comboRemaining);
+    this.ui.environment(this.road.biome, this.player.isBoat);
   }
 
   private gameOver(): void {
@@ -352,5 +374,17 @@ export class Game {
     this.ui.show(this.screen);
   }
 
-  private render(): void { this.renderer.render(this.scene, this.camera); }
+  private render(): void {
+    const center = (z: number): number => this.road.centerAt(z);
+    // Simulation runs in a stable lane-relative coordinate system. Only the
+    // presentation layer bends positions along the generated centerline.
+    for (const car of this.traffic) car.mesh.position.x = car.x + center(car.z);
+    this.bullets.renderAt(center);
+    this.specials.renderAt(center);
+    this.air.renderAt(center);
+    this.enemyShots.renderAt(center);
+    this.effects.renderAt(center);
+    this.van.mesh.position.x = 6.4 + center(this.van.mesh.position.z);
+    this.renderer.render(this.scene, this.camera);
+  }
 }

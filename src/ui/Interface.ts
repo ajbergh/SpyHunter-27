@@ -1,4 +1,6 @@
 import type { WeaponCounts } from '../combat/SpecialWeapons';
+import { GAME_MODES, type GameMode } from '../gameplay/GameModes';
+import type { Biome } from '../world/WorldPlan';
 
 export type Screen = 'menu' | 'playing' | 'paused' | 'gameover';
 
@@ -9,7 +11,8 @@ export class Interface {
   private readonly paused: HTMLElement;
   private readonly gameover: HTMLElement;
   private readonly hud: HTMLElement;
-  onStart: () => void = () => {};
+  onStart: (mode: GameMode) => void = () => {};
+  private selectedMode: GameMode = 'classic';
   onResume: () => void = () => {};
 
   constructor(host: HTMLElement) {
@@ -25,6 +28,7 @@ export class Interface {
           <div class="hud-block hud-right"><span class="micro">LIVES <span id="lives">●●●</span></span><strong><span id="speed">025</span><small> MPH</small></strong><span class="micro">DUAL CANNONS // <b class="ready">ARMED</b></span></div>
         </header>
         <div class="toast" id="toast" aria-live="polite"></div>
+        <div class="environment-name" id="environment-name">FOREST HIGHWAY</div>
         <div class="special-hud" id="special-hud">
           <div class="special-line">[Q] MISSILE <b id="ammo-missile">03</b></div>
           <div class="special-line">[E] OIL <b id="ammo-oil">02</b></div>
@@ -41,6 +45,9 @@ export class Interface {
           <p class="subhead">THE PURSUIT NEVER ENDS.</p>
           <div class="panel-rule"></div>
           <p class="intro">INTERCEPT HOSTILES. PROTECT CIVILIANS.<br />SURVIVE THE HIGHWAY.</p>
+          <label class="mode-label" for="mode-select">MISSION PROTOCOL</label>
+          <select id="mode-select" class="mode-select" aria-label="Game mode"><option value="classic">CLASSIC ARCADE</option><option value="modern">MODERN ARCADE</option><option value="endless">ENDLESS PURSUIT</option></select>
+          <p class="mode-description" id="mode-description">Three lives. Fast enemies. Every impact counts.</p>
           <button id="start-button" class="primary-button">INITIATE PURSUIT <span>↗</span></button>
           <div class="keys">A / D <span>STEER</span> · W / S <span>SPEED</span> · SPACE <span>FIRE</span><div>Q <span>MISSILE</span> · E <span>OIL</span> · R <span>SMOKE</span> · F <span>RESUPPLY</span></div></div>
           <p class="build-tag">PHASE 2 // COMBAT SYSTEMS ACTIVE</p>
@@ -67,8 +74,14 @@ export class Interface {
     this.paused = this.get('paused');
     this.gameover = this.get('gameover');
     this.hud = this.get('hud');
-    this.get('start-button').addEventListener('click', () => this.onStart());
-    this.get('retry-button').addEventListener('click', () => this.onStart());
+    const mode = this.get<HTMLSelectElement>('mode-select');
+    mode.addEventListener('change', () => {
+      const selected = mode.value as GameMode;
+      this.selectedMode = selected;
+      this.get('mode-description').textContent = GAME_MODES[selected].description;
+    });
+    this.get('start-button').addEventListener('click', () => this.onStart(this.selectedMode));
+    this.get('retry-button').addEventListener('click', () => this.onStart(this.selectedMode));
     this.get('resume-button').addEventListener('click', () => this.onResume());
     this.show('menu');
   }
@@ -102,6 +115,14 @@ export class Interface {
   threats(helicopters: number, enemyRounds: number): void {
     this.get('air-count').textContent = String(helicopters).padStart(2, '0');
     this.get('enemy-round-count').textContent = String(enemyRounds).padStart(2, '0');
+  }
+
+  environment(biome: Biome, boat: boolean): void {
+    const labels: Record<Biome, string> = {
+      forest: 'FOREST HIGHWAY', desert: 'DESERT PURSUIT',
+      snow: 'ARCTIC RUN', city: 'NEON CITY', water: 'WATERWAY INTERCEPT',
+    };
+    this.get('environment-name').textContent = labels[biome] + (boat ? ' // SPEEDBOAT' : '');
   }
 
   combo(multiplier: number, seconds: number): void {

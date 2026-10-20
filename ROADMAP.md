@@ -63,14 +63,19 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 
 **Exit:** complete, distinct combat mechanics and memorable resupply loop.
 
-## Phase 3 — Living world and watercraft
+## Phase 3 — Living world and watercraft (in progress)
 
-- [ ] Continuous curved-road centerline, geometry/marking interpolation.
+- [x] Smooth deterministic curved centerline with continuous streamed road/water strips and markings.
+- [ ] Advanced curve-aware guardrails, branching road geometry and collision boundaries.
 - [ ] Validated road splits, bridges, ramps, guardrails and collision constraints.
-- [ ] Five biomes: forest, desert, snow/ice, city at night, waterways.
-- [ ] Seeded authored-pattern world generation with biome transitions.
-- [ ] Boathouse conversion, boat physics and original boat model.
-- [ ] Water shader, animated wake, water enemies and torpedo hazards.
+- [x] Five visually distinct biomes: forest, desert, snow, neon city and waterways.
+- [ ] Biome weather, driving traction differences and substantial art refinement.
+- [x] Seeded deterministic roadside props and biome transitions on cumulative distance.
+- [ ] Authorable seeded set pieces and biome-specific encounter scripts.
+- [x] Original low-poly speedboat model, water handling and automatic land/water transformation.
+- [ ] Interactive boathouse entry/exit animation and collision-driven conversion.
+- [x] Animated original water shader and boat enemy encounters.
+- [ ] Water wakes, shore collisions and torpedo hazards.
 
 **Exit:** 15-minute play session with seamless road/water traversal.
 
@@ -98,6 +103,14 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 **Exit:** release candidate with tests, production bundle and deployment instructions.
 
 ## Next implementation batch
+
+1. Verify initial Phase 3 changes with CI and browser mode-selection tests.
+2. Add boathouse portal geometry with interactive alignment/docking and safe return to driving.
+3. Implement torpedoes, river hazards, actual bank collisions, boat wakes and biome-dependent traction.
+4. Add real quality presets, settings and accessibility controls; compose original layered engine/music audio.
+5. Add diagnostics, longer Chromium play sessions and screenshots for all five environments.
+
+## Previous planned Phase 2 follow-ups
 
 1. Inspect captured Chromium gameplay screenshots and tune visual readability and vehicle placement.
 2. Capture and inspect gameplay screenshots, then run a full manual play session.

@@ -117,6 +117,11 @@ export class SpecialWeapons {
     return impacts;
   }
 
+  renderAt(center: (z: number) => number): void {
+    for (const missile of this.missiles) missile.mesh.position.x = missile.x + center(missile.z);
+    for (const hazard of this.hazards) hazard.mesh.position.x = hazard.x + center(hazard.z);
+  }
+
   private makeMissile(): THREE.Group {
     const group = new THREE.Group();
     const body = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.27, 1.6, 8),

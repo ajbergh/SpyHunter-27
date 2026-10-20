@@ -70,3 +70,8 @@ h2 { font-size: 88px; line-height: .9; }
 .mission-results { display:flex; flex-wrap:wrap; justify-content:center; gap:7px 20px; font:700 12px 'Rajdhani',sans-serif; letter-spacing:.1em; color:#b1c6d2; margin:0 0 18px; }
 .mission-results b { color:#ffcf78; }
 @media(max-width:520px) { .combo-counter { top:160px; left:7px; padding:5px 6px; } }
+
+.mode-label { color:#86b9ca; font:700 11px 'Rajdhani',sans-serif; letter-spacing:.2em; margin-bottom:4px; }
+.mode-select { width:230px; background:#0a2134; color:#ffd78c; border:1px solid #5a8397; padding:9px 14px; font:800 16px 'Barlow Condensed',sans-serif; letter-spacing:.14em; cursor:pointer; text-align:center; }
+.mode-description { margin:8px 0 17px; font-size:12px; letter-spacing:.05em; color:#a4b9c5; }
+.environment-name { position:absolute; z-index:3; bottom:52px; left:0; width:100%; text-align:center; font:700 11px 'Rajdhani',sans-serif; letter-spacing:.2em; color:#b9e6e5; pointer-events:none; text-shadow:0 2px 8px #000; }

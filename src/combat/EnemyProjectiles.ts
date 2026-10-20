@@ -49,6 +49,12 @@ export class EnemyProjectiles {
     return impacts;
   }
 
+  renderAt(center: (z: number) => number): void {
+    for (const round of this.rounds) {
+      if (round.active) round.mesh.position.x = round.x + center(round.z);
+    }
+  }
+
   reset(): void { for (const round of this.rounds) this.deactivate(round); }
 
   private deactivate(round: HostileRound): void { round.active = false; round.mesh.visible = false; }
