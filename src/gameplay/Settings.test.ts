@@ -40,7 +40,7 @@ describe('durable graphics and audio preferences', () => {
     expect(assignGamepadBinding(DEFAULT_GAMEPAD_BINDINGS, 'fire', 4.5)).toBeNull();
   });
   it('loads and safely rejects malformed persisted gamepad controls', () => {
-    const p = parsePreferences({ gamepadBindings: { fire: 12, missile: 0, oil: -4 } });
+    const p = parsePreferences({ gamepadBindings: { fire: 12, missile: 12, oil: -4 } });
     expect(p.gamepadBindings.fire).toBe(12);
     expect(p.gamepadBindings.missile).toBe(1);
     expect(p.gamepadBindings.oil).toBe(2);
