@@ -58,7 +58,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] First deployable support truck with an animated ramp, approach/cooldown, alignment-based docking and inventory refill.
 - [x] Animate resupply van rear doors, ramp, beacons and brief vehicle-hide/docking camera choreography.
 - [x] Animate visible interceptor moving into van and safe reentry with invulnerability and cleared deployment lane.
-- [ ] More detailed interior animation and feedback for near-miss docking.
+- [x] One-shot approach guidance distinguishes wrong lane and wrong speed, without prematurely failing the van docking sequence.
+- [ ] More detailed van interior animation and loading choreography.
 - [x] Five-second civilian casualty NO POINTS lockout with HUD warning and casualty counter.
 - [x] Initial lane reservation check at spawn horizon.
 - [x] Deterministic encounter-planning function with early-game gating and lane safety unit tests.

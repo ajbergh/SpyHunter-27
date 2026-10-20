@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { PLAYER_Z } from '../core/logic';
 
 export type VanState = 'idle' | 'approaching' | 'docking';
+export type VanEvent = 'docked' | 'missed' | 'align-lane' | 'adjust-speed' | null;
 
 /** Animated support truck. The player must actually meet and align with the rear ramp. */
 export class WeaponsVan {
@@ -14,6 +15,7 @@ export class WeaponsVan {
   private state: VanState = 'idle';
   private cooldown = 0;
   private dockTimer = 0;
+  private approachHintGiven = false;
   private readonly lane = 6.4;
 
   constructor(scene: THREE.Scene) {
@@ -63,6 +65,7 @@ export class WeaponsVan {
     this.cooldown = 0;
     this.elapsed = 0;
     this.dockTimer = 0;
+    this.approachHintGiven = false;
     this.ramp.rotation.x = -0.06;
     this.doorLeft.rotation.y = 0;
     this.doorRight.rotation.y = 0;
@@ -79,10 +82,11 @@ export class WeaponsVan {
     this.doorLeft.rotation.y = 0;
     this.doorRight.rotation.y = 0;
     this.cooldown = 45;
+    this.approachHintGiven = false;
     return true;
   }
 
-  step(dt: number, playerSpeed: number, playerX: number): 'docked' | 'missed' | null {
+  step(dt: number, playerSpeed: number, playerX: number): VanEvent {
     this.cooldown = Math.max(0, this.cooldown - dt);
     this.elapsed += dt;
     this.beacon.scale.x = 0.8 + Math.abs(Math.sin(this.elapsed * 5)) * 0.5;
@@ -107,11 +111,17 @@ export class WeaponsVan {
     }
     // Trigger only when the player's nose is aligned with the exposed loading ramp.
     const rearZ = this.mesh.position.z + 5.6;
-    if (Math.abs(rearZ - (PLAYER_Z - 2.1)) < 2.4 &&
-        Math.abs(playerX - this.lane) < 1.45 && playerSpeed >= 15 && playerSpeed <= 49) {
+    const atRamp = Math.abs(rearZ - (PLAYER_Z - 2.1)) < 2.4;
+    const aligned = Math.abs(playerX - this.lane) < 1.45;
+    const speedCorrect = playerSpeed >= 15 && playerSpeed <= 49;
+    if (atRamp && aligned && speedCorrect) {
       this.state = 'docking';
       this.dockTimer = 1.3;
       return 'docked';
+    }
+    if (atRamp && !this.approachHintGiven) {
+      this.approachHintGiven = true;
+      return !aligned ? 'align-lane' : 'adjust-speed';
     }
     if (this.mesh.position.z > PLAYER_Z + 17) {
       this.state = 'idle';

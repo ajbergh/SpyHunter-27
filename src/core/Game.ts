@@ -405,8 +405,14 @@ export class Game {
       this.announce(resupplyBonus ? 'DOCKING SUCCESS — WEAPONS REPLENISHED  +500'
         : 'WEAPONS REPLENISHED — NO POINTS DURING CIVILIAN PENALTY');
       this.audio.resupply();
+    } else if (vanEvent === 'align-lane') {
+      this.announce('DOCKING ALIGNMENT — MOVE INTO RIGHT LANE');
+      this.audio.warning();
+    } else if (vanEvent === 'adjust-speed') {
+      this.announce('DOCKING SPEED — MAINTAIN 15–49');
+      this.audio.warning();
     } else if (vanEvent === 'missed') {
-      this.announce('SUPPORT VAN MISSED');
+      this.announce('SUPPORT VAN MISSED — TRY ANOTHER APPROACH');
     }
 
     this.shotClock -= dt;
