@@ -22,6 +22,7 @@ export class Weather {
     this.geometry.setAttribute('position', new THREE.BufferAttribute(this.positions, 3));
     this.points = new THREE.Points(this.geometry, this.material);
     scene.add(this.points);
+    this.setQuality('medium');
     this.setBiome('forest');
   }
 
