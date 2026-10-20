@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { biomeAt, roadCenterAt, seededRandom, type Biome } from './WorldPlan';
 import { PLAYER_Z } from '../core/logic';
+import { splitMedianHalfWidth, SPLIT_PERIOD, SPLIT_START } from './SplitRoad';
 
 const LENGTH = 30;
 const COUNT = 10;
@@ -22,6 +23,35 @@ function strip(anchor: number, halfWidth: number, fromZ: number, toZ: number, y:
     if (i < steps) {
       const n = i * 2;
       indices.push(n, n + 2, n + 1, n + 1, n + 2, n + 3);
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+
+/**
+ * Center hazard overlay follows the same curved world-space geometry as road
+ * ribbons. Geometry collapses to zero width as two drivable paths rejoin.
+ */
+function medianRibbon(anchor: number, side: -1 | 0 | 1, width = 0): THREE.BufferGeometry {
+  const vertices: number[] = [];
+  const indices: number[] = [];
+  const n = 30;
+  for (let i = 0; i <= n; i++) {
+    const z = -15.03 + i * 30.06 / n;
+    const world = anchor - z;
+    const gap = splitMedianHalfWidth(world);
+    const center = roadCenterAt(world) - roadCenterAt(anchor);
+    const left = side === 0 ? center - gap : center + side * gap - width / 2;
+    const right = side === 0 ? center + gap : center + side * gap + width / 2;
+    vertices.push(left, side === 0 ? 0.055 : 0.063, z, right, side === 0 ? 0.055 : 0.063, z);
+    if (i < n) {
+      const a = i * 2;
+      indices.push(a, a + 2, a + 1, a + 1, a + 2, a + 3);
     }
   }
   const geometry = new THREE.BufferGeometry();
@@ -85,6 +115,44 @@ export class Road {
     if (biome !== 'water') for (const x of [-3.3, 3.3]) {
       for (const z of [-11, -3.5, 4, 11.5]) {
         group.add(this.line(anchor, x, z, z + 3.2, 0.02, 0.11, white));
+      }
+    }
+    if (biome !== 'water' && Array.from({ length: 10 }, (_, i) =>
+      splitMedianHalfWidth(anchor - (-15 + i * (30 / 9)))).some(gap => gap > 0.03)) {
+      const hazard = new THREE.Mesh(medianRibbon(anchor, 0),
+        new THREE.MeshStandardMaterial({ color: biome === 'snow' ? 0x314957 : 0x382d24,
+          roughness: 1, side: THREE.DoubleSide }));
+      group.add(hazard);
+      const warning = new THREE.MeshBasicMaterial({ color: 0xffbf47, side: THREE.DoubleSide });
+      for (const side of [-1, 1] as const) {
+        group.add(new THREE.Mesh(medianRibbon(anchor, side, 0.16), warning));
+      }
+      // Repeating retro-reflectors at the divider provide depth and warning.
+      for (const z of [-10, 0, 10]) {
+        const half = splitMedianHalfWidth(anchor - z);
+        if (half < 1.7) continue;
+        for (const side of [-1, 1]) {
+          const reflector = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.3, 0.45),
+            new THREE.MeshBasicMaterial({ color: 0xffdb67 }));
+          reflector.position.set(roadCenterAt(anchor - z) - roadCenterAt(anchor) + side * (half - 0.2), 0.24, z);
+          group.add(reflector);
+        }
+      }
+    }
+    if (biome !== 'water') {
+      const start = Math.floor(anchor / SPLIT_PERIOD) * SPLIT_PERIOD + SPLIT_START;
+      const localZ = anchor - start;
+      if (Math.abs(localZ) <= 14 && splitMedianHalfWidth(start + 65) > 0) {
+        const poleMaterial = new THREE.MeshStandardMaterial({ color: 0xb9cdd1, metalness: 0.7 });
+        const signMaterial = new THREE.MeshBasicMaterial({ color: 0xffcb59 });
+        for (const side of [-1, 1]) {
+          const pole = new THREE.Mesh(new THREE.BoxGeometry(0.18, 3.2, 0.18), poleMaterial);
+          pole.position.set(side * 4.25 + roadCenterAt(start) - roadCenterAt(anchor), 1.6, localZ);
+          group.add(pole);
+          const sign = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.75, 0.16), signMaterial);
+          sign.position.set(pole.position.x, 3.2, localZ);
+          group.add(sign);
+        }
       }
     }
     // Each entry or exit from the river is framed by a recognizable boathouse

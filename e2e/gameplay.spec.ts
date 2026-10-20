@@ -150,3 +150,14 @@ test('daily challenge shows UTC date and seeded session identity', async ({ page
   await expect(page.locator('#daily-date')).toContainText(/^\d{4}-\d{2}-\d{2}$/);
   await expect(page.locator('#lives')).toHaveText('●●●');
 });
+
+test('shows split-road approach warning and renders branch geometry', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.goto('/?testDistance=480');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#toast')).toContainText('DIVIDED HIGHWAY', { timeout: 5000 });
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  await page.screenshot({ path: 'test-results/divided-highway-warning.png' });
+  expect(errors).toEqual([]);
+});

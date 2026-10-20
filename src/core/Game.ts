@@ -30,6 +30,7 @@ import {
 } from '../gameplay/DailyChallenge';
 import { boundaryStrike, gradeBoathouseEntry } from '../gameplay/Boundary';
 import { biomeAt } from '../world/WorldPlan';
+import { splitDangerous, splitMedianHalfWidth, upcomingSplit, escapeFromMedian } from '../world/SplitRoad';
 
 export class Game {
   private readonly scene = new THREE.Scene();
@@ -72,6 +73,9 @@ export class Game {
   private dockingEntryX = 0;
   private boundaryCooldown = 0;
   private gateWarned = false;
+  private splitWarnAt = -1;
+  private splitInProgress = false;
+  private splitClean = true;
   private toastClock = 0;
   private survivalSeconds = 0;
   private roundsFired = 0;
@@ -184,6 +188,9 @@ export class Game {
     this.dockingEntryX = 0;
     this.boundaryCooldown = 0;
     this.gateWarned = false;
+    this.splitWarnAt = -1;
+    this.splitInProgress = false;
+    this.splitClean = true;
     this.spawnClock = 0.8;
     this.airSpawnClock = 9;
     this.shotClock = 0;
@@ -298,6 +305,33 @@ export class Game {
     this.wake.step(dt, this.player.speed, this.player.x, this.player.isBoat);
     this.weather.step(dt, this.player.speed, this.road.biome);
     this.distance += this.player.speed * dt;
+    const forkWarning = upcomingSplit(this.distance);
+    if (forkWarning !== null) {
+      const marker = Math.round(this.distance + forkWarning);
+      if (marker !== this.splitWarnAt) {
+        this.splitWarnAt = marker;
+        this.announce('DIVIDED HIGHWAY AHEAD — CHOOSE LEFT OR RIGHT BRANCH');
+      }
+    }
+    const gap = splitMedianHalfWidth(this.distance);
+    if (gap > 1.16 && !this.splitInProgress) {
+      this.splitInProgress = true;
+      this.splitClean = true;
+    }
+    if (splitDangerous(this.distance, this.player.x)) {
+      this.splitClean = false;
+      this.damagePlayer('DIVIDED HIGHWAY CENTER MEDIAN IMPACT');
+      if (this.lives <= 0) return;
+      this.player.x = escapeFromMedian(this.player.x, this.distance);
+      this.player.mesh.position.x = this.player.x;
+    }
+    if (this.splitInProgress && gap < 0.08) {
+      this.splitInProgress = false;
+      if (this.splitClean) {
+        const awarded = this.scoring.bonus(200);
+        if (awarded) this.announce('DIVIDED HIGHWAY CLEARED +200');
+      }
+    }
     const toGate = 1000 - (this.distance % 1000);
     const nextBiome = biomeAt(this.distance + toGate + 1);
     const waterTransfer = this.road.biome === 'water' || nextBiome === 'water';
@@ -367,6 +401,10 @@ export class Game {
     }
     for (const car of this.traffic) {
       car.step(dt, this.player.speed, this.player.x);
+      if (splitDangerous(this.distance - car.z, car.x, car.halfWidth)) {
+        car.x = escapeFromMedian(car.x, this.distance - car.z, car.halfWidth);
+        car.mesh.position.x = car.x;
+      }
       if (car.tryFire(this.player.x)) {
         this.enemyShots.spawn(car.x, car.z + car.halfLength, this.player.x, car.role === 'boat');
         this.flash(car.x, car.z + car.halfLength, 0.14, 0xff563b);
