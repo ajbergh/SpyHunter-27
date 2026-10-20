@@ -26,5 +26,5 @@ export function bombingLane(profile: HelicopterProfile, playerX: number, volleyI
 }
 
 export function helicopterCooldown(profile: HelicopterProfile): number {
-  return profile === 'ace' ? 2.35 : 2.9;
+  return profile === 'ace' ? 1.15 : 2.9;
 }
