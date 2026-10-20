@@ -73,9 +73,11 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] Seeded deterministic roadside props and biome transitions on cumulative distance.
 - [ ] Authorable seeded set pieces and biome-specific encounter scripts.
 - [x] Original low-poly speedboat model, water handling and automatic land/water transformation.
-- [ ] Interactive boathouse entry/exit animation and collision-driven conversion.
+- [x] Boathouse portal geometry at land/water stage boundaries.
+- [ ] Collision-driven boathouse docking, active steering alignment and full transformation sequence.
 - [x] Animated original water shader and boat enemy encounters.
-- [ ] Water wakes, shore collisions and torpedo hazards.
+- [x] Speedboat wake rings and enemy boat-fired torpedo projectiles.
+- [ ] Shore collision hazards, barrel dumpers and more sophisticated torpedo behavior.
 
 **Exit:** 15-minute play session with seamless road/water traversal.
 
@@ -84,9 +86,12 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [ ] High-quality original interceptor, enemies, truck, props and variant assets.
 - [ ] Real-time lighting, reflection approximations and optional shadows.
 - [ ] GPU-oriented particle pooling, weather, skid marks and atmospheric effects.
-- [ ] Optimized EffectComposer with output transform, restrained bloom and grades.
-- [ ] Original adaptive espionage score and rich vehicle audio system.
-- [ ] Visual/audio accessibility options and quality presets.
+- [x] Optional high-quality EffectComposer with subtle bloom and OutputPass.
+- [ ] Sophisticated color grading, advanced reflections and weather effects.
+- [x] Original adaptive synthesized espionage riff and speed-sensitive engine drone.
+- [ ] Multi-layer authored music, richer engine samples and environmental audio.
+- [x] Persistent Low/Medium/High render quality, original music/effects volume and reduced-motion option.
+- [ ] Full high-contrast accessibility system, rebinding and broader graphics presets.
 
 **Exit:** cohesive premium look, responsive effects, no readability regressions.
 
@@ -95,8 +100,10 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [ ] Sophisticated start screen/attract mode, game mode/settings, control rebinding.
 - [ ] Full HUD: weapons, speed, lives, scoring modifiers, truck readiness.
 - [ ] Results statistics, achievements, seeded daily challenge (optional).
-- [ ] Full keyboard and gamepad support; resize/pause/focus behavior.
-- [ ] Profiling: 60 FPS 1080p midrange GPU, integrated GPU quality tier.
+- [x] Persistent settings UI available on main and paused screens.
+- [ ] Full keyboard/gamepad rebinding, extended pause/focus/accessibility behavior.
+- [x] Optional FPS, draw calls, active vehicle diagnostics overlay.
+- [ ] Profiling: verified 60 FPS at 1080p midrange GPU and integrated GPU tier.
 - [ ] Memory soak, collision fuzzing, fixed-step consistency, cross-browser tests.
 - [ ] Document asset provenance; resolve final name and trademark review.
 
@@ -104,11 +111,11 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 
 ## Next implementation batch
 
-1. Verify initial Phase 3 changes with CI and browser mode-selection tests.
+1. Validate five-biome progression and boat mode in extended Playwright coverage.
 2. Add boathouse portal geometry with interactive alignment/docking and safe return to driving.
 3. Implement torpedoes, river hazards, actual bank collisions, boat wakes and biome-dependent traction.
-4. Add real quality presets, settings and accessibility controls; compose original layered engine/music audio.
-5. Add diagnostics, longer Chromium play sessions and screenshots for all five environments.
+4. Refine premium art, settings accessibility, dynamic lighting and fuller original audio soundtrack.
+5. Extend browser soak sessions and capture representative screenshots for all five environments.
 
 ## Previous planned Phase 2 follow-ups
 

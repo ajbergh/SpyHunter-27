@@ -1,6 +1,7 @@
 import type { WeaponCounts } from '../combat/SpecialWeapons';
 import { GAME_MODES, type GameMode } from '../gameplay/GameModes';
 import type { Biome } from '../world/WorldPlan';
+import { loadPreferences, savePreferences, type GamePreferences } from '../gameplay/Settings';
 
 export type Screen = 'menu' | 'playing' | 'paused' | 'gameover';
 
@@ -14,6 +15,8 @@ export class Interface {
   onStart: (mode: GameMode) => void = () => {};
   private selectedMode: GameMode = 'classic';
   onResume: () => void = () => {};
+  onSettingsChange: (settings: GamePreferences) => void = () => {};
+  private preferences = loadPreferences();
 
   constructor(host: HTMLElement) {
     this.root = document.createElement('div');
@@ -50,12 +53,31 @@ export class Interface {
           <p class="mode-description" id="mode-description">Three lives. Fast enemies. Every impact counts.</p>
           <button id="start-button" class="primary-button">INITIATE PURSUIT <span>↗</span></button>
           <div class="keys">A / D <span>STEER</span> · W / S <span>SPEED</span> · SPACE <span>FIRE</span><div>Q <span>MISSILE</span> · E <span>OIL</span> · R <span>SMOKE</span> · F <span>RESUPPLY</span></div></div>
-          <p class="build-tag">PHASE 2 // COMBAT SYSTEMS ACTIVE</p>
+          <button class="aux-button" id="settings-button">SETTINGS / AUDIO / GRAPHICS</button>
+          <p class="build-tag">THREE.JS // WEBGL ARCADE</p>
         </section>
+        <section class="settings-overlay" id="settings-panel" hidden>
+          <div class="eyebrow">SYSTEM PREFERENCES</div><h2 class="settings-heading">CONFIGURATION</h2>
+          <label for="quality-select">RENDERING QUALITY</label>
+          <select id="quality-select" aria-label="Rendering quality">
+            <option value="low">LOW // PERFORMANCE</option>
+            <option value="medium">MEDIUM // BALANCED</option>
+            <option value="high">HIGH // CINEMATIC BLOOM</option>
+          </select>
+          <label for="music-volume">ORIGINAL MUSIC VOLUME</label>
+          <input type="range" id="music-volume" min="0" max="100" step="5" />
+          <label for="effects-volume">SOUND EFFECTS VOLUME</label>
+          <input type="range" id="effects-volume" min="0" max="100" step="5" />
+          <label class="toggle"><input type="checkbox" id="reduced-motion" /> REDUCED MOTION</label>
+          <label class="toggle"><input type="checkbox" id="show-fps" /> PERFORMANCE DIAGNOSTICS</label>
+          <button class="primary-button" id="close-settings">APPLY AND RETURN ↗</button>
+        </section>
+        <div class="fps-debug" id="fps-debug" hidden>FPS -- / DRAWS -- / VEH --</div>
         <section class="panel compact" id="paused" hidden>
           <div class="eyebrow">MISSION INTERRUPTED</div><h2>PAUSED</h2>
           <p class="intro">PRESS P OR ESC TO RESUME</p>
           <button class="primary-button" id="resume-button">RESUME PURSUIT ↗</button>
+          <button class="aux-button" id="pause-settings-button">SETTINGS</button>
         </section>
         <section class="panel compact" id="gameover" hidden>
           <div class="eyebrow">INTERCEPTOR LOST</div><h2>MISSION<br />TERMINATED</h2>
@@ -83,6 +105,36 @@ export class Interface {
     this.get('start-button').addEventListener('click', () => this.onStart(this.selectedMode));
     this.get('retry-button').addEventListener('click', () => this.onStart(this.selectedMode));
     this.get('resume-button').addEventListener('click', () => this.onResume());
+    this.get('settings-button').addEventListener('click', () => { this.get('settings-panel').hidden = false; });
+    this.get('pause-settings-button').addEventListener('click', () => { this.get('settings-panel').hidden = false; });
+    this.get('close-settings').addEventListener('click', () => { this.get('settings-panel').hidden = true; });
+    const quality = this.get<HTMLSelectElement>('quality-select');
+    const music = this.get<HTMLInputElement>('music-volume');
+    const effects = this.get<HTMLInputElement>('effects-volume');
+    const motion = this.get<HTMLInputElement>('reduced-motion');
+    const fps = this.get<HTMLInputElement>('show-fps');
+    quality.value = this.preferences.quality;
+    music.value = String(Math.round(this.preferences.musicVolume * 100));
+    effects.value = String(Math.round(this.preferences.effectsVolume * 100));
+    motion.checked = this.preferences.reducedMotion;
+    fps.checked = this.preferences.showFps;
+    const change = () => {
+      this.preferences = {
+        quality: quality.value as GamePreferences['quality'],
+        musicVolume: Number(music.value) / 100,
+        effectsVolume: Number(effects.value) / 100,
+        reducedMotion: motion.checked,
+        showFps: fps.checked,
+      };
+      savePreferences(this.preferences);
+      this.onSettingsChange(this.preferences);
+      this.get('fps-debug').hidden = !this.preferences.showFps;
+    };
+    for (const element of [quality, music, effects, motion, fps]) {
+      element.addEventListener('change', change);
+      element.addEventListener('input', change);
+    }
+    this.get('fps-debug').hidden = !this.preferences.showFps;
     this.show('menu');
   }
 
@@ -97,6 +149,7 @@ export class Interface {
     this.paused.hidden = screen !== 'paused';
     this.gameover.hidden = screen !== 'gameover';
     this.hud.hidden = screen === 'menu';
+    this.get('settings-panel').hidden = true;
     this.get('special-hud').hidden = screen === 'menu' || screen === 'gameover';
     if (screen === 'menu' || screen === 'gameover') this.get('combo-counter').hidden = true;
     if (screen === 'menu' || screen === 'gameover') this.get('penalty').hidden = true;
@@ -115,6 +168,12 @@ export class Interface {
   threats(helicopters: number, enemyRounds: number): void {
     this.get('air-count').textContent = String(helicopters).padStart(2, '0');
     this.get('enemy-round-count').textContent = String(enemyRounds).padStart(2, '0');
+  }
+
+  diagnostics(fps: number, drawCalls: number, vehicles: number): void {
+    if (!this.preferences.showFps) return;
+    this.get('fps-debug').textContent =
+      'FPS ' + Math.round(fps) + ' / DRAWS ' + drawCalls + ' / VEH ' + vehicles;
   }
 
   environment(biome: Biome, boat: boolean): void {

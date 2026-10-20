@@ -46,3 +46,18 @@ test('modern arcade mode configures lives and begins at forest biome', async ({ 
   await expect(page.locator('#lives')).toHaveText('●●●●●');
   await expect(page.locator('#environment-name')).toContainText('FOREST');
 });
+
+test('persists renderer preferences and diagnostics across reload', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
+  await expect(page.locator('#settings-panel')).toBeVisible();
+  await page.locator('#quality-select').selectOption('low');
+  await page.locator('#show-fps').check();
+  await expect(page.locator('#fps-debug')).toBeVisible();
+  await page.getByRole('button', { name: /apply and return/i }).click();
+  await expect(page.locator('#settings-panel')).toBeHidden();
+  await page.reload();
+  await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
+  await expect(page.locator('#quality-select')).toHaveValue('low');
+  await expect(page.locator('#show-fps')).toBeChecked();
+});

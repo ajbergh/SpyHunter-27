@@ -1,4 +1,8 @@
 import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { GameLoop } from './GameLoop';
 import { Input } from './Input';
 import { MAX_LIVES, PLAYER_Z, approach, distancePoints, intersects, scoreForTarget, spawnInterval } from './logic';
@@ -14,6 +18,7 @@ import { Interface, type Screen } from '../ui/Interface';
 import { AudioManager } from '../audio/Audio';
 import { Scoring } from '../gameplay/Scoring';
 import { GAME_MODES, type GameMode } from '../gameplay/GameModes';
+import { loadPreferences, type GamePreferences } from '../gameplay/Settings';
 import { WeaponsVan } from '../gameplay/WeaponsVan';
 import { planEncounter } from '../gameplay/EncounterDirector';
 import { ExplosionEffects } from '../combat/ExplosionEffects';
@@ -22,6 +27,10 @@ export class Game {
   private readonly scene = new THREE.Scene();
   private readonly camera = new THREE.OrthographicCamera(-20, 20, 35, -35, 0.1, 350);
   private readonly renderer: THREE.WebGLRenderer;
+  private composer: EffectComposer | null = null;
+  private preferences = loadPreferences();
+  private renderTime = 0;
+  private averageFps = 60;
   private readonly ui: Interface;
   private readonly input = new Input();
   private readonly audio = new AudioManager();
@@ -77,9 +86,11 @@ export class Game {
     this.refreshHUD();
     this.ui.onStart = (mode) => this.start(mode);
     this.ui.onResume = () => this.resume();
+    this.ui.onSettingsChange = (settings) => this.configure(settings);
     this.loop = new GameLoop((dt) => this.update(dt), () => this.render());
     new ResizeObserver(() => this.resize()).observe(this.ui.stage);
     window.addEventListener('blur', () => { if (this.screen === 'playing') this.pause(); });
+    this.configure(this.preferences);
     this.resize();
     this.loop.start();
   }
@@ -88,6 +99,7 @@ export class Game {
     const width = Math.max(1, this.ui.stage.clientWidth);
     const height = Math.max(1, this.ui.stage.clientHeight);
     this.renderer.setSize(width, height, false);
+    this.composer?.setSize(width, height);
     const halfHeight = 36;
     const halfWidth = halfHeight * width / height;
     this.camera.left = -halfWidth;
@@ -95,6 +107,20 @@ export class Game {
     this.camera.top = halfHeight;
     this.camera.bottom = -halfHeight;
     this.camera.updateProjectionMatrix();
+  }
+
+  private configure(settings: GamePreferences): void {
+    this.preferences = settings;
+    this.audio.configure(settings.musicVolume, settings.effectsVolume);
+    const ratio = settings.quality === 'low' ? 1 : settings.quality === 'high' ? 2 : 1.5;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, ratio));
+    if (settings.quality === 'high' && !this.composer) {
+      this.composer = new EffectComposer(this.renderer);
+      this.composer.addPass(new RenderPass(this.scene, this.camera));
+      this.composer.addPass(new UnrealBloomPass(new THREE.Vector2(1, 1), 0.55, 0.38, 0.84));
+      this.composer.addPass(new OutputPass());
+    }
+    this.resize();
   }
 
   private start(mode: GameMode = this.mode): void {
@@ -128,6 +154,7 @@ export class Game {
   }
 
   private pause(): void {
+    this.audio.silence();
     this.screen = 'paused';
     this.ui.show(this.screen);
   }
@@ -301,6 +328,7 @@ export class Game {
       this.audio.confirm();
     }
     this.stepExplosions(dt);
+    this.audio.step(dt, this.player.speed, this.traffic.length + this.air.helicopters.length * 2, this.player.isBoat);
     if (this.toastClock > 0) {
       this.toastClock -= dt;
       if (this.toastClock <= 0) this.ui.message('');
@@ -372,6 +400,7 @@ export class Game {
 
   private gameOver(): void {
     this.screen = 'gameover';
+    this.audio.silence();
     this.best = Math.max(this.best, Math.floor(this.scoring.score));
     try { localStorage.setItem('spyhunter27-best', String(this.best)); } catch { /* optional persistence */ }
     this.ui.result(this.scoring.score, this.best, this.scoring.hostileEliminations,
@@ -391,6 +420,14 @@ export class Game {
     this.effects.renderAt(center);
     this.wake.renderAt(center);
     this.van.mesh.position.x = 6.4 + center(this.van.mesh.position.z);
-    this.renderer.render(this.scene, this.camera);
+    if (this.preferences.quality === 'high' && this.composer) this.composer.render();
+    else this.renderer.render(this.scene, this.camera);
+    const now = performance.now();
+    if (this.renderTime > 0) {
+      const instantaneous = 1000 / Math.max(1, now - this.renderTime);
+      this.averageFps = this.averageFps * 0.92 + instantaneous * 0.08;
+    }
+    this.renderTime = now;
+    this.ui.diagnostics(this.averageFps, this.renderer.info.render.calls, this.traffic.length);
   }
 }
