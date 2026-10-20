@@ -81,3 +81,23 @@ for (const [label, distance] of [
     expect(crashes).toEqual([]);
   });
 }
+
+test('converts a moving interceptor to boat when crossing a boathouse', async ({ page }) => {
+  const crashes: string[] = [];
+  page.on('pageerror', e => crashes.push(e.message));
+  await page.goto('/?testDistance=3990');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#environment-name')).toContainText('NEON CITY');
+  await expect(page.locator('#environment-name')).toContainText('SPEEDBOAT', { timeout: 10000 });
+  await expect(page.locator('#van-status')).toContainText('NO VAN');
+  expect(crashes).toEqual([]);
+});
+
+test('restores highway interceptor after leaving waterway', async ({ page }) => {
+  await page.goto('/?testDistance=4990');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#environment-name')).toContainText('SPEEDBOAT');
+  await expect(page.locator('#environment-name')).toContainText('FOREST HIGHWAY', { timeout: 10000 });
+  await expect(page.locator('#environment-name')).not.toContainText('SPEEDBOAT');
+  await expect(page.locator('#van-status')).toContainText('READY');
+});
