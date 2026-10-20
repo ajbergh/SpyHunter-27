@@ -4,7 +4,7 @@
 **Stack:** Three.js / WebGL2 / TypeScript / Vite  
 **Target:** Polished 60 FPS desktop browser arcade game
 
-**Verified green baseline (2026-10-20):** strict TypeScript, 53 unit tests, Vite production build, 12 Chromium Playwright browser tests, including full game-over and redeploy. High-contrast and release documentation additions require CI confirmation. Full manual play session and visual review remain outstanding. Full manual session and visual inspection remain outstanding.
+**Latest verified CI (2026-10-20):** 53 unit tests across 19 test files, 12 Chromium Playwright browser tests, strict TypeScript and production build all passed on commit `712b69c`. The E2E suite covers actual WebGL gameplay, five biome renders, live vehicle/boat crossings, persistent settings, keyboard remapping, high contrast, natural game-over and redeploy. Hardware performance, extended manual play and visual approval remain unverified.
 
 ## North star
 
@@ -18,7 +18,7 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] Validate GitHub Actions type-check, all 5 unit tests and production build (2026-10-20).
 - [ ] Commit a resolved package-lock.json and switch CI from npm install to npm ci.
 - [x] Add Playwright Chromium gameplay smoke suite (passed on GitHub Actions, 2026-10-20).
-- [x] Add Playwright screenshots of all five environments with development-only distance-seek harness (pending CI validation).
+- [x] Add Playwright screenshots of all five environments with development-only distance-seek harness (CI validated).
 - [ ] Approve reviewed screenshot baselines and extended manual play session.
 
 **Exit:** reproducible local setup, type-check/test/build green and CI green.
@@ -34,7 +34,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] Collisions, lives, spawn grace, score, local high score, menu/pause/game over.
 - [x] Keyboard plus basic Gamepad API mapping.
 - [ ] Verify full browser play session, tune pacing, road scaling and collision fairness.
-- [ ] Add explicit FPS/diagnostics panel and extended play-session automation (basic browser smoke suite passes).
+- [x] FPS/draw-call/vehicle diagnostics and full game-over/redeploy Chromium browser test.
+- [ ] Complete an uninterrupted 10–15 minute manual session and extended automated soak.
 
 **Exit:** player can begin, drive, destroy hostile cars, avoid civilians, lose lives and restart. No known blockers in a 10-minute session.
 
@@ -59,7 +60,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [ ] Tune pacing/fairness during extended gameplay, especially enemy convergences.
 - [x] Extra life every 10,000 points (capped at five lives).
 - [x] Timed 1×–4× hostile-elimination combos, civilian/collision resets, score HUD and results statistics.
-- [ ] Achievement hooks and Classic/Modern/Endless modes.
+- [x] Classic/Modern/Endless mode configuration, starting lives and encounter pacing.
+- [ ] Achievement hooks and additional mode-specific scoring rules.
 - [x] Bounded pooled multi-layer explosion effects with expanding shockwave and ballistic sparks.
 - [ ] More physical vehicle debris, lighting flashes and sound layering.
 
@@ -73,7 +75,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [ ] Validated road splits, bridges, ramps, guardrails and collision constraints.
 - [x] Five visually distinct biomes: forest, desert, snow, neon city and waterways.
 - [x] Distinct snow/ice lateral traction, speedboat lateral inertia and mode-adjusted speed ranges.
-- [ ] Biome weather and substantial visual art refinement.
+- [x] GPU particle snow, desert dust, urban rain and river mist.
+- [ ] Substantial biome art/weather polish.
 - [x] Seeded deterministic roadside props and biome transitions on cumulative distance.
 - [ ] Authorable seeded set pieces and biome-specific encounter scripts.
 - [x] Original low-poly speedboat model, water handling and automatic land/water transformation.
@@ -109,7 +112,7 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 
 - [x] Three-mode title-screen selection, settings panel and live keyboard control-rebinding interface.
 - [ ] Sophisticated autonomous attract-mode demo, more accessible tutorial and credits.
-- [ ] Full HUD: weapons, speed, lives, scoring modifiers, truck readiness.
+- [x] Functional HUD for weapons, ammunition, speed, lives, scoring lockout, combo and resupply readiness.
 - [x] Results statistics: enemies eliminated, civilian casualties, best combo, distance, elapsed time and gun accuracy.
 - [ ] Achievements and seeded daily challenge (optional).
 - [x] Persistent settings UI available on main and paused screens.
@@ -126,11 +129,11 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 
 ## Next implementation batch
 
-1. Validate the five-biome/boat Playwright screenshot suite in CI, then inspect visual accuracy.
-2. Add boathouse portal geometry with interactive alignment/docking and safe return to driving.
-3. Implement torpedoes, river hazards, actual bank collisions, boat wakes and biome-dependent traction.
-4. Refine premium art, settings accessibility, dynamic lighting and fuller original audio soundtrack.
-5. Extend browser soak sessions and capture representative screenshots for all five environments.
+1. Commit a dependency lockfile and switch CI to reproducible `npm ci`.
+2. Implement fully interactive branching roads, bridges and more detailed boathouse transformations.
+3. Deepen pursuit AI, missile trails, visual destruction and fully authored music/engine audio.
+4. Add an attract-mode demonstration, tutorial, gamepad rebinding and broader accessibility review.
+5. Run 10–30 minute manual/memory soaks, inspect screenshot artifacts, benchmark 1080p performance, and verify Firefox/Edge/Safari before a release candidate.
 
 ## Previous planned Phase 2 follow-ups
 
@@ -150,6 +153,6 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - Do not mark unimplemented gameplay systems done because a placeholder or UI element exists.
 - Strict TypeScript, successful production build and a 10-minute manual smoke run required for phase completion.
 
-## Known limitations of first vertical slice
+## Known limitations of current prototype
 
-Straight highway only, initial but incomplete enemy AI and signature weapons systems, no boat/biome transitions; initial helicopters, motorcycles, paired pursuits and combos now exist. Low-poly procedural art and simple audio remain. Chromium E2E smoke tests are present, but not extended manual playtests. Those constraints are explicit so future engineering work can advance gameplay rather than masquerade as visual completion.
+The highway and river are continuous and curved, but do not yet have interactive forks, complex bridges or mission-specific set pieces. Vehicle and roadside art remains procedurally stylized rather than premium authored production art. Enemies support several distinct behaviors but lack full coordinated tactical AI. River transfers are graded for center alignment and speed but lack a detailed boathouse interior transformation. Gamepad rebinding, final soundtrack production, comprehensive accessibility validation, and multi-browser/real-hardware performance qualification remain unfinished. A dependency lockfile is not yet committed. Do not market this build as feature-complete or commercially cleared without completing the release checklist.
