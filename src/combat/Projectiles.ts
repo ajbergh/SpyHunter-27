@@ -9,7 +9,7 @@ export class Projectiles {
   private readonly geometry = new THREE.BoxGeometry(0.14, 0.11, 1.35);
   private readonly material = new THREE.MeshBasicMaterial({ color: 0xffe38c });
 
-  constructor(private readonly scene: THREE.Scene) {
+  constructor(scene: THREE.Scene) {
     for (let i = 0; i < 80; i++) {
       const mesh = new THREE.Mesh(this.geometry, this.material);
       mesh.visible = false;
