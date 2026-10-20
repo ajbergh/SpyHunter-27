@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { approach, clamp, type RectHitbox } from '../core/logic';
 import { makeTrafficVehicle } from './VehicleModels';
 
-export type EnemyRole = 'civilian' | 'interceptor' | 'weaver' | 'blocker' | 'enforcer';
+export type EnemyRole = 'civilian' | 'interceptor' | 'weaver' | 'blocker' | 'enforcer' | 'motorcycle';
 export type EnemyState = 'approach' | 'intercept' | 'disrupted' | 'spinning';
 
 export class TrafficVehicle {
@@ -24,14 +24,14 @@ export class TrafficVehicle {
 
   constructor(scene: THREE.Scene, x: number, z: number, hostile: boolean, variant: number, color: number, speed: number) {
     this.hostile = hostile;
-    this.role = !hostile ? 'civilian' : variant === 3 ? 'enforcer' : variant === 2 ? 'blocker' : variant === 1 ? 'weaver' : 'interceptor';
+    this.role = !hostile ? 'civilian' : variant === 4 ? 'motorcycle' : variant === 3 ? 'enforcer' : variant === 2 ? 'blocker' : variant === 1 ? 'weaver' : 'interceptor';
     this.x = x;
     this.z = z;
     this.speed = speed;
     this.spinDirection = x >= 0 ? 1 : -1;
-    this.halfWidth = variant === 2 ? 1.4 : variant === 1 ? 0.95 : 1.13;
-    this.halfLength = variant === 3 ? 3.32 : variant === 2 ? 3.05 : variant === 1 ? 1.98 : 2.37;
-    this.hp = hostile && variant === 2 ? 4 : hostile ? 2 : 1;
+    this.halfWidth = variant === 4 ? 0.63 : variant === 2 ? 1.4 : variant === 1 ? 0.95 : 1.13;
+    this.halfLength = variant === 4 ? 1.65 : variant === 3 ? 3.32 : variant === 2 ? 3.05 : variant === 1 ? 1.98 : 2.37;
+    this.hp = hostile && variant === 2 ? 4 : hostile && variant === 4 ? 1 : hostile ? 2 : 1;
     this.mesh = makeTrafficVehicle(hostile, color, variant);
     this.mesh.position.set(x, 0.12, z);
     scene.add(this.mesh);
@@ -67,10 +67,16 @@ export class TrafficVehicle {
         this.x = approach(this.x, clamp(playerX, -6.4, 6.4), 0.15, dt);
       } else if (this.role === 'weaver') {
         this.x = clamp(this.x + Math.sin(this.sway * 5.0) * dt * 6, -7.4, 7.4);
+      } else if (this.role === 'motorcycle') {
+        // A narrow high-frequency slalom, with slight pursuit bias.
+        this.x = clamp(this.x + (Math.sin(this.sway * 8) * 10 +
+          clamp(playerX - this.x, -3, 3) * 0.28) * dt, -7.8, 7.8);
+        this.mesh.rotation.z = Math.sin(this.sway * 8) * -0.13;
       }
       // Armored blockers intentionally hold their lane.
       this.mesh.rotation.y = approach(this.mesh.rotation.y, 0, 4, dt);
     } else {
+      this.mesh.rotation.z = approach(this.mesh.rotation.z, 0, 5, dt);
       this.state = 'approach';
       this.mesh.rotation.y = approach(this.mesh.rotation.y, 0, 4, dt);
     }

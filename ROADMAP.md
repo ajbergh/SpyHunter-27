@@ -4,7 +4,7 @@
 **Stack:** Three.js / WebGL2 / TypeScript / Vite  
 **Target:** Polished 60 FPS desktop browser arcade game
 
-**Latest CI verification (2026-10-20):** strict TypeScript passed, 20 unit tests passed, Vite production build passed, Chromium Playwright smoke test passed. Full manual session and visual inspection remain outstanding.
+**Latest CI verification (2026-10-20):** strict TypeScript passed, 27 unit tests passed, Vite production build passed, Chromium Playwright smoke test passed. Full manual session and visual inspection remain outstanding.
 
 ## North star
 
@@ -42,7 +42,9 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] Initial distinct interceptor, weaver, blocker behaviors and disrupted/spinning states.
 - [x] Enforcer ranged-limousine role with cooldown, dodgeable enemy rounds and custom weapon visuals.
 - [x] Attack helicopter with animated rotor, timed bomb warning rings and damaging blasts.
-- [ ] Expand enemy state machines: motorcycles, coordinated attacks and more complex helicopter behaviors.
+- [x] Original motorcycle geometry with fast slalom attacks and single-hit precision targeting.
+- [x] Paired hostile encounters with longitudinal separation and a reserved escape lane.
+- [ ] Expand coordinated AI, attack pacing and more complex helicopter behaviors.
 - [x] Initial guided hostile-target missiles, oil spinout hazards, smoke-based AI disruption, inventory and cooldown.
 - [x] Prioritize helicopter targets with altitude-aware guided missile interception and +750 aerial scoring.
 - [ ] Refine missile contrails, air-combat visuals and balance.
@@ -51,10 +53,13 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [ ] Add visible interceptor interior loading/exit sequence, near-miss feedback and collision-safe reentry.
 - [x] Five-second civilian casualty NO POINTS lockout with HUD warning and casualty counter.
 - [x] Initial lane reservation check at spawn horizon.
-- [ ] Improve telegraphs, pacing director and fairness for clustered enemies.
+- [x] Deterministic encounter-planning function with early-game gating and lane safety unit tests.
+- [ ] Tune pacing/fairness during extended gameplay, especially enemy convergences.
 - [x] Extra life every 10,000 points (capped at five lives).
-- [ ] Combo scoring, achievement hooks, Classic/Modern/Endless modes.
-- [ ] Layered debris/shockwaves/explosion lighting.
+- [x] Timed 1×–4× hostile-elimination combos, civilian/collision resets, score HUD and results statistics.
+- [ ] Achievement hooks and Classic/Modern/Endless modes.
+- [x] Bounded pooled multi-layer explosion effects with expanding shockwave and ballistic sparks.
+- [ ] More physical vehicle debris, lighting flashes and sound layering.
 
 **Exit:** complete, distinct combat mechanics and memorable resupply loop.
 
@@ -97,8 +102,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 1. Inspect captured Chromium gameplay screenshots and tune visual readability and vehicle placement.
 2. Capture and inspect gameplay screenshots, then run a full manual play session.
 3. Make the truck docking sequence cinematic and detect near-misses clearly.
-4. Add motorcycle and convoy encounter behaviors, improve aerial bomb targeting/telegraphs.
-5. Expand explosion visuals and integrate cinematic truck loading/reentry.
+4. Tune new motorcycle/paired encounter pacing in browser and improve bomb telegraph fairness.
+5. Add full weapons-van interior loading, vehicle reentry, and damage-safe docking.
 
 ## Architecture and quality gates
 
@@ -112,4 +117,4 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 
 ## Known limitations of first vertical slice
 
-Straight highway only, initial but incomplete enemy AI and signature weapons systems, no boat/biome transitions; initial helicopter attacks now exist, low-poly procedural artwork, simple sound, no browser E2E suite yet. Those constraints are explicit so future engineering work can advance gameplay rather than masquerade as visual completion.
+Straight highway only, initial but incomplete enemy AI and signature weapons systems, no boat/biome transitions; initial helicopters, motorcycles, paired pursuits and combos now exist. Low-poly procedural art and simple audio remain. Chromium E2E smoke tests are present, but not extended manual playtests. Those constraints are explicit so future engineering work can advance gameplay rather than masquerade as visual completion.

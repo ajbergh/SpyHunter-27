@@ -62,3 +62,11 @@ h2 { font-size: 88px; line-height: .9; }
 
 .radar-line { border-left-color: #ff815c; color: #a8c8d5; }
 .radar-line b { color: #ffaf70; }
+
+.combo-counter { position:absolute; z-index:4; top:195px; left:14px; display:flex; align-items:center; gap:8px; padding:8px 11px; border-left:3px solid #ffbb61; background:#061525d9; font:800 13px 'Rajdhani',sans-serif; letter-spacing:.1em; color:#ffd393; text-shadow:0 1px 7px #000; pointer-events:none; }
+.combo-counter[hidden] { display:none; }
+.combo-counter b { font:900 28px/1 'Barlow Condensed',sans-serif; color:#ffe69a; }
+.combo-counter small { font-size:10px; color:#a9cad6; }
+.mission-results { display:flex; flex-wrap:wrap; justify-content:center; gap:7px 20px; font:700 12px 'Rajdhani',sans-serif; letter-spacing:.1em; color:#b1c6d2; margin:0 0 18px; }
+.mission-results b { color:#ffcf78; }
+@media(max-width:520px) { .combo-counter { top:160px; left:7px; padding:5px 6px; } }

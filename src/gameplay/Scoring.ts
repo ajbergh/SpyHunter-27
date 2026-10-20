@@ -25,6 +25,12 @@ export class Scoring {
     return points;
   }
 
+  bonus(points: number): number {
+    if (this.lockout > 0) return 0;
+    this.score += points;
+    return points;
+  }
+
   civilianDestroyed(): void {
     this.civilianCasualties++;
     this.lockout = 5;

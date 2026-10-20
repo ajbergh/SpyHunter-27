@@ -2,7 +2,7 @@
 
 A modern, original WebGL arcade-combat driving game inspired by the feel of early 1980s vertical-scrolling highway games. Powered by **Three.js + TypeScript + Vite**.
 
-> **Project status:** Phase 2 in progress. Phase 1 driving, traffic and scoring are implemented; initial special weapons (missile, oil, smoke), civilian NO POINTS penalty, enemy roles and an alignment-based support truck are now added. Curved highways, watercraft, biome variety, watercraft, biome variety and premium art/audio remain roadmap items. Phase 2 now includes attack helicopters with bombs and enforcer ranged fire. Automated Chromium WebGL start/control/pause smoke testing passed; the expanded Phase 2 suite has 20 passing unit tests. Extended manual gameplay and art-quality reviews remain outstanding.
+> **Project status:** Phase 2 in progress. Phase 1 driving, traffic and scoring are implemented; initial special weapons (missile, oil, smoke), civilian NO POINTS penalty, enemy roles and an alignment-based support truck are now added. Curved highways, watercraft, biome variety, watercraft, biome variety and premium art/audio remain roadmap items. Phase 2 now includes helicopter bombs, enforcer fire, motorcycle attackers, paired pursuits, timed combos, and pooled explosions. Automated Chromium WebGL start/control/pause smoke testing passed; the expanded Phase 2 suite has 27 passing unit tests. Extended manual gameplay and art-quality reviews remain outstanding.
 
 ## Run locally
 
@@ -54,7 +54,9 @@ The game also reads compatible gamepads (left stick to steer, right trigger to a
 - `src/gameplay/WeaponsVan.ts` implements roadside truck deployment, ramp alignment, animated docking and refill.
 - `src/combat/AirThreats.ts` owns aerial enemies, bomb telegraphs and blast hit detection.
 - `src/combat/EnemyProjectiles.ts` pools dodgeable enemy turret rounds.
-- `src/gameplay/Scoring.ts` implements civilian score lockout and extra-life milestones.
+- `src/gameplay/Scoring.ts` implements civilian lockout, extra-life milestones and timed score combos.
+- `src/gameplay/EncounterDirector.ts` plans lane-safe paired pursuit waves.
+- `src/combat/ExplosionEffects.ts` pools layered explosion effects.
 - `src/ui/Interface.ts` presents accessible HTML HUD/menu overlays on the WebGL canvas.
 - `src/audio/Audio.ts` generates lightweight original synthesized arcade effects using Web Audio.
 - `src/core/logic.ts` contains small deterministic gameplay functions and tests.

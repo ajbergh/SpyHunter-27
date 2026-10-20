@@ -40,6 +40,7 @@ export function makeInterceptor(): THREE.Group {
 }
 
 export function makeTrafficVehicle(hostile: boolean, color: number, variant = 0): THREE.Group {
+  if (variant === 4) return makeMotorcycle(hostile, color);
   const group = new THREE.Group();
   const body = metal(color, 0.49);
   const dark = metal(0x151b27);
@@ -66,5 +67,33 @@ export function makeTrafficVehicle(hostile: boolean, color: number, variant = 0)
     box(group, [0.65, 0.35, 1.25], [0, 1.52, -0.5], dark);
     box(group, [0.34, 0.21, 0.8], [0, 1.62, -1.4], red);
   }
+  return group;
+}
+
+/** Slim two-wheeled hostile silhouette, with rider and distinct red tail lamp. */
+export function makeMotorcycle(hostile: boolean, color: number): THREE.Group {
+  const group = new THREE.Group();
+  const paint = metal(color, 0.38);
+  const tire = new THREE.MeshStandardMaterial({ color: 0x101820, roughness: 0.9 });
+  const rider = new THREE.MeshStandardMaterial({ color: hostile ? 0x2b1723 : 0x526879, roughness: 0.79 });
+  const visor = new THREE.MeshStandardMaterial({ color: 0x57b5da, metalness: 0.65, roughness: 0.25 });
+  box(group, [0.65, 0.38, 2.7], [0, 0.7, 0], paint);
+  box(group, [0.83, 0.15, 1.1], [0, 0.83, -0.5], paint);
+  box(group, [0.73, 0.68, 0.92], [0, 1.33, 0.45], rider);
+  const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.38, 10, 7), rider);
+  helmet.position.set(0, 1.91, -0.03);
+  group.add(helmet);
+  box(group, [0.53, 0.2, 0.1], [0, 1.94, -0.37], visor);
+  box(group, [0.98, 0.11, 0.16], [0, 1.07, -0.86], tire);
+  for (const z of [-1.29, 1.3]) {
+    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.22, 14), tire);
+    wheel.rotation.z = Math.PI / 2;
+    wheel.position.set(0, 0.54, z);
+    group.add(wheel);
+  }
+  const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.2, 0.15),
+    new THREE.MeshBasicMaterial({ color: hostile ? 0xff344f : 0xffb96e }));
+  lamp.position.set(0, 0.92, 1.4);
+  group.add(lamp);
   return group;
 }

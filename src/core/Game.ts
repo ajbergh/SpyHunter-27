@@ -13,9 +13,8 @@ import { Interface, type Screen } from '../ui/Interface';
 import { AudioManager } from '../audio/Audio';
 import { Scoring } from '../gameplay/Scoring';
 import { WeaponsVan } from '../gameplay/WeaponsVan';
-import { selectSpawnLane } from '../gameplay/SpawnDirector';
-
-type Explosion = { mesh: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>; life: number; total: number };
+import { planEncounter } from '../gameplay/EncounterDirector';
+import { ExplosionEffects } from '../combat/ExplosionEffects';
 
 export class Game {
   private readonly scene = new THREE.Scene();
@@ -34,8 +33,7 @@ export class Game {
   private readonly scoring = new Scoring();
   private readonly loop: GameLoop;
   private readonly traffic: TrafficVehicle[] = [];
-  private readonly explosions: Explosion[] = [];
-  private readonly explosionGeometry = new THREE.SphereGeometry(1, 12, 8);
+  private readonly effects: ExplosionEffects;
   private screen: Screen = 'menu';
   private best = 0;
   private lives = MAX_LIVES;
@@ -68,6 +66,7 @@ export class Game {
     this.specials = new SpecialWeapons(this.scene);
     this.air = new AirThreats(this.scene);
     this.enemyShots = new EnemyProjectiles(this.scene);
+    this.effects = new ExplosionEffects(this.scene);
     this.van = new WeaponsVan(this.scene);
     try { this.best = Number(localStorage.getItem('spyhunter27-best') || 0) || 0; } catch { /* private browsing may deny storage */ }
     this.refreshHUD();
@@ -177,7 +176,7 @@ export class Game {
     this.grace = Math.max(0, this.grace - dt);
     this.spawnClock -= dt;
     if (this.spawnClock <= 0) {
-      this.spawnVehicle();
+      this.spawnEncounter();
       this.spawnClock += spawnInterval(this.distance) * (0.8 + Math.random() * 0.4);
     }
 
@@ -190,7 +189,7 @@ export class Game {
     if (vanEvent === 'docked') {
       this.specials.refill();
       this.player.mesh.visible = false;
-      this.scoring.enemyDestroyed(500);
+      this.scoring.bonus(500);
       this.player.invulnerability = 2.5;
       this.dockingTimer = 1.3;
       this.announce('DOCKING SUCCESS — WEAPONS REPLENISHED  +500');
@@ -230,7 +229,7 @@ export class Game {
         this.audio.explode();
         if (impact.aircraft.hp <= 0) {
           const points = this.scoring.enemyDestroyed(750);
-          this.announce(points ? 'AIR THREAT NEUTRALIZED  +750' : 'AIR THREAT NEUTRALIZED — NO POINTS');
+          this.announce(points ? `AIR THREAT NEUTRALIZED +${points}` : 'AIR THREAT NEUTRALIZED — NO POINTS');
         }
       } else if (impact.kind === 'missile') {
         this.flash(impact.vehicle.x, impact.vehicle.z, 0.52, 0xffaa42);
@@ -251,8 +250,8 @@ export class Game {
       if (car.hp <= 0) {
         this.flash(car.x, car.z, 0.55, car.hostile ? 0xff8b34 : 0xff5252);
         if (car.hostile) {
-          const awarded = this.scoring.enemyDestroyed(scoreForTarget(true));
-          if (awarded) this.announce('HOSTILE NEUTRALIZED  +250');
+          const awarded = this.scoring.enemyDestroyed(car.role === 'motorcycle' ? 400 : scoreForTarget(true));
+          if (awarded) this.announce(`HOSTILE NEUTRALIZED  +${awarded}`);
           else this.announce('NO POINTS — CIVILIAN PENALTY');
         } else {
           this.scoring.civilianDestroyed();
@@ -295,14 +294,20 @@ export class Game {
     if (smoke) attempt('smoke');
   }
 
-  private spawnVehicle(): void {
-    const x = selectSpawnLane(this.traffic, -90, Math.random);
-    if (x === null) return;
-    const hostile = Math.random() < 0.63;
-    const variant = hostile && Math.random() < 0.16 ? 3 : Math.random() < 0.17 ? 2 : Math.random() < 0.3 ? 1 : 0;
-    const colors = hostile ? [0x902d3e, 0x4c182b, 0x9e553e] : [0x7495a7, 0xc5bda9, 0x647c73, 0x8e9bae];
-    const color = colors[Math.floor(Math.random() * colors.length)];
-    this.traffic.push(new TrafficVehicle(this.scene, x, -90, hostile, variant, color, hostile ? 8 + Math.random() * 7 : 12 + Math.random() * 7));
+  private spawnEncounter(): void {
+    const encounter = planEncounter(this.traffic, this.distance, Math.random);
+    if (encounter.type === 'pursuit-pair') this.announce('COORDINATED PURSUIT — TWO HOSTILES');
+    for (const spawn of encounter.spawns) {
+      const colors = spawn.hostile
+        ? [0x902d3e, 0x4c182b, 0x9e553e, 0xaf3048]
+        : [0x7495a7, 0xc5bda9, 0x647c73, 0x8e9bae];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      const speed = spawn.variant === 4 ? 16 + Math.random() * 9
+        : spawn.hostile ? 8 + Math.random() * 7 : 12 + Math.random() * 7;
+      this.traffic.push(new TrafficVehicle(
+        this.scene, spawn.x, spawn.z, spawn.hostile, spawn.variant, color, speed,
+      ));
+    }
   }
 
   private removeVehicle(index: number): void {
@@ -315,38 +320,18 @@ export class Game {
     this.flash(this.player.x, PLAYER_Z, 0.72, 0xffa342);
     this.audio.explode();
     this.lives--;
+    this.scoring.resetCombo();
     if (this.lives <= 0) { this.gameOver(); return; }
     this.player.invulnerability = 2.6;
     this.announce(reason + ' — INTERCEPTOR REDEPLOYED');
   }
 
   private flash(x: number, z: number, duration: number, color: number): void {
-    const material = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.84, depthWrite: false });
-    const mesh = new THREE.Mesh(this.explosionGeometry, material);
-    mesh.position.set(x, 1.05, z);
-    this.scene.add(mesh);
-    this.explosions.push({ mesh, life: duration, total: duration });
+    this.effects.emit(x, z, duration, color);
   }
 
-  private stepExplosions(dt: number): void {
-    for (let i = this.explosions.length - 1; i >= 0; i--) {
-      const effect = this.explosions[i];
-      effect.life -= dt;
-      const progress = 1 - Math.max(0, effect.life) / effect.total;
-      effect.mesh.scale.setScalar(0.3 + progress * 2.3);
-      effect.mesh.material.opacity = (1 - progress) * 0.84;
-      if (effect.life <= 0) {
-        this.scene.remove(effect.mesh);
-        effect.mesh.material.dispose();
-        this.explosions.splice(i, 1);
-      }
-    }
-  }
-
-  private clearExplosions(): void {
-    for (const effect of this.explosions) { this.scene.remove(effect.mesh); effect.mesh.material.dispose(); }
-    this.explosions.length = 0;
-  }
+  private stepExplosions(dt: number): void { this.effects.step(dt); }
+  private clearExplosions(): void { this.effects.reset(); }
 
   private announce(message: string): void { this.ui.message(message); this.toastClock = 1.6; }
 
@@ -354,13 +339,15 @@ export class Game {
     this.ui.stats(this.scoring.score, Math.max(this.best, this.scoring.score), this.lives, this.player.speed);
     this.ui.armory(this.specials.counts, this.van.status, this.scoring.lockoutRemaining);
     this.ui.threats(this.air.helicopters.length, this.enemyShots.activeCount);
+    this.ui.combo(this.scoring.comboMultiplier, this.scoring.comboRemaining);
   }
 
   private gameOver(): void {
     this.screen = 'gameover';
     this.best = Math.max(this.best, Math.floor(this.scoring.score));
     try { localStorage.setItem('spyhunter27-best', String(this.best)); } catch { /* optional persistence */ }
-    this.ui.result(this.scoring.score, this.best);
+    this.ui.result(this.scoring.score, this.best, this.scoring.hostileEliminations,
+      this.scoring.civilianCasualties, this.scoring.bestCombo);
     this.ui.show(this.screen);
   }
 

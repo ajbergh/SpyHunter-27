@@ -17,4 +17,14 @@ describe('enforcer AI', () => {
     expect(enemy.tryFire(0)).toBe(false);
     enemy.dispose(scene);
   });
+  it('motorcycle uses a narrow single-hit profile with fast lateral slalom', () => {
+    const scene = new THREE.Scene();
+    const bike = new TrafficVehicle(scene, 0, -36, true, 4, 0x6b1622, 15);
+    expect(bike.role).toBe('motorcycle');
+    expect(bike.hitbox().halfWidth).toBeLessThan(0.7);
+    expect(bike.hp).toBe(1);
+    for (let i = 0; i < 80; i++) bike.step(1/60, 40, 5);
+    expect(Math.abs(bike.x)).toBeGreaterThan(0.1);
+    bike.dispose(scene);
+  });
 });

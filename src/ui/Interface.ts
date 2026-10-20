@@ -32,6 +32,7 @@ export class Interface {
           <div class="special-line van-line">VAN: <b id="van-status">READY [F]</b></div>
           <div class="special-line radar-line">AIR <b id="air-count">00</b> · ROUNDS <b id="enemy-round-count">00</b></div>
         </div>
+        <div class="combo-counter" id="combo-counter" hidden>COMBO <b id="combo-value">×2</b><small id="combo-time">5.0s</small></div>
         <div class="penalty" id="penalty" hidden>NO POINTS <span id="penalty-time">5</span>s</div>
         <section class="panel" id="menu">
           <div class="eyebrow">1983 REIMAGINED // 2027 RECHARGED</div>
@@ -53,6 +54,7 @@ export class Interface {
           <div class="eyebrow">INTERCEPTOR LOST</div><h2>MISSION<br />TERMINATED</h2>
           <p class="intro">FINAL SCORE</p><div class="final-score" id="final-score">000000</div>
           <p class="intro">BEST <span id="final-best">000000</span></p>
+          <div class="mission-results"><span>HOSTILES <b id="result-hostiles">0</b></span><span>CIVILIANS <b id="result-civilians">0</b></span><span>TOP COMBO <b id="result-combo">×1</b></span></div>
           <button class="primary-button" id="retry-button">REDEPLOY ↗</button>
         </section>
         <footer class="viewport-footer"><span>◉ LIVE OPERATIONS</span><span>THREAT LEVEL <b>HIGH</b></span><span id="sound-indicator">AUDIO ON</span></footer>
@@ -83,6 +85,7 @@ export class Interface {
     this.gameover.hidden = screen !== 'gameover';
     this.hud.hidden = screen === 'menu';
     this.get('special-hud').hidden = screen === 'menu' || screen === 'gameover';
+    if (screen === 'menu' || screen === 'gameover') this.get('combo-counter').hidden = true;
     if (screen === 'menu' || screen === 'gameover') this.get('penalty').hidden = true;
   }
 
@@ -101,6 +104,12 @@ export class Interface {
     this.get('enemy-round-count').textContent = String(enemyRounds).padStart(2, '0');
   }
 
+  combo(multiplier: number, seconds: number): void {
+    this.get('combo-counter').hidden = multiplier <= 1 || seconds <= 0;
+    this.get('combo-value').textContent = '×' + multiplier;
+    this.get('combo-time').textContent = seconds.toFixed(1) + 's';
+  }
+
   stats(score: number, best: number, lives: number, speed: number): void {
     const format = (n: number) => Math.floor(n).toString().padStart(6, '0');
     this.get('score').textContent = format(score);
@@ -109,9 +118,12 @@ export class Interface {
     this.get('speed').textContent = Math.floor(speed * 2.1).toString().padStart(3, '0');
   }
 
-  result(score: number, best: number): void {
+  result(score: number, best: number, hostiles = 0, civilians = 0, maxCombo = 1): void {
     this.get('final-score').textContent = Math.floor(score).toString().padStart(6, '0');
     this.get('final-best').textContent = Math.floor(best).toString().padStart(6, '0');
+    this.get('result-hostiles').textContent = String(hostiles);
+    this.get('result-civilians').textContent = String(civilians);
+    this.get('result-combo').textContent = '×' + maxCombo;
   }
 
   mute(muted: boolean): void { this.get('sound-indicator').textContent = muted ? 'AUDIO OFF' : 'AUDIO ON'; }
