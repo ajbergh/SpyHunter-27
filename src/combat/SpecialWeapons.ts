@@ -2,11 +2,12 @@ import * as THREE from 'three';
 import { approach, intersects, PLAYER_Z } from '../core/logic';
 import type { TrafficVehicle } from '../entities/Traffic';
 import type { AirTarget } from './AirThreats';
+import { MissileContrails } from './MissileContrails';
 
 export type WeaponKind = 'missile' | 'oil' | 'smoke';
 export type WeaponCounts = Readonly<Record<WeaponKind, number>>;
 export type Impact = { vehicle: TrafficVehicle; kind: WeaponKind | 'flame' } | { aircraft: AirTarget; kind: 'missile' };
-type Missile = { mesh: THREE.Group; x: number; z: number };
+type Missile = { mesh: THREE.Group; x: number; z: number; trailClock: number };
 type Hazard = { mesh: THREE.Group; kind: 'oil' | 'smoke' | 'flame'; x: number; z: number; life: number; affected: Set<TrafficVehicle> };
 
 const MAX_AMMO: Record<WeaponKind, number> = { missile: 3, oil: 2, smoke: 2 };
@@ -17,10 +18,14 @@ export class SpecialWeapons {
   private missiles: Missile[] = [];
   private hazards: Hazard[] = [];
   private cooldown = 0;
+  private readonly contrails: MissileContrails;
 
-  constructor(private readonly scene: THREE.Scene) {}
+  constructor(private readonly scene: THREE.Scene) {
+    this.contrails = new MissileContrails(scene);
+  }
 
   get counts(): WeaponCounts { return { ...this.ammo }; }
+  get activeMissileTrails(): number { return this.contrails.activeCount; }
 
   reset(): void {
     for (const missile of this.missiles) this.destroyObject(missile.mesh);
@@ -29,6 +34,7 @@ export class SpecialWeapons {
     this.hazards = [];
     this.ammo = { ...MAX_AMMO };
     this.cooldown = 0;
+    this.contrails.reset();
   }
 
   refill(): void { this.ammo = { ...MAX_AMMO }; }
@@ -47,7 +53,7 @@ export class SpecialWeapons {
       const mesh = this.makeMissile();
       mesh.position.set(x, 0.8, PLAYER_Z - 3.8);
       this.scene.add(mesh);
-      this.missiles.push({ mesh, x, z: PLAYER_Z - 3.8 });
+      this.missiles.push({ mesh, x, z: PLAYER_Z - 3.8, trailClock: 0 });
     } else {
       const hazardKind = water && kind === 'oil' ? 'flame' : kind;
       const mesh = this.makeHazard(hazardKind);
@@ -65,6 +71,7 @@ export class SpecialWeapons {
   step(dt: number, playerSpeed: number, traffic: readonly TrafficVehicle[], airTargets: readonly AirTarget[] = []): Impact[] {
     const impacts: Impact[] = [];
     this.cooldown = Math.max(0, this.cooldown - dt);
+    this.contrails.step(dt, playerSpeed);
     for (let i = this.missiles.length - 1; i >= 0; i--) {
       const missile = this.missiles[i];
       // Aerial targets are prioritized when in range; other missiles target road hostiles.
@@ -84,6 +91,11 @@ export class SpecialWeapons {
       missile.z -= 82 * dt;
       const altitude = aircraft ? 8.7 : 0.83;
       missile.mesh.position.set(missile.x, approach(missile.mesh.position.y, altitude, 7, dt), missile.z);
+      missile.trailClock -= dt;
+      if (missile.trailClock <= 0) {
+        this.contrails.emit(missile.x, missile.mesh.position.y, missile.z + 1.05);
+        missile.trailClock = 0.085;
+      }
       missile.mesh.rotation.z = target ? Math.max(-0.25, Math.min(0.25, (target.x - missile.x) * -0.08)) : 0;
       const airHit = airTargets.find((air) => air.hp > 0 &&
         Math.abs(missile.x - air.x) < 2.4 && Math.abs(missile.z - air.z) < 3.7 &&
@@ -131,6 +143,7 @@ export class SpecialWeapons {
   renderAt(center: (z: number) => number): void {
     for (const missile of this.missiles) missile.mesh.position.x = missile.x + center(missile.z);
     for (const hazard of this.hazards) hazard.mesh.position.x = hazard.x + center(hazard.z);
+    this.contrails.renderAt(center);
   }
 
   private makeMissile(): THREE.Group {

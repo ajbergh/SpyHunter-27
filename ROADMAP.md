@@ -51,7 +51,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] Initial guided hostile-target missiles, oil spinout hazards, smoke-based AI disruption, inventory and cooldown.
 - [x] Prioritize helicopter targets with altitude-aware guided missile interception and +750 aerial scoring.
 - [x] Improved helicopter bomb fairness: 0.92-second predictive warning, ramping target marker and brake/steer escape validation.
-- [ ] Refine missile contrails, additional air-combat visuals and long-session balance.
+- [x] Single-draw-call 128-instance pooled missile contrails, curved-road world alignment and unit regression coverage.
+- [ ] More comprehensive missile camera/readability polish, aerial blast detail and long-session balance.
 - [x] First deployable support truck with an animated ramp, approach/cooldown, alignment-based docking and inventory refill.
 - [x] Animate resupply van rear doors, ramp, beacons and brief vehicle-hide/docking camera choreography.
 - [x] Animate visible interceptor moving into van and safe reentry with invulnerability and cleared deployment lane.

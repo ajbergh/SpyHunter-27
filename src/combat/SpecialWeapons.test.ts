@@ -72,4 +72,19 @@ describe('special weapon inventory', () => {
     weapons.reset();
   });
 
+  it('maintains a bounded trail while guided missiles fly and clears it on reset', () => {
+    const scene = new THREE.Scene();
+    const weapons = new SpecialWeapons(scene);
+    const children = scene.children.length;
+    expect(weapons.use('missile', 0)).toBe(true);
+    for (let i = 0; i < 25; i++) weapons.step(1/60, 30, []);
+    expect(weapons.activeMissileTrails).toBeGreaterThan(0);
+    expect(weapons.activeMissileTrails).toBeLessThanOrEqual(128);
+    weapons.renderAt(() => 1);
+    expect(scene.children.length).toBe(children + 1);
+    weapons.reset();
+    expect(weapons.activeMissileTrails).toBe(0);
+    expect(scene.children.length).toBe(children);
+  });
+
 });
