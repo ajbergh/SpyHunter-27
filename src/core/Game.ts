@@ -418,7 +418,7 @@ export class Game {
         if (this.lives <= 0) break;
       }
     }
-    if (this.screen === 'gameover') return;
+    if (this.lives <= 0) return;
     const extraLives = this.scoring.checkExtraLives();
     if (extraLives > 0) {
       this.lives = Math.min(5, this.lives + extraLives);
