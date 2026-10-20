@@ -75,6 +75,7 @@ describe('air threats', () => {
   it('ace bomb telegraph remains dodgeable and releases target offsets over time', () => {
     const threats = new AirThreats(new THREE.Scene());
     const ace = threats.spawn(0, 'ace');
+    expect(ace.hpMax).toBe(5);
     const hitbox = { x: 6.4, z: PLAYER_Z, halfWidth: 1, halfLength: 2 };
     const bombXs: number[] = [];
     for (let i=0;i<590;i++) {
