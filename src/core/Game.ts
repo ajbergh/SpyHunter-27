@@ -24,6 +24,8 @@ import { loadPreferences, type GamePreferences } from '../gameplay/Settings';
 import { WeaponsVan } from '../gameplay/WeaponsVan';
 import { planEncounter } from '../gameplay/EncounterDirector';
 import { ExplosionEffects } from '../combat/ExplosionEffects';
+import { boundaryStrike, gradeBoathouseEntry } from '../gameplay/Boundary';
+import { biomeAt } from '../world/WorldPlan';
 
 export class Game {
   private readonly scene = new THREE.Scene();
@@ -61,6 +63,8 @@ export class Game {
   private grace = 0;
   private dockingTimer = 0;
   private dockingEntryX = 0;
+  private boundaryCooldown = 0;
+  private gateWarned = false;
   private toastClock = 0;
 
   constructor(host: HTMLElement) {
@@ -160,6 +164,8 @@ export class Game {
     this.grace = mode === 'modern' ? 5 : 3;
     this.dockingTimer = 0;
     this.dockingEntryX = 0;
+    this.boundaryCooldown = 0;
+    this.gateWarned = false;
     this.spawnClock = 0.8;
     this.airSpawnClock = 9;
     this.shotClock = 0;
@@ -227,9 +233,27 @@ export class Game {
     }
 
     this.player.step(dt, controls, this.road.biome, GAME_MODES[this.mode].speedScale);
+    this.boundaryCooldown = Math.max(0, this.boundaryCooldown - dt);
+    if (this.boundaryCooldown === 0 && boundaryStrike(
+      this.player.x, controls.steer, this.player.speed, this.player.isBoat
+    )) {
+      this.boundaryCooldown = 3;
+      this.damagePlayer(this.player.isBoat ? 'RIVERBANK COLLISION' : 'GUARDRAIL COLLISION');
+    }
+    if (this.lives <= 0) return;
     this.camera.position.x = approach(this.camera.position.x, this.player.x * 0.13, 3.2, dt);
     const biomeChanged = this.road.step(this.player.speed, dt);
     if (biomeChanged) {
+      const transfer = gradeBoathouseEntry(this.player.x, this.player.speed);
+      if (transfer === 'scrape') {
+        this.damagePlayer('BOATHOUSE WALL COLLISION');
+        if (this.lives <= 0) return;
+        this.player.x = 0;
+        this.player.mesh.position.x = 0;
+        this.scoring.resetCombo();
+      } else {
+        this.scoring.bonus(350);
+      }
       const onWater = this.road.biome === 'water';
       this.player.setBoat(onWater);
       this.player.invulnerability = 3.5;
@@ -243,9 +267,11 @@ export class Game {
       this.bullets.reset();
       this.van.reset();
       this.waterHazards.reset();
-      this.announce(onWater
-        ? 'BOATHOUSE TRANSFER — SPEEDBOAT DEPLOYED'
-        : 'BOATHOUSE TRANSFER — INTERCEPTOR RESTORED');
+      this.announce(transfer === 'scrape'
+        ? 'BOATHOUSE MISALIGNED — WALL IMPACT / RECOVERY'
+        : onWater
+          ? 'BOATHOUSE DOCKED — SPEEDBOAT DEPLOYED +350'
+          : 'BOATHOUSE DOCKED — INTERCEPTOR RESTORED +350');
     }
     this.wake.step(dt, this.player.speed, this.player.x, this.player.isBoat);
     this.weather.step(dt, this.player.speed, this.road.biome);
@@ -343,7 +369,9 @@ export class Game {
         this.flash(impact.vehicle.x, impact.vehicle.z, 0.52, 0xffaa42);
         this.audio.explode();
       } else {
-        this.flash(impact.vehicle.x, impact.vehicle.z, 0.22, impact.kind === 'oil' ? 0x47c3ff : 0xd7f7ff);
+        this.flash(impact.vehicle.x, impact.vehicle.z, impact.kind === 'flame' ? 0.65 : 0.22,
+          impact.kind === 'flame' ? 0xff7130 : impact.kind === 'oil' ? 0x47c3ff : 0xd7f7ff);
+        if (impact.kind === 'flame') this.audio.explode();
       }
     }
 
@@ -393,8 +421,8 @@ export class Game {
 
   private handleWeapons(missile: boolean, oil: boolean, smoke: boolean): void {
     const attempt = (kind: WeaponKind): void => {
-      if (this.specials.use(kind, this.player.x)) {
-        this.announce(kind.toUpperCase() + ' DEPLOYED');
+      if (this.specials.use(kind, this.player.x, this.player.isBoat)) {
+        this.announce(kind === 'oil' && this.player.isBoat ? 'FLAMING WAKE DEPLOYED' : kind.toUpperCase() + ' DEPLOYED');
         this.audio.confirm();
       } else this.announce('WEAPON UNAVAILABLE — REQUEST RESUPPLY [F]');
     };
