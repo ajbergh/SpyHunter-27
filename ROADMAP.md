@@ -34,14 +34,19 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 
 **Exit:** player can begin, drive, destroy hostile cars, avoid civilians, lose lives and restart. No known blockers in a 10-minute session.
 
-## Phase 2 — Signature arcade systems
+## Phase 2 — Signature arcade systems (incremental implementation)
 
-- [ ] Enemy state machines: flank/sideswipe, armored blockers, shooting limousines, motorcycles and helicopters.
-- [ ] Missile, oil slick and smoke systems with actual tactical effects.
-- [ ] Deployable resupply weapons van with alignment/docking/ramp animation.
-- [ ] Civilian casualty penalty with timed score lockout and feedback.
-- [ ] Attack telegraphs, spawn fairness constraints and difficulty encounter director.
-- [ ] Combo, extra lives, score events and modes (Classic/Modern/Endless).
+- [x] Initial distinct interceptor, weaver, blocker behaviors and disrupted/spinning states.
+- [ ] Expand enemy state machines: ranged limousines, motorcycles, helicopters, coordinated attacks.
+- [x] Initial guided hostile-target missiles, oil spinout hazards, smoke-based AI disruption, inventory and cooldown.
+- [ ] Refine missiles for airborne targets, visual effects and defensive weapon balancing.
+- [x] First deployable support truck with an animated ramp, approach/cooldown, alignment-based docking and inventory refill.
+- [ ] Add vehicle-inside-van camera animation, complete mechanical transitions and skill feedback.
+- [x] Five-second civilian casualty NO POINTS lockout with HUD warning and casualty counter.
+- [x] Initial lane reservation check at spawn horizon.
+- [ ] Improve telegraphs, pacing director and fairness for clustered enemies.
+- [x] Extra life every 10,000 points (capped at five lives).
+- [ ] Combo scoring, achievement hooks, Classic/Modern/Endless modes.
 - [ ] Layered debris/shockwaves/explosion lighting.
 
 **Exit:** complete, distinct combat mechanics and memorable resupply loop.
@@ -82,11 +87,11 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 
 ## Next implementation batch
 
-1. Run first GitHub Actions CI and correct any failing checks.
+1. Verify new Phase 2 code in CI and run a full in-browser playthrough, including Q/E/R/F inputs.
 2. Add Playwright gameplay smoke test and collect screenshots for visual inspection.
-3. Refine enemy AI into a reusable behavior/state system, then make traffic reactions fair.
-4. Add timed civilian scoring penalty and extra-life thresholds.
-5. Implement missiles, oil/smoke and then weapons van docking as an actual collision interaction.
+3. Make the truck docking sequence cinematic and detect near-misses clearly.
+4. Add helicopter AI, aerial bombs and missile-specific surface-to-air interactions.
+5. Add enemy ranged attacks and upgraded combat visual effects.
 
 ## Architecture and quality gates
 
@@ -100,4 +105,4 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 
 ## Known limitations of first vertical slice
 
-Straight highway only, minimal AI, no missiles/truck/boat, low-poly procedural artwork, simple sound, no browser E2E suite yet. Those constraints are explicit so future engineering work can advance gameplay rather than masquerade as visual completion.
+Straight highway only, initial but incomplete enemy AI and signature weapons systems, no boat/helicopter/biome transitions, low-poly procedural artwork, simple sound, no browser E2E suite yet. Those constraints are explicit so future engineering work can advance gameplay rather than masquerade as visual completion.

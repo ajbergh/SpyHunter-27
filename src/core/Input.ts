@@ -3,6 +3,10 @@ export interface Controls {
   throttle: boolean;
   brake: boolean;
   fire: boolean;
+  missilePressed: boolean;
+  oilPressed: boolean;
+  smokePressed: boolean;
+  vanPressed: boolean;
   startPressed: boolean;
   pausePressed: boolean;
   mutePressed: boolean;
@@ -10,7 +14,7 @@ export interface Controls {
 
 export class Input {
   private keys = new Set<string>();
-  private previous = { start: false, pause: false, mute: false };
+  private previous: Record<string, boolean> = {};
 
   constructor() {
     window.addEventListener('keydown', (e) => {
@@ -30,19 +34,23 @@ export class Input {
     const keyboardSteer = Number(right) - Number(left);
     const stick = Math.abs(axis) > 0.15 ? axis : 0;
     const pressed = (index: number): boolean => Boolean(gamepad?.buttons[index]?.pressed);
-    const throttle = key('KeyW') || key('ArrowUp') || pressed(7);
-    const brake = key('KeyS') || key('ArrowDown') || pressed(6);
-    const fire = key('Space') || pressed(0);
-    const start = key('Enter');
-    const pause = key('KeyP') || key('Escape') || pressed(9);
-    const mute = key('KeyM');
-    const snapshot: Controls = {
-      steer: Math.max(-1, Math.min(1, keyboardSteer || stick)), throttle, brake, fire,
-      startPressed: start && !this.previous.start,
-      pausePressed: pause && !this.previous.pause,
-      mutePressed: mute && !this.previous.mute,
+    const edge = (name: string, active: boolean): boolean => {
+      const fired = active && !this.previous[name];
+      this.previous[name] = active;
+      return fired;
     };
-    this.previous = { start, pause, mute };
-    return snapshot;
+    return {
+      steer: Math.max(-1, Math.min(1, keyboardSteer || stick)),
+      throttle: key('KeyW') || key('ArrowUp') || pressed(7),
+      brake: key('KeyS') || key('ArrowDown') || pressed(6),
+      fire: key('Space') || pressed(0),
+      missilePressed: edge('missile', key('KeyQ') || pressed(1)),
+      oilPressed: edge('oil', key('KeyE') || pressed(2)),
+      smokePressed: edge('smoke', key('KeyR') || pressed(3)),
+      vanPressed: edge('van', key('KeyF') || pressed(4)),
+      startPressed: edge('start', key('Enter')),
+      pausePressed: edge('pause', key('KeyP') || key('Escape') || pressed(9)),
+      mutePressed: edge('mute', key('KeyM')),
+    };
   }
 }

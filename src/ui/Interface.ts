@@ -1,3 +1,5 @@
+import type { WeaponCounts } from '../combat/SpecialWeapons';
+
 export type Screen = 'menu' | 'playing' | 'paused' | 'gameover';
 
 export class Interface {
@@ -23,6 +25,13 @@ export class Interface {
           <div class="hud-block hud-right"><span class="micro">LIVES <span id="lives">●●●</span></span><strong><span id="speed">025</span><small> MPH</small></strong><span class="micro">DUAL CANNONS // <b class="ready">ARMED</b></span></div>
         </header>
         <div class="toast" id="toast" aria-live="polite"></div>
+        <div class="special-hud" id="special-hud">
+          <div class="special-line">[Q] MISSILE <b id="ammo-missile">03</b></div>
+          <div class="special-line">[E] OIL <b id="ammo-oil">02</b></div>
+          <div class="special-line">[R] SMOKE <b id="ammo-smoke">02</b></div>
+          <div class="special-line van-line">VAN: <b id="van-status">READY [F]</b></div>
+        </div>
+        <div class="penalty" id="penalty" hidden>NO POINTS <span id="penalty-time">5</span>s</div>
         <section class="panel" id="menu">
           <div class="eyebrow">1983 REIMAGINED // 2027 RECHARGED</div>
           <div class="emblem">◈</div>
@@ -31,7 +40,7 @@ export class Interface {
           <div class="panel-rule"></div>
           <p class="intro">INTERCEPT HOSTILES. PROTECT CIVILIANS.<br />SURVIVE THE HIGHWAY.</p>
           <button id="start-button" class="primary-button">INITIATE PURSUIT <span>↗</span></button>
-          <div class="keys">A / D <span>STEER</span> · W / S <span>SPEED</span> · SPACE <span>FIRE</span></div>
+          <div class="keys">A / D <span>STEER</span> · W / S <span>SPEED</span> · SPACE <span>FIRE</span><div>Q <span>MISSILE</span> · E <span>OIL</span> · R <span>SMOKE</span> · F <span>RESUPPLY</span></div></div>
           <p class="build-tag">PHASE 1 // PLAYABLE PROTOTYPE</p>
         </section>
         <section class="panel compact" id="paused" hidden>
@@ -72,6 +81,18 @@ export class Interface {
     this.paused.hidden = screen !== 'paused';
     this.gameover.hidden = screen !== 'gameover';
     this.hud.hidden = screen === 'menu';
+    this.get('special-hud').hidden = screen === 'menu' || screen === 'gameover';
+    if (screen === 'menu' || screen === 'gameover') this.get('penalty').hidden = true;
+  }
+
+  armory(ammo: WeaponCounts, van: string, penalty: number): void {
+    this.get('ammo-missile').textContent = String(ammo.missile).padStart(2, '0');
+    this.get('ammo-oil').textContent = String(ammo.oil).padStart(2, '0');
+    this.get('ammo-smoke').textContent = String(ammo.smoke).padStart(2, '0');
+    this.get('van-status').textContent = van;
+    const warning = this.get('penalty');
+    warning.hidden = penalty <= 0;
+    this.get('penalty-time').textContent = String(Math.ceil(penalty));
   }
 
   stats(score: number, best: number, lives: number, speed: number): void {

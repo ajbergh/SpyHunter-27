@@ -2,7 +2,7 @@
 
 A modern, original WebGL arcade-combat driving game inspired by the feel of early 1980s vertical-scrolling highway games. Powered by **Three.js + TypeScript + Vite**.
 
-> **Project status:** Phase 1 playable vertical slice. Core land driving, scrolling road, shooting, civilian/enemy traffic, scoring, lives, pause and restart are implemented. Weapon truck, secondary weapons, curved highways, watercraft, biome variety and premium art/audio are roadmap items—not yet implemented.
+> **Project status:** Phase 2 in progress. Phase 1 driving, traffic and scoring are implemented; initial special weapons (missile, oil, smoke), civilian NO POINTS penalty, enemy roles and an alignment-based support truck are now added. Curved highways, watercraft, biome variety, specialized airborne enemies and premium art/audio remain roadmap items. Browser gameplay validation is outstanding.
 
 ## Run locally
 
@@ -30,11 +30,15 @@ npm run preview
 | Accelerate | W or up arrow |
 | Brake | S or down arrow |
 | Fire dual guns | Space |
+| Guided missile | Q |
+| Deploy oil slick | E |
+| Deploy smoke screen | R |
+| Call weapons resupply truck | F |
 | Pause / resume | P or Escape |
 | Start / retry | Enter |
 | Mute | M |
 
-The game also reads compatible gamepads (left stick to steer, right trigger to accelerate, left trigger to brake, main button to shoot, Start to pause).
+The game also reads compatible gamepads (left stick to steer, right trigger to accelerate, left trigger to brake, main button to shoot, face buttons for specials, left shoulder to call truck, Start to pause).
 
 ## Architecture
 
@@ -44,6 +48,9 @@ The game also reads compatible gamepads (left stick to steer, right trigger to a
 - `src/world/Road.ts` streams recyclable three-dimensional highway segments and roadside scenery.
 - `src/entities/` owns original procedural vehicle meshes and traffic entities.
 - `src/combat/Projectiles.ts` handles pooled bullets and hit checks.
+- `src/combat/SpecialWeapons.ts` manages missile homing, oil/smoke hazard interactions, ammo and cooldown.
+- `src/gameplay/WeaponsVan.ts` implements roadside truck deployment, ramp alignment, docking and refill.
+- `src/gameplay/Scoring.ts` implements civilian score lockout and extra-life milestones.
 - `src/ui/Interface.ts` presents accessible HTML HUD/menu overlays on the WebGL canvas.
 - `src/audio/Audio.ts` generates lightweight original synthesized arcade effects using Web Audio.
 - `src/core/logic.ts` contains small deterministic gameplay functions and tests.
@@ -58,7 +65,7 @@ The game uses actual 3D rendering with an angled orthographic camera, but collis
 4. Use original assets and sound.
 5. Optimize and verify before expanding scope.
 
-See [ROADMAP.md](ROADMAP.md) for milestones, acceptance gates and next actions.
+Read the original [MASTER DEVELOPMENT PROMPT](docs/MASTER_DEVELOPMENT_PROMPT.md) for the authoritative game specification. See [ROADMAP.md](ROADMAP.md) for milestones, acceptance gates and next actions.
 
 ## IP note
 
