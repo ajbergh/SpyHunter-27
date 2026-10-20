@@ -24,6 +24,7 @@ import { loadPreferences, type GamePreferences } from '../gameplay/Settings';
 import { WeaponsVan } from '../gameplay/WeaponsVan';
 import { planEncounter } from '../gameplay/EncounterDirector';
 import { ExplosionEffects } from '../combat/ExplosionEffects';
+import { VehicleDebris } from '../combat/VehicleDebris';
 import { accuracyPercent } from '../gameplay/SessionMetrics';
 import {
   challengeDate, challengeSeed, dailyRecordKey, seededGenerator, bestDailyScore,
@@ -63,6 +64,7 @@ export class Game {
   private readonly traffic: TrafficVehicle[] = [];
   private nextSquadId = 1;
   private readonly effects: ExplosionEffects;
+  private readonly debris: VehicleDebris;
   private screen: Screen = 'menu';
   private mode: GameMode = 'classic';
   private random: () => number = Math.random;
@@ -113,6 +115,7 @@ export class Game {
     this.air = new AirThreats(this.scene);
     this.enemyShots = new EnemyProjectiles(this.scene);
     this.effects = new ExplosionEffects(this.scene);
+    this.debris = new VehicleDebris(this.scene);
     this.van = new WeaponsVan(this.scene);
     try { this.best = Number(localStorage.getItem('spyhunter27-best') || 0) || 0; } catch { /* private browsing may deny storage */ }
     this.refreshHUD();
@@ -422,6 +425,7 @@ export class Game {
         }
       )) {
         this.flash(event.x, event.z, 0.57, 0xff6a31);
+        this.debris.emit(event.x, event.z, true, 0.7);
         this.audio.explode();
         if (event.kind === 'barrel-impact') this.damagePlayer('EXPLOSIVE BARREL IMPACT');
         else {
@@ -460,6 +464,7 @@ export class Game {
         this.flash(impact.aircraft.x, impact.aircraft.z, 0.84, 0xffc65d);
         this.audio.explode();
         if (impact.aircraft.hp <= 0) {
+          this.debris.emit(impact.aircraft.x, impact.aircraft.z, true, 8.7);
           const points = this.scoring.enemyDestroyed(impact.aircraft instanceof Helicopter &&
             impact.aircraft.profile === 'ace' ? 1250 : 750);
           this.announce(points ? `AIR THREAT NEUTRALIZED +${points}` : 'AIR THREAT NEUTRALIZED — NO POINTS');
@@ -485,6 +490,7 @@ export class Game {
       }
       if (car.hp <= 0) {
         this.flash(car.x, car.z, 0.55, car.hostile ? 0xff8b34 : 0xff5252);
+        this.debris.emit(car.x, car.z, car.hostile);
         if (car.hostile) {
           const awarded = this.scoring.enemyDestroyed(car.role === 'motorcycle' ? 400 : scoreForTarget(true));
           if (awarded) this.announce(`HOSTILE NEUTRALIZED  +${awarded}`);
@@ -564,6 +570,7 @@ export class Game {
   private damagePlayer(reason: string): void {
     if (this.player.invulnerability > 0 || this.grace > 0 || this.screen !== 'playing' || this.dockingTimer > 0) return;
     this.flash(this.player.x, PLAYER_Z, 0.72, 0xffa342);
+    this.debris.emit(this.player.x, PLAYER_Z, true);
     this.audio.explode();
     this.lives--;
     this.scoring.resetCombo();
@@ -576,8 +583,14 @@ export class Game {
     this.effects.emit(x, z, this.preferences.reducedMotion ? Math.min(duration, 0.22) : duration, color);
   }
 
-  private stepExplosions(dt: number): void { this.effects.step(dt); }
-  private clearExplosions(): void { this.effects.reset(); }
+  private stepExplosions(dt: number): void {
+    this.effects.step(dt);
+    this.debris.step(dt, this.player.speed);
+  }
+  private clearExplosions(): void {
+    this.effects.reset();
+    this.debris.reset();
+  }
 
   private announce(message: string): void { this.ui.message(message); this.toastClock = 1.6; }
 
@@ -619,6 +632,7 @@ export class Game {
     this.air.renderAt(center);
     this.enemyShots.renderAt(center);
     this.effects.renderAt(center);
+    this.debris.renderAt(center);
     this.wake.renderAt(center);
     this.waterHazards.renderAt(center);
     this.van.mesh.position.x = 6.4 + center(this.van.mesh.position.z);

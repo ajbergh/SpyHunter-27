@@ -67,7 +67,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] Classic/Modern/Endless mode configuration, starting lives and encounter pacing.
 - [ ] Achievement hooks and additional mode-specific scoring rules.
 - [x] Bounded pooled multi-layer explosion effects with expanding shockwave and ballistic sparks.
-- [ ] More physical vehicle debris, lighting flashes and sound layering.
+- [x] 96-slot single-draw-call ballistic metal-debris pool for vehicles, helicopters and shoreline barrels, with gravity/bounce and deterministic dispersion.
+- [ ] Additional lighting flashes, authored vehicle-part breakage and layered destruction audio.
 
 **Exit:** complete, distinct combat mechanics and memorable resupply loop.
 

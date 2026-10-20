@@ -226,3 +226,13 @@ test('gamepad buttons can be reassigned and persist between sessions', async ({ 
   await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
   await expect(page.locator('#gamepad-fire')).toHaveValue('14');
 });
+
+test('elite air combat and debris renderer initialize without WebGL exceptions', async ({ page }) => {
+  const crashes: string[] = [];
+  page.on('pageerror', error => crashes.push(error.message));
+  await page.goto('/?testDistance=2150');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#environment-name')).toContainText('ARCTIC');
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  expect(crashes).toEqual([]);
+});
