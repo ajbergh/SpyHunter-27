@@ -89,3 +89,15 @@ h2 { font-size: 88px; line-height: .9; }
 .settings-overlay .toggle input { accent-color:#ffcb73; }
 .settings-overlay .primary-button { margin-top:12px; }
 .fps-debug { position:absolute; z-index:4; bottom:79px; right:8px; padding:6px; background:#04121de5; color:#96f0d7; font:700 11px monospace; pointer-events:none; }
+
+/* Scrollable, keyboard-operated control settings without squeezing the main HUD. */
+.settings-overlay { justify-content:flex-start; overflow-y:auto; overscroll-behavior:contain; max-height:100%; }
+.settings-overlay .settings-heading { font-size:38px; }
+.binding-heading { font:800 12px 'Rajdhani',sans-serif; color:#ffdba1; letter-spacing:.13em; margin-top:14px; }
+.bindings-grid { display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:5px; }
+.binding-button { min-width:0; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:2px; padding:7px 10px; background:#0a283b; color:#b8d3df; border:1px solid #3f6475; cursor:pointer; font:700 10px 'Rajdhani',sans-serif; text-align:left; letter-spacing:.08em; }
+.binding-button strong { font:800 16px 'Barlow Condensed',sans-serif; color:#ffce7c; }
+.binding-button:hover,.binding-button:focus-visible { border-color:#ffcc76; outline-offset:2px; }
+.binding-status { font:700 11px 'Rajdhani',sans-serif; color:#b6d2e0; min-height:18px; margin:3px 0; }
+.cabinet.reduced-motion .scanlines { display:none; }
+.cabinet.reduced-motion *, .cabinet.reduced-motion *::before, .cabinet.reduced-motion *::after { transition-duration:.01ms!important; animation-duration:.01ms!important; }

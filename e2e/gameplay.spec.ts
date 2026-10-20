@@ -101,3 +101,19 @@ test('restores highway interceptor after leaving waterway', async ({ page }) => 
   await expect(page.locator('#environment-name')).not.toContainText('SPEEDBOAT');
   await expect(page.locator('#van-status')).toContainText('READY');
 });
+
+test('custom keyboard mappings persist and update visible control hints', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
+  await page.locator('#bindings-grid [data-action="fire"]').click();
+  await page.keyboard.press('z');
+  await expect(page.locator('#bindings-grid [data-action="fire"] strong')).toHaveText('Z');
+  await expect(page.locator('#control-keys')).toContainText('Z FIRE');
+  await page.locator('#reduced-motion').check();
+  await page.getByRole('button', { name: /apply and return/i }).click();
+  await page.reload();
+  await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
+  await expect(page.locator('#bindings-grid [data-action="fire"] strong')).toHaveText('Z');
+  await expect(page.locator('#reduced-motion')).toBeChecked();
+  await expect(page.locator('.cabinet')).toHaveClass(/reduced-motion/);
+});

@@ -123,6 +123,7 @@ export class Game {
   private configure(settings: GamePreferences): void {
     this.preferences = settings;
     this.audio.configure(settings.musicVolume, settings.effectsVolume);
+    this.input.setBindings(settings.bindings);
     this.weather.setQuality(settings.quality);
     const ratio = settings.quality === 'low' ? 1 : settings.quality === 'high' ? 2 : 1.5;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, ratio));
@@ -465,7 +466,7 @@ export class Game {
   }
 
   private flash(x: number, z: number, duration: number, color: number): void {
-    this.effects.emit(x, z, duration, color);
+    this.effects.emit(x, z, this.preferences.reducedMotion ? Math.min(duration, 0.22) : duration, color);
   }
 
   private stepExplosions(dt: number): void { this.effects.step(dt); }

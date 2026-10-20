@@ -42,7 +42,7 @@ npm run preview
 
 ### Graphics, audio and accessibility
 
-The **Settings** menu (also accessible while paused) saves High/Medium/Low graphics settings, music and effects volumes, reduced-motion preference, and an optional FPS/draw-call diagnostics overlay. Biome-specific GPU weather adds snow, dust, city rain and water mist at quality-dependent particle budgets. High quality enables restrained bloom through a Three.js EffectComposer pipeline. The soundtrack and speed-reactive engine audio are original synthesized Web Audio.
+The **Settings** menu (also accessible while paused) saves High/Medium/Low graphics settings, music and effects volumes, reduced-motion preference, and an optional FPS/draw-call diagnostics overlay. Ten core keyboard actions can be rebound in Settings (with duplicate detection and persistent storage); Arrow keys and Escape remain available as fallbacks. Biome-specific GPU weather adds snow, dust, city rain and water mist at quality-dependent particle budgets. High quality enables restrained bloom through a Three.js EffectComposer pipeline. The soundtrack and speed-reactive engine audio are original synthesized Web Audio.
 
 ### Game modes and environment progression
 

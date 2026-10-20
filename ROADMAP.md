@@ -99,17 +99,20 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] Original adaptive synthesized espionage riff and speed-sensitive engine drone.
 - [ ] Multi-layer authored music, richer engine samples and environmental audio.
 - [x] Persistent Low/Medium/High render quality, original music/effects volume and reduced-motion option.
-- [ ] Full high-contrast accessibility system, rebinding and broader graphics presets.
+- [x] Persistent keyboard remapping for 10 actions with duplicate protection, Escape cancellation and reduced-motion display rules.
+- [ ] Full high-contrast accessibility system, remappable gamepad buttons and broader graphics presets.
 
 **Exit:** cohesive premium look, responsive effects, no readability regressions.
 
 ## Phase 5 — UX, polish and release readiness
 
-- [ ] Sophisticated start screen/attract mode, game mode/settings, control rebinding.
+- [x] Three-mode title-screen selection, settings panel and live keyboard control-rebinding interface.
+- [ ] Sophisticated autonomous attract-mode demo, more accessible tutorial and credits.
 - [ ] Full HUD: weapons, speed, lives, scoring modifiers, truck readiness.
 - [ ] Results statistics, achievements, seeded daily challenge (optional).
 - [x] Persistent settings UI available on main and paused screens.
-- [ ] Full keyboard/gamepad rebinding, extended pause/focus/accessibility behavior.
+- [x] Keyboard control rebinding with persisted help hints and optional reduced-motion interface treatment.
+- [ ] Gamepad button remapping and extended pause/focus/accessibility behavior.
 - [x] Optional FPS, draw calls, active vehicle diagnostics overlay.
 - [ ] Profiling: verified 60 FPS at 1080p midrange GPU and integrated GPU tier.
 - [ ] Memory soak, collision fuzzing, fixed-step consistency, cross-browser tests.

@@ -1,7 +1,10 @@
 import type { WeaponCounts } from '../combat/SpecialWeapons';
 import { GAME_MODES, type GameMode } from '../gameplay/GameModes';
 import type { Biome } from '../world/WorldPlan';
-import { loadPreferences, savePreferences, type GamePreferences } from '../gameplay/Settings';
+import {
+  loadPreferences, savePreferences, assignBinding, BINDING_ACTIONS,
+  type GamePreferences, type BindingAction,
+} from '../gameplay/Settings';
 
 export type Screen = 'menu' | 'playing' | 'paused' | 'gameover';
 
@@ -17,6 +20,7 @@ export class Interface {
   onResume: () => void = () => {};
   onSettingsChange: (settings: GamePreferences) => void = () => {};
   private preferences = loadPreferences();
+  private capturing: BindingAction | null = null;
 
   constructor(host: HTMLElement) {
     this.root = document.createElement('div');
@@ -52,7 +56,7 @@ export class Interface {
           <select id="mode-select" class="mode-select" aria-label="Game mode"><option value="classic">CLASSIC ARCADE</option><option value="modern">MODERN ARCADE</option><option value="endless">ENDLESS PURSUIT</option></select>
           <p class="mode-description" id="mode-description">Three lives. Fast enemies. Every impact counts.</p>
           <button id="start-button" class="primary-button">INITIATE PURSUIT <span>↗</span></button>
-          <div class="keys">A / D <span>STEER</span> · W / S <span>SPEED</span> · SPACE <span>FIRE</span><div>Q <span>MISSILE</span> · E <span>OIL</span> · R <span>SMOKE</span> · F <span>RESUPPLY</span></div></div>
+          <div class="keys" id="control-keys">A / D <span>STEER</span> · W / S <span>SPEED</span> · SPACE <span>FIRE</span><div>Q <span>MISSILE</span> · E <span>OIL</span> · R <span>SMOKE</span> · F <span>RESUPPLY</span></div></div>
           <button class="aux-button" id="settings-button">SETTINGS / AUDIO / GRAPHICS</button>
           <p class="build-tag">THREE.JS // WEBGL ARCADE</p>
         </section>
@@ -70,6 +74,9 @@ export class Interface {
           <input type="range" id="effects-volume" min="0" max="100" step="5" />
           <label class="toggle"><input type="checkbox" id="reduced-motion" /> REDUCED MOTION</label>
           <label class="toggle"><input type="checkbox" id="show-fps" /> PERFORMANCE DIAGNOSTICS</label>
+          <div class="binding-heading">REMAP KEYBOARD CONTROLS</div>
+          <div class="bindings-grid" id="bindings-grid"></div>
+          <p class="binding-status" id="binding-status" aria-live="polite">Select a command to change its key. Escape cancels.</p>
           <button class="primary-button" id="close-settings">APPLY AND RETURN ↗</button>
         </section>
         <div class="fps-debug" id="fps-debug" hidden>FPS -- / DRAWS -- / VEH --</div>
@@ -107,7 +114,10 @@ export class Interface {
     this.get('resume-button').addEventListener('click', () => this.onResume());
     this.get('settings-button').addEventListener('click', () => { this.get('settings-panel').hidden = false; });
     this.get('pause-settings-button').addEventListener('click', () => { this.get('settings-panel').hidden = false; });
-    this.get('close-settings').addEventListener('click', () => { this.get('settings-panel').hidden = true; });
+    this.get('close-settings').addEventListener('click', () => {
+      this.capturing = null;
+      this.get('settings-panel').hidden = true;
+    });
     const quality = this.get<HTMLSelectElement>('quality-select');
     const music = this.get<HTMLInputElement>('music-volume');
     const effects = this.get<HTMLInputElement>('effects-volume');
@@ -125,17 +135,85 @@ export class Interface {
         effectsVolume: Number(effects.value) / 100,
         reducedMotion: motion.checked,
         showFps: fps.checked,
+        bindings: this.preferences.bindings,
       };
       savePreferences(this.preferences);
       this.onSettingsChange(this.preferences);
       this.get('fps-debug').hidden = !this.preferences.showFps;
+      this.root.classList.toggle('reduced-motion', this.preferences.reducedMotion);
     };
     for (const element of [quality, music, effects, motion, fps]) {
       element.addEventListener('change', change);
       element.addEventListener('input', change);
     }
     this.get('fps-debug').hidden = !this.preferences.showFps;
+    this.root.classList.toggle('reduced-motion', this.preferences.reducedMotion);
+
+    const labels: Record<BindingAction, string> = {
+      left: 'LEFT', right: 'RIGHT', throttle: 'ACCELERATE', brake: 'BRAKE',
+      fire: 'MACHINE GUNS', missile: 'MISSILE', oil: 'OIL / FLAME',
+      smoke: 'SMOKE', van: 'RESUPPLY VAN', pause: 'PAUSE',
+    };
+    const grid = this.get<HTMLDivElement>('bindings-grid');
+    for (const action of BINDING_ACTIONS) {
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'binding-button';
+      row.dataset.action = action;
+      const label = document.createElement('span');
+      label.textContent = labels[action];
+      const key = document.createElement('strong');
+      key.textContent = this.displayKey(this.preferences.bindings[action]);
+      row.append(label, key);
+      row.addEventListener('click', () => {
+        this.capturing = action;
+        this.get('binding-status').textContent = 'Press a new key for ' + labels[action] + ' — Escape to cancel';
+      });
+      grid.appendChild(row);
+    }
+    window.addEventListener('keydown', event => {
+      if (!this.capturing) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const action = this.capturing;
+      this.capturing = null;
+      if (event.code === 'Escape') {
+        this.get('binding-status').textContent = 'Key change cancelled';
+        return;
+      }
+      const updated = assignBinding(this.preferences.bindings, action, event.code);
+      if (!updated) {
+        this.get('binding-status').textContent = 'Key unavailable or already assigned. Choose A–Z, 0–9, Space or Shift.';
+        return;
+      }
+      this.preferences = { ...this.preferences, bindings: updated };
+      savePreferences(this.preferences);
+      this.onSettingsChange(this.preferences);
+      this.get('binding-status').textContent = 'Updated ' + labels[action] + ' to ' + this.displayKey(event.code);
+      const button = grid.querySelector<HTMLButtonElement>('[data-action="' + action + '"] strong');
+      if (button) button.textContent = this.displayKey(event.code);
+      this.refreshControlHints();
+    }, true);
+    this.refreshControlHints();
     this.show('menu');
+  }
+
+  private displayKey(code: string): string {
+    return code.startsWith('Key') ? code.slice(3)
+      : code.startsWith('Digit') ? code.slice(5)
+      : code === 'Space' ? 'SPACE' : code.replace('Shift', 'SHIFT ');
+  }
+
+  private refreshControlHints(): void {
+    const b = this.preferences.bindings;
+    this.get('control-keys').textContent =
+      this.displayKey(b.left) + '/' + this.displayKey(b.right) + ' STEER · ' +
+      this.displayKey(b.throttle) + '/' + this.displayKey(b.brake) + ' SPEED · ' +
+      this.displayKey(b.fire) + ' FIRE · ' +
+      this.displayKey(b.missile) + ' MISSILE · ' +
+      this.displayKey(b.oil) + ' OIL · ' +
+      this.displayKey(b.smoke) + ' SMOKE · ' +
+      this.displayKey(b.van) + ' RESUPPLY';
   }
 
   private get<T extends HTMLElement = HTMLElement>(id: string): T {

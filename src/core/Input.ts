@@ -1,3 +1,5 @@
+import { DEFAULT_BINDINGS, type KeyBindings } from '../gameplay/Settings';
+
 export interface Controls {
   steer: number;
   throttle: boolean;
@@ -15,6 +17,7 @@ export interface Controls {
 export class Input {
   private keys = new Set<string>();
   private previous: Record<string, boolean> = {};
+  private bindings: KeyBindings = { ...DEFAULT_BINDINGS };
 
   constructor() {
     window.addEventListener('keydown', (e) => {
@@ -25,12 +28,19 @@ export class Input {
     window.addEventListener('blur', () => this.keys.clear());
   }
 
+  setBindings(bindings: KeyBindings): void {
+    this.bindings = { ...bindings };
+    this.previous = {};
+    this.keys.clear();
+  }
+
   read(): Controls {
     const key = (code: string): boolean => this.keys.has(code);
+    const bound = (action: keyof KeyBindings): boolean => key(this.bindings[action]);
     const gamepad = navigator.getGamepads?.().find((pad) => pad && pad.mapping === 'standard');
     const axis = gamepad?.axes[0] ?? 0;
-    const left = key('KeyA') || key('ArrowLeft');
-    const right = key('KeyD') || key('ArrowRight');
+    const left = bound('left') || key('ArrowLeft');
+    const right = bound('right') || key('ArrowRight');
     const keyboardSteer = Number(right) - Number(left);
     const stick = Math.abs(axis) > 0.15 ? axis : 0;
     const pressed = (index: number): boolean => Boolean(gamepad?.buttons[index]?.pressed);
@@ -41,15 +51,15 @@ export class Input {
     };
     return {
       steer: Math.max(-1, Math.min(1, keyboardSteer || stick)),
-      throttle: key('KeyW') || key('ArrowUp') || pressed(7),
-      brake: key('KeyS') || key('ArrowDown') || pressed(6),
-      fire: key('Space') || pressed(0),
-      missilePressed: edge('missile', key('KeyQ') || pressed(1)),
-      oilPressed: edge('oil', key('KeyE') || pressed(2)),
-      smokePressed: edge('smoke', key('KeyR') || pressed(3)),
-      vanPressed: edge('van', key('KeyF') || pressed(4)),
+      throttle: bound('throttle') || key('ArrowUp') || pressed(7),
+      brake: bound('brake') || key('ArrowDown') || pressed(6),
+      fire: bound('fire') || pressed(0),
+      missilePressed: edge('missile', bound('missile') || pressed(1)),
+      oilPressed: edge('oil', bound('oil') || pressed(2)),
+      smokePressed: edge('smoke', bound('smoke') || pressed(3)),
+      vanPressed: edge('van', bound('van') || pressed(4)),
       startPressed: edge('start', key('Enter')),
-      pausePressed: edge('pause', key('KeyP') || key('Escape') || pressed(9)),
+      pausePressed: edge('pause', bound('pause') || key('Escape') || pressed(9)),
       mutePressed: edge('mute', key('KeyM')),
     };
   }
