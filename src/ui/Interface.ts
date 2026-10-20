@@ -1,6 +1,7 @@
 import type { WeaponCounts } from '../combat/SpecialWeapons';
 import { GAME_MODES, type GameMode } from '../gameplay/GameModes';
 import type { Biome } from '../world/WorldPlan';
+import { formatMissionDistance, formatMissionTime } from '../gameplay/SessionMetrics';
 import {
   loadPreferences, savePreferences, assignBinding, BINDING_ACTIONS,
   type GamePreferences, type BindingAction,
@@ -90,7 +91,14 @@ export class Interface {
           <div class="eyebrow">INTERCEPTOR LOST</div><h2>MISSION<br />TERMINATED</h2>
           <p class="intro">FINAL SCORE</p><div class="final-score" id="final-score">000000</div>
           <p class="intro">BEST <span id="final-best">000000</span></p>
-          <div class="mission-results"><span>HOSTILES <b id="result-hostiles">0</b></span><span>CIVILIANS <b id="result-civilians">0</b></span><span>TOP COMBO <b id="result-combo">×1</b></span></div>
+          <div class="mission-results">
+            <span>HOSTILES <b id="result-hostiles">0</b></span>
+            <span>CIVILIANS <b id="result-civilians">0</b></span>
+            <span>TOP COMBO <b id="result-combo">×1</b></span>
+            <span>TRAVEL <b id="result-distance">0.00 KM</b></span>
+            <span>TIME <b id="result-time">00:00</b></span>
+            <span>ACCURACY <b id="result-accuracy">0%</b></span>
+          </div>
           <button class="primary-button" id="retry-button">REDEPLOY ↗</button>
         </section>
         <footer class="viewport-footer"><span>◉ LIVE OPERATIONS</span><span>THREAT LEVEL <b>HIGH</b></span><span id="sound-indicator">AUDIO ON</span></footer>
@@ -276,12 +284,18 @@ export class Interface {
     this.get('speed').textContent = Math.floor(speed * 2.1).toString().padStart(3, '0');
   }
 
-  result(score: number, best: number, hostiles = 0, civilians = 0, maxCombo = 1): void {
+  result(
+    score: number, best: number, hostiles = 0, civilians = 0, maxCombo = 1,
+    distance = 0, survivalSeconds = 0, accuracy = 0,
+  ): void {
     this.get('final-score').textContent = Math.floor(score).toString().padStart(6, '0');
     this.get('final-best').textContent = Math.floor(best).toString().padStart(6, '0');
     this.get('result-hostiles').textContent = String(hostiles);
     this.get('result-civilians').textContent = String(civilians);
     this.get('result-combo').textContent = '×' + maxCombo;
+    this.get('result-distance').textContent = formatMissionDistance(distance);
+    this.get('result-time').textContent = formatMissionTime(survivalSeconds);
+    this.get('result-accuracy').textContent = accuracy + '%';
   }
 
   mute(muted: boolean): void { this.get('sound-indicator').textContent = muted ? 'AUDIO OFF' : 'AUDIO ON'; }

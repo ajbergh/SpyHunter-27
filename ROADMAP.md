@@ -109,7 +109,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] Three-mode title-screen selection, settings panel and live keyboard control-rebinding interface.
 - [ ] Sophisticated autonomous attract-mode demo, more accessible tutorial and credits.
 - [ ] Full HUD: weapons, speed, lives, scoring modifiers, truck readiness.
-- [ ] Results statistics, achievements, seeded daily challenge (optional).
+- [x] Results statistics: enemies eliminated, civilian casualties, best combo, distance, elapsed time and gun accuracy.
+- [ ] Achievements and seeded daily challenge (optional).
 - [x] Persistent settings UI available on main and paused screens.
 - [x] Keyboard control rebinding with persisted help hints and optional reduced-motion interface treatment.
 - [ ] Gamepad button remapping and extended pause/focus/accessibility behavior.

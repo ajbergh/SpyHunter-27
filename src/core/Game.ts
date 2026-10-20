@@ -24,6 +24,7 @@ import { loadPreferences, type GamePreferences } from '../gameplay/Settings';
 import { WeaponsVan } from '../gameplay/WeaponsVan';
 import { planEncounter } from '../gameplay/EncounterDirector';
 import { ExplosionEffects } from '../combat/ExplosionEffects';
+import { accuracyPercent } from '../gameplay/SessionMetrics';
 import { boundaryStrike, gradeBoathouseEntry } from '../gameplay/Boundary';
 import { biomeAt } from '../world/WorldPlan';
 
@@ -66,6 +67,9 @@ export class Game {
   private boundaryCooldown = 0;
   private gateWarned = false;
   private toastClock = 0;
+  private survivalSeconds = 0;
+  private roundsFired = 0;
+  private roundsHit = 0;
 
   constructor(host: HTMLElement) {
     this.ui = new Interface(host);
@@ -171,6 +175,9 @@ export class Game {
     this.airSpawnClock = 9;
     this.shotClock = 0;
     this.toastClock = 0;
+    this.survivalSeconds = 0;
+    this.roundsFired = 0;
+    this.roundsHit = 0;
     this.ui.message('');
     this.screen = 'playing';
     this.ui.show(this.screen);
@@ -204,6 +211,7 @@ export class Game {
       return;
     }
     if (this.screen !== 'playing') return;
+    this.survivalSeconds += dt;
 
     if (this.dockingTimer > 0) {
       this.dockingTimer = Math.max(0, this.dockingTimer - dt);
@@ -322,14 +330,18 @@ export class Game {
 
     this.shotClock -= dt;
     if (controls.fire && this.shotClock <= 0 && this.dockingTimer <= 0) {
-      this.bullets.fire(this.player.x, PLAYER_Z);
+      this.roundsFired += this.bullets.fire(this.player.x, PLAYER_Z);
       this.audio.fire();
       this.shotClock = 0.115;
     }
     this.bullets.step(dt);
     if (this.player.isBoat) {
       for (const event of this.waterHazards.step(
-        dt, this.player.speed, this.player.hitbox(), (target) => this.bullets.hitTest(target)
+        dt, this.player.speed, this.player.hitbox(), (target) => {
+          const hit = this.bullets.hitTest(target);
+          if (hit) this.roundsHit++;
+          return hit;
+        }
       )) {
         this.flash(event.x, event.z, 0.57, 0xff6a31);
         this.audio.explode();
@@ -381,6 +393,7 @@ export class Game {
       if (car.z > 55) { this.removeVehicle(i); continue; }
       while (car.hp > 0 && this.bullets.hitTest(car.hitbox())) {
         car.hp--;
+        this.roundsHit++;
         this.audio.impact();
         this.flash(car.x, car.z, 0.22, 0xffd57c);
       }
@@ -405,6 +418,7 @@ export class Game {
         if (this.lives <= 0) break;
       }
     }
+    if (this.screen === 'gameover') return;
     const extraLives = this.scoring.checkExtraLives();
     if (extraLives > 0) {
       this.lives = Math.min(5, this.lives + extraLives);
@@ -488,7 +502,8 @@ export class Game {
     this.best = Math.max(this.best, Math.floor(this.scoring.score));
     try { localStorage.setItem('spyhunter27-best', String(this.best)); } catch { /* optional persistence */ }
     this.ui.result(this.scoring.score, this.best, this.scoring.hostileEliminations,
-      this.scoring.civilianCasualties, this.scoring.bestCombo);
+      this.scoring.civilianCasualties, this.scoring.bestCombo, this.distance,
+      this.survivalSeconds, accuracyPercent(this.roundsFired, this.roundsHit));
     this.ui.show(this.screen);
   }
 

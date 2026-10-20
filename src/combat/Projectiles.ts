@@ -18,16 +18,20 @@ export class Projectiles {
     }
   }
 
-  fire(x: number, z: number): void {
+  /** Number of shots successfully allocated from the fixed projectile pool. */
+  fire(x: number, z: number): number {
+    let fired = 0;
     for (const offset of [-0.63, 0.63]) {
       const bullet = this.bullets.find((b) => !b.active);
-      if (!bullet) return;
+      if (!bullet) return fired;
       bullet.active = true;
+      fired++;
       bullet.x = x + offset;
       bullet.z = z - 2.9;
       bullet.mesh.position.set(bullet.x, 0.73, bullet.z);
       bullet.mesh.visible = true;
     }
+    return fired;
   }
 
   step(dt: number): void {
