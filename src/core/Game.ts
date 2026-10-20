@@ -31,6 +31,7 @@ import {
 import { boundaryStrike, gradeBoathouseEntry } from '../gameplay/Boundary';
 import { biomeAt } from '../world/WorldPlan';
 import { splitDangerous, splitMedianHalfWidth, upcomingSplit, escapeFromMedian } from '../world/SplitRoad';
+import { RouteDirector, ROUTE_CHOICES } from '../gameplay/RouteDirector';
 
 export class Game {
   private readonly scene = new THREE.Scene();
@@ -54,6 +55,7 @@ export class Game {
   private readonly enemyShots: EnemyProjectiles;
   private readonly van: WeaponsVan;
   private readonly scoring = new Scoring();
+  private readonly routes = new RouteDirector();
   private readonly loop: GameLoop;
   private readonly traffic: TrafficVehicle[] = [];
   private readonly effects: ExplosionEffects;
@@ -173,6 +175,7 @@ export class Game {
     this.waterHazards.reset();
     this.player.reset();
     this.scoring.reset();
+    this.routes.reset();
     this.distance = 0;
     if (import.meta.env.DEV) {
       const seek = Number(new URLSearchParams(window.location.search).get('testDistance') ?? 0);
@@ -327,10 +330,18 @@ export class Game {
     }
     if (this.splitInProgress && gap < 0.08) {
       this.splitInProgress = false;
-      if (this.splitClean) {
-        const awarded = this.scoring.bonus(200);
-        if (awarded) this.announce('DIVIDED HIGHWAY CLEARED +200');
-      }
+      if (this.splitClean) this.scoring.bonus(200);
+    }
+    const routeEvent = this.routes.step(this.distance, this.player.x);
+    if (routeEvent?.type === 'selected') {
+      const route = ROUTE_CHOICES[routeEvent.side];
+      this.announce('ROUTE SELECTED — ' + route.label + ' // ' + route.risk);
+    } else if (routeEvent?.type === 'completed' && this.splitClean) {
+      const route = ROUTE_CHOICES[routeEvent.side];
+      const earned = this.scoring.bonus(route.score);
+      const ammo = this.specials.grantAmmo(route.ammo);
+      this.announce(route.label + ' CLEARED ' + (earned ? '+' + earned : 'NO POINTS') +
+        (ammo ? ' // ' + route.ammo.toUpperCase() + ' +1' : ''));
     }
     const toGate = 1000 - (this.distance % 1000);
     const nextBiome = biomeAt(this.distance + toGate + 1);
@@ -353,7 +364,8 @@ export class Game {
     this.spawnClock -= dt;
     if (this.spawnClock <= 0) {
       this.spawnEncounter();
-      this.spawnClock += spawnInterval(this.distance) * GAME_MODES[this.mode].spawnScale * (0.8 + this.random() * 0.4);
+      const branchPace = this.routes.side === 'left' ? 1.35 : this.routes.side === 'right' ? 0.74 : 1;
+      this.spawnClock += spawnInterval(this.distance) * GAME_MODES[this.mode].spawnScale * branchPace * (0.8 + this.random() * 0.4);
     }
 
     this.handleWeapons(controls.missilePressed, controls.oilPressed, controls.smokePressed);
@@ -498,7 +510,12 @@ export class Game {
   }
 
   private spawnEncounter(): void {
-    const encounter = planEncounter(this.traffic, this.distance, this.random);
+    const route = this.routes.side;
+    // Vehicles spawned during the fork are reserved to the chosen corridor.
+    // Avoid placing new traffic on the impassable middle median.
+    const routeAhead = splitMedianHalfWidth(this.distance + 90) > 1.15 ? route : null;
+    const lanes = routeAhead ? [routeAhead === 'left' ? -6.4 : 6.4] : undefined;
+    const encounter = planEncounter(this.traffic, this.distance, this.random, route, lanes);
     if (encounter.type === 'pursuit-pair') this.announce('COORDINATED PURSUIT — TWO HOSTILES');
     for (const spawn of encounter.spawns) {
       const variant = this.player.isBoat ? 5 : spawn.variant;
@@ -545,6 +562,7 @@ export class Game {
     this.ui.threats(this.air.helicopters.length, this.enemyShots.activeCount);
     this.ui.combo(this.scoring.comboMultiplier, this.scoring.comboRemaining);
     this.ui.environment(this.road.biome, this.player.isBoat);
+    this.ui.route(this.routes.side, this.routes.leftCompletions, this.routes.rightCompletions);
     this.ui.dailyChallenge(this.dailyDate, this.dailyBest);
   }
 
@@ -562,6 +580,7 @@ export class Game {
       this.scoring.civilianCasualties, this.scoring.bestCombo, this.distance,
       this.survivalSeconds, accuracyPercent(this.roundsFired, this.roundsHit));
     this.ui.dailyChallenge(this.dailyDate, this.dailyBest);
+    this.ui.route(null, this.routes.leftCompletions, this.routes.rightCompletions);
     this.ui.show(this.screen);
   }
 

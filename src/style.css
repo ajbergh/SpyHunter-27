@@ -116,3 +116,9 @@ h2 { font-size: 88px; line-height: .9; }
 .daily-stamp { position:absolute; top:142px; right:9px; z-index:4; color:#ffe1ad; background:#0b273ae8; border:1px solid #897353; padding:6px 9px; letter-spacing:.1em; font:700 10px 'Rajdhani',sans-serif; pointer-events:none; }
 .daily-stamp[hidden], #daily-result[hidden] { display:none; }
 .daily-stamp b { color:#ffffff; }
+
+.route-status { position:absolute; z-index:4; top:196px; right:12px; display:flex; flex-direction:column; align-items:flex-end; gap:2px; padding:8px 11px; background:#061e2ced; color:#f5d492; font:800 12px 'Rajdhani',sans-serif; letter-spacing:.09em; border-right:3px solid #f5bc65; pointer-events:none; text-shadow:0 1px 5px #000; }
+.route-status b { color:#ffffff; font:900 19px 'Barlow Condensed',sans-serif; letter-spacing:.06em; }
+.route-status[hidden] { display:none; }
+.cabinet.high-contrast .route-status { color:#fff; background:#000; border-color:#fff; }
+@media (max-width:520px) { .route-status { top:158px; right:7px; padding:5px 7px; } .route-status b { font-size:15px; } }

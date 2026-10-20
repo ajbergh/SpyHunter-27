@@ -72,7 +72,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] Smooth deterministic curved centerline with continuous streamed road/water strips and markings.
 - [x] Guardrail and riverbank contact damage with rate limiting and recovery.
 - [x] First divided-highway encounter: continuous center median, two navigable routes, reflective barriers, signs, warnings, collision recovery and clean-pass score.
-- [ ] Fully branching road topology with independent route destinations and merge AI.
+- [x] Consequential left/right fork selection: stealth bypass vs high-risk pursuit, route-specific traffic pressure, ammo/score rewards, branch HUD and completion statistics.
+- [ ] Separate world destinations, terrain-diverging branch geometry and advanced merge AI.
 - [ ] Advanced bridges and ramps, separate route destinations, and extended corridor collision validation.
 - [x] Five visually distinct biomes: forest, desert, snow, neon city and waterways.
 - [x] Distinct snow/ice lateral traction, speedboat lateral inertia and mode-adjusted speed ranges.

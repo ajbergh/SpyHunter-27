@@ -26,4 +26,19 @@ describe('encounter director', () => {
     const encounter = planEncounter([], 200, () => draws[cursor++ % draws.length]);
     expect(encounter.spawns[0].variant).toBe(4);
   });
+  it('keeps fork encounters inside the selected physical corridor', () => {
+    const left = planEncounter([], 720, () => 0.9, 'left', [-6.4]);
+    expect(left.spawns).toHaveLength(1);
+    expect(left.spawns[0].x).toBe(-6.4);
+    expect(left.spawns[0].hostile).toBe(false);
+    const right = planEncounter([], 720, () => 0.8, 'right', [6.4]);
+    expect(right.spawns).toHaveLength(1);
+    expect(right.spawns[0].x).toBe(6.4);
+    expect(right.spawns[0].hostile).toBe(true);
+  });
+  it('defers a fork encounter when its only corridor is occupied', () => {
+    const encounter = planEncounter([{ x: 6.4, z: -91 }], 720, () => 0, 'right', [6.4]);
+    expect(encounter.spawns).toHaveLength(0);
+  });
+
 });

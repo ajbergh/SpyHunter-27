@@ -62,4 +62,14 @@ describe('special weapon inventory', () => {
     weapons.reset();
   });
 
+  it('awards branch-specific ammo without exceeding inventory capacity', () => {
+    const weapons = new SpecialWeapons(new THREE.Scene());
+    expect(weapons.grantAmmo('smoke')).toBe(0);
+    expect(weapons.use('smoke', 0)).toBe(true);
+    expect(weapons.grantAmmo('smoke')).toBe(1);
+    expect(weapons.counts.smoke).toBe(2);
+    expect(weapons.grantAmmo('missile', -1)).toBe(0);
+    weapons.reset();
+  });
+
 });

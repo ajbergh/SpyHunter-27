@@ -1,5 +1,6 @@
 import type { WeaponCounts } from '../combat/SpecialWeapons';
 import { GAME_MODES, type GameMode } from '../gameplay/GameModes';
+import { ROUTE_CHOICES, type RouteSide } from '../gameplay/RouteDirector';
 import type { Biome } from '../world/WorldPlan';
 import { formatMissionDistance, formatMissionTime } from '../gameplay/SessionMetrics';
 import {
@@ -37,6 +38,7 @@ export class Interface {
         </header>
         <div class="toast" id="toast" aria-live="polite"></div>
         <div class="environment-name" id="environment-name">FOREST HIGHWAY</div>
+        <div class="route-status" id="route-status" hidden><span>FORK CHOICE</span> <b id="route-name"></b></div>
         <div class="daily-stamp" id="daily-stamp" hidden>DAILY <b id="daily-date">—</b></div>
         <div class="special-hud" id="special-hud">
           <div class="special-line">[Q] MISSILE <b id="ammo-missile">03</b></div>
@@ -101,6 +103,8 @@ export class Interface {
             <span>TRAVEL <b id="result-distance">0.00 KM</b></span>
             <span>TIME <b id="result-time">00:00</b></span>
             <span>ACCURACY <b id="result-accuracy">0%</b></span>
+            <span>SHADOW ROUTES <b id="result-left-routes">0</b></span>
+            <span>PURSUIT ROUTES <b id="result-right-routes">0</b></span>
           </div>
           <button class="primary-button" id="retry-button">REDEPLOY ↗</button>
         </section>
@@ -244,6 +248,7 @@ export class Interface {
     this.gameover.hidden = screen !== 'gameover';
     this.hud.hidden = screen === 'menu';
     this.get('settings-panel').hidden = true;
+    if (screen === 'menu' || screen === 'gameover') this.get('route-status').hidden = true;
     this.get('special-hud').hidden = screen === 'menu' || screen === 'gameover';
     if (screen === 'menu' || screen === 'gameover') this.get('combo-counter').hidden = true;
     if (screen === 'menu' || screen === 'gameover') this.get('penalty').hidden = true;
@@ -262,6 +267,13 @@ export class Interface {
   threats(helicopters: number, enemyRounds: number): void {
     this.get('air-count').textContent = String(helicopters).padStart(2, '0');
     this.get('enemy-round-count').textContent = String(enemyRounds).padStart(2, '0');
+  }
+
+  route(side: RouteSide | null, leftCompleted: number, rightCompleted: number): void {
+    this.get('route-status').hidden = side === null;
+    if (side) this.get('route-name').textContent = ROUTE_CHOICES[side].label;
+    this.get('result-left-routes').textContent = String(leftCompleted);
+    this.get('result-right-routes').textContent = String(rightCompleted);
   }
 
   dailyChallenge(day: string, best: number): void {

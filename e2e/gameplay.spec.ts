@@ -161,3 +161,23 @@ test('shows split-road approach warning and renders branch geometry', async ({ p
   await page.screenshot({ path: 'test-results/divided-highway-warning.png' });
   expect(errors).toEqual([]);
 });
+
+test('pursuit fork commits to selected route and reports branch status', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/?testDistance=618');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#route-status')).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('#route-name')).toHaveText('PURSUIT ROUTE');
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('driver can deliberately choose the shadow bypass branch', async ({ page }) => {
+  await page.goto('/?testDistance=570');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await page.keyboard.down('a');
+  await expect(page.locator('#route-name')).toHaveText('SHADOW BYPASS', { timeout: 9000 });
+  await page.keyboard.up('a');
+  await expect(page.locator('#route-status')).toBeVisible();
+});

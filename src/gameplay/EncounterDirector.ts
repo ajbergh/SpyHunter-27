@@ -1,5 +1,6 @@
 import { LANES, selectSpawnLane } from './SpawnDirector';
 import type { TrafficVehicle } from '../entities/Traffic';
+import type { RouteSide } from './RouteDirector';
 
 export interface EncounterSpawn {
   x: number;
@@ -18,22 +19,25 @@ export function planEncounter(
   existing: ReadonlyArray<Pick<TrafficVehicle, 'x' | 'z'>>,
   distance: number,
   random: () => number,
+  route: RouteSide | null = null,
+  laneOptions: readonly number[] = LANES,
 ): Encounter {
   const startZ = -90;
-  const first = selectSpawnLane(existing, startZ, random);
+  const first = selectSpawnLane(existing, startZ, random, laneOptions);
   if (first === null) return { type: 'traffic', spawns: [] };
 
-  const hostile = random() < 0.66;
+  const hostile = random() < (route === 'left' ? 0.35 : route === 'right' ? 0.9 : 0.66);
   const variantRoll = random();
   const variant = hostile
     ? variantRoll < 0.11 ? 6 : variantRoll < 0.27 ? 4 : variantRoll < 0.44 ? 3 : variantRoll < 0.6 ? 2 : variantRoll < 0.76 ? 1 : 0
     : variantRoll < 0.08 ? 4 : variantRoll < 0.17 ? 2 : 0;
   const firstSpawn: EncounterSpawn = { x: first, z: startZ, hostile, variant };
 
-  const pairAllowed = hostile && distance > 420 && random() < 0.25;
+  const pairAllowed = hostile && distance > 420 && route !== 'left' &&
+    random() < (route === 'right' ? 0.45 : 0.25);
   if (!pairAllowed) return { type: 'traffic', spawns: [firstSpawn] };
 
-  const available = LANES.filter((lane) => lane !== first &&
+  const available = laneOptions.filter((lane) => lane !== first &&
     !existing.some((car) => Math.abs(car.z - (startZ - 12)) < 15 && Math.abs(car.x - lane) < 3.3));
   if (available.length === 0) return { type: 'traffic', spawns: [firstSpawn] };
 

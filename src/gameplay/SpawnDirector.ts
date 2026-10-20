@@ -7,8 +7,9 @@ export function selectSpawnLane(
   existing: ReadonlyArray<Pick<TrafficVehicle, 'x' | 'z'>>,
   spawnZ: number,
   random: () => number,
+  laneOptions: readonly number[] = LANES,
 ): number | null {
-  const free = LANES.filter((lane) => !existing.some((car) =>
+  const free = laneOptions.filter((lane) => !existing.some((car) =>
     Math.abs(car.z - spawnZ) < 15 && Math.abs(car.x - lane) < 3.3));
   if (free.length === 0) return null;
   return free[Math.min(free.length - 1, Math.floor(random() * free.length))];

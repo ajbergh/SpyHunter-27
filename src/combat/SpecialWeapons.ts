@@ -33,6 +33,12 @@ export class SpecialWeapons {
 
   refill(): void { this.ammo = { ...MAX_AMMO }; }
 
+  grantAmmo(kind: WeaponKind, quantity = 1): number {
+    const before = this.ammo[kind];
+    this.ammo[kind] = Math.min(MAX_AMMO[kind], before + Math.max(0, Math.floor(quantity)));
+    return this.ammo[kind] - before;
+  }
+
   use(kind: WeaponKind, x: number, water = false): boolean {
     if (this.ammo[kind] === 0 || this.cooldown > 0) return false;
     this.ammo[kind]--;
