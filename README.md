@@ -2,7 +2,7 @@
 
 A modern, original WebGL arcade-combat driving game inspired by the feel of early 1980s vertical-scrolling highway games. Powered by **Three.js + TypeScript + Vite**.
 
-> **Project status:** Phase 2 in progress. Phase 1 driving, traffic and scoring are implemented; initial special weapons (missile, oil, smoke), civilian NO POINTS penalty, enemy roles and an alignment-based support truck are now added. Curved highways, watercraft, biome variety, watercraft, biome variety and premium art/audio remain roadmap items. Phase 2 includes helicopter bombs, enforcer fire, motorcycle attackers, paired pursuits, timed combos and pooled explosions. Initial Phase 3 curve/biome/watercraft traversal and game mode selection are implemented. Automated Chromium WebGL start/control/pause smoke testing passed; the expanded Phase 2 suite has 30 passing unit tests. Extended manual gameplay, visual quality reviews and a performance soak remain outstanding.
+> **Project status:** Phase 2 in progress. Phase 1 driving, traffic and scoring are implemented; initial special weapons (missile, oil, smoke), civilian NO POINTS penalty, enemy roles and an alignment-based support truck are now added. Curved highways, watercraft, biome variety, watercraft, biome variety and premium art/audio remain roadmap items. Phase 2 includes helicopter bombs, enforcer fire, motorcycle and switchblade attackers, paired pursuits, timed combos and pooled explosions. Initial Phase 3 curve/biome/watercraft traversal and game mode selection are implemented. Automated Chromium WebGL start/control/pause smoke testing passed; the expanded Phase 2 suite has 30 passing unit tests. Extended manual gameplay, visual quality reviews and a performance soak remain outstanding.
 
 ## Run locally
 
@@ -42,7 +42,7 @@ npm run preview
 
 ### Graphics, audio and accessibility
 
-The **Settings** menu (also accessible while paused) saves High/Medium/Low graphics settings, music and effects volumes, reduced-motion preference, and an optional FPS/draw-call diagnostics overlay. High quality enables restrained bloom through a Three.js EffectComposer pipeline. The soundtrack and speed-reactive engine audio are original synthesized Web Audio.
+The **Settings** menu (also accessible while paused) saves High/Medium/Low graphics settings, music and effects volumes, reduced-motion preference, and an optional FPS/draw-call diagnostics overlay. Biome-specific GPU weather adds snow, dust, city rain and water mist at quality-dependent particle budgets. High quality enables restrained bloom through a Three.js EffectComposer pipeline. The soundtrack and speed-reactive engine audio are original synthesized Web Audio.
 
 ### Game modes and environment progression
 

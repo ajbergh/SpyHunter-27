@@ -40,7 +40,7 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 
 ## Phase 2 — Signature arcade systems (incremental implementation)
 
-- [x] Initial distinct interceptor, weaver, blocker behaviors and disrupted/spinning states.
+- [x] Distinct interceptor, weaver, armored blocker and aggressive switchblade sideswipe behavior with original procedural blades.
 - [x] Enforcer ranged-limousine role with cooldown, dodgeable enemy rounds and custom weapon visuals.
 - [x] Attack helicopter with animated rotor, timed bomb warning rings and damaging blasts.
 - [x] Original motorcycle geometry with fast slalom attacks and single-hit precision targeting.
@@ -89,7 +89,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 
 - [ ] High-quality original interceptor, enemies, truck, props and variant assets.
 - [ ] Real-time lighting, reflection approximations and optional shadows.
-- [ ] GPU-oriented particle pooling, weather, skid marks and atmospheric effects.
+- [x] Single-draw-call GPU weather particles (snow, dust, city rain, river mist) with quality budgets.
+- [ ] Skid marks, more physical debris and atmospheric grading.
 - [x] Optional high-quality EffectComposer with subtle bloom and OutputPass.
 - [ ] Sophisticated color grading, advanced reflections and weather effects.
 - [x] Original adaptive synthesized espionage riff and speed-sensitive engine drone.

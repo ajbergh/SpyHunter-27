@@ -9,6 +9,7 @@ import { MAX_LIVES, PLAYER_Z, approach, distancePoints, intersects, scoreForTarg
 import { Road } from '../world/Road';
 import { BoatWake } from '../world/BoatWake';
 import { WaterHazards } from '../world/WaterHazards';
+import { Weather } from '../rendering/Weather';
 import { Player } from '../entities/Player';
 import { TrafficVehicle } from '../entities/Traffic';
 import { Projectiles } from '../combat/Projectiles';
@@ -38,6 +39,7 @@ export class Game {
   private readonly road: Road;
   private readonly wake: BoatWake;
   private readonly waterHazards: WaterHazards;
+  private readonly weather: Weather;
   private readonly player: Player;
   private readonly bullets: Projectiles;
   private readonly specials: SpecialWeapons;
@@ -79,6 +81,7 @@ export class Game {
     this.road = new Road(this.scene);
     this.wake = new BoatWake(this.scene);
     this.waterHazards = new WaterHazards(this.scene);
+    this.weather = new Weather(this.scene);
     this.player = new Player(this.scene);
     this.bullets = new Projectiles(this.scene);
     this.specials = new SpecialWeapons(this.scene);
@@ -116,6 +119,7 @@ export class Game {
   private configure(settings: GamePreferences): void {
     this.preferences = settings;
     this.audio.configure(settings.musicVolume, settings.effectsVolume);
+    this.weather.setQuality(settings.quality);
     const ratio = settings.quality === 'low' ? 1 : settings.quality === 'high' ? 2 : 1.5;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, ratio));
     if (settings.quality === 'high' && !this.composer) {
@@ -244,6 +248,7 @@ export class Game {
         : 'BOATHOUSE TRANSFER — INTERCEPTOR RESTORED');
     }
     this.wake.step(dt, this.player.speed, this.player.x, this.player.isBoat);
+    this.weather.step(dt, this.player.speed, this.road.biome);
     this.distance += this.player.speed * dt;
     this.scoring.tick(dt, distancePoints(this.player.speed, dt));
     this.airSpawnClock -= dt;

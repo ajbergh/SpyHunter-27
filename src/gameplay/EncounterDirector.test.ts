@@ -21,7 +21,9 @@ describe('encounter director', () => {
     expect(planEncounter([...occupied,{x:6.4,z:-89}],1000,()=>0).spawns).toHaveLength(0);
   });
   it('can generate a motorcycle encounter at high distance', () => {
-    const encounter = planEncounter([], 200, () => 0);
+    const draws = [0, 0, 0.2, 1];
+    let cursor = 0;
+    const encounter = planEncounter([], 200, () => draws[cursor++ % draws.length]);
     expect(encounter.spawns[0].variant).toBe(4);
   });
 });
