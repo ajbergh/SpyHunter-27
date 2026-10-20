@@ -4,7 +4,7 @@
 **Stack:** Three.js / WebGL2 / TypeScript / Vite  
 **Target:** Polished 60 FPS desktop browser arcade game
 
-**Last verified green baseline (2026-10-20):** strict TypeScript, 51 unit tests, Vite production build, 11 Chromium Playwright browser tests. Subsequent controller and session-results work is under validation. Full manual play session and visual review remain outstanding. Full manual session and visual inspection remain outstanding.
+**Verified green baseline (2026-10-20):** strict TypeScript, 53 unit tests, Vite production build, 12 Chromium Playwright browser tests, including full game-over and redeploy. High-contrast and release documentation additions require CI confirmation. Full manual play session and visual review remain outstanding. Full manual session and visual inspection remain outstanding.
 
 ## North star
 
@@ -100,7 +100,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [ ] Multi-layer authored music, richer engine samples and environmental audio.
 - [x] Persistent Low/Medium/High render quality, original music/effects volume and reduced-motion option.
 - [x] Persistent keyboard remapping for 10 actions with duplicate protection, Escape cancellation and reduced-motion display rules.
-- [ ] Full high-contrast accessibility system, remappable gamepad buttons and broader graphics presets.
+- [x] Persistent high-contrast HUD and reduced-motion UI preferences.
+- [ ] Remappable gamepad buttons, additional accessibility review and broader graphics presets.
 
 **Exit:** cohesive premium look, responsive effects, no readability regressions.
 
@@ -116,9 +117,10 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [ ] Gamepad button remapping and extended pause/focus/accessibility behavior.
 - [x] Optional FPS, draw calls, active vehicle diagnostics overlay.
 - [ ] Profiling: verified 60 FPS at 1080p midrange GPU and integrated GPU tier.
-- [x] Chromium E2E game-over / full-life-cycle / redeploy test added (awaiting CI).
+- [x] Chromium E2E game-over / full-life-cycle / redeploy test passed (2026-10-20).
 - [ ] 10-minute memory soak, collision fuzzing, fixed-step consistency and cross-browser tests.
-- [ ] Document asset provenance; resolve final name and trademark review.
+- [x] Document asset provenance, font dependencies, QA and release validation gates.
+- [ ] Resolve final name and trademark review.
 
 **Exit:** release candidate with tests, production bundle and deployment instructions.
 

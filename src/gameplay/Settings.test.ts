@@ -13,6 +13,7 @@ describe('durable graphics and audio preferences', () => {
     expect(p.effectsVolume).toBe(1);
     expect(p.musicVolume).toBe(0);
     expect(p.showFps).toBe(true);
+    expect(parsePreferences({ highContrast: true }).highContrast).toBe(true);
   });
   it('accepts remaps and prevents duplicate or unusable keycodes', () => {
     const changed = assignBinding(DEFAULT_BINDINGS, 'fire', 'KeyZ');
@@ -20,6 +21,7 @@ describe('durable graphics and audio preferences', () => {
     expect(assignBinding(DEFAULT_BINDINGS, 'fire', 'KeyW')).toBeNull();
     expect(assignBinding(DEFAULT_BINDINGS, 'fire', 'Escape')).toBeNull();
     expect(assignBinding(DEFAULT_BINDINGS, 'fire', 'Delete')).toBeNull();
+    expect(assignBinding(DEFAULT_BINDINGS, 'fire', 'KeyM')).toBeNull();
   });
   it('safely validates persisted bindings while maintaining arrow fallbacks', () => {
     const preferences = parsePreferences({

@@ -11,7 +11,7 @@ export const DEFAULT_BINDINGS: KeyBindings = {
 };
 /** Arrow keys and Escape stay available as accessibility fallbacks. */
 export function validBindingCode(code: unknown): code is string {
-  return typeof code === 'string' && /^(Key[A-Z]|Digit[0-9]|Space|ShiftLeft|ShiftRight)$/.test(code);
+  return typeof code === 'string' && code !== 'KeyM' && /^(Key[A-Z]|Digit[0-9]|Space|ShiftLeft|ShiftRight)$/.test(code);
 }
 export function assignBinding(
   bindings: KeyBindings, action: BindingAction, code: string,
@@ -25,12 +25,13 @@ export interface GamePreferences {
   effectsVolume: number;
   musicVolume: number;
   reducedMotion: boolean;
+  highContrast: boolean;
   showFps: boolean;
   bindings: KeyBindings;
 }
 export const DEFAULT_PREFERENCES: GamePreferences = {
   quality: 'medium', effectsVolume: 0.7, musicVolume: 0.45,
-  reducedMotion: false, showFps: false, bindings: { ...DEFAULT_BINDINGS },
+  reducedMotion: false, highContrast: false, showFps: false, bindings: { ...DEFAULT_BINDINGS },
 };
 const KEY = 'spyhunter27-settings';
 const isQuality = (value: unknown): value is Quality =>
@@ -55,6 +56,7 @@ export function parsePreferences(input: unknown): GamePreferences {
     effectsVolume: volume(obj.effectsVolume, DEFAULT_PREFERENCES.effectsVolume),
     musicVolume: volume(obj.musicVolume, DEFAULT_PREFERENCES.musicVolume),
     reducedMotion: typeof obj.reducedMotion === 'boolean' ? obj.reducedMotion : DEFAULT_PREFERENCES.reducedMotion,
+    highContrast: typeof obj.highContrast === 'boolean' ? obj.highContrast : DEFAULT_PREFERENCES.highContrast,
     showFps: typeof obj.showFps === 'boolean' ? obj.showFps : DEFAULT_PREFERENCES.showFps,
   };
 }

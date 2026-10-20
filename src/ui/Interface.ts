@@ -74,6 +74,7 @@ export class Interface {
           <label for="effects-volume">SOUND EFFECTS VOLUME</label>
           <input type="range" id="effects-volume" min="0" max="100" step="5" />
           <label class="toggle"><input type="checkbox" id="reduced-motion" /> REDUCED MOTION</label>
+          <label class="toggle"><input type="checkbox" id="high-contrast" /> HIGH-CONTRAST HUD</label>
           <label class="toggle"><input type="checkbox" id="show-fps" /> PERFORMANCE DIAGNOSTICS</label>
           <div class="binding-heading">REMAP KEYBOARD CONTROLS</div>
           <div class="bindings-grid" id="bindings-grid"></div>
@@ -130,11 +131,13 @@ export class Interface {
     const music = this.get<HTMLInputElement>('music-volume');
     const effects = this.get<HTMLInputElement>('effects-volume');
     const motion = this.get<HTMLInputElement>('reduced-motion');
+    const contrast = this.get<HTMLInputElement>('high-contrast');
     const fps = this.get<HTMLInputElement>('show-fps');
     quality.value = this.preferences.quality;
     music.value = String(Math.round(this.preferences.musicVolume * 100));
     effects.value = String(Math.round(this.preferences.effectsVolume * 100));
     motion.checked = this.preferences.reducedMotion;
+    contrast.checked = this.preferences.highContrast;
     fps.checked = this.preferences.showFps;
     const change = () => {
       this.preferences = {
@@ -142,6 +145,7 @@ export class Interface {
         musicVolume: Number(music.value) / 100,
         effectsVolume: Number(effects.value) / 100,
         reducedMotion: motion.checked,
+        highContrast: contrast.checked,
         showFps: fps.checked,
         bindings: this.preferences.bindings,
       };
@@ -149,13 +153,15 @@ export class Interface {
       this.onSettingsChange(this.preferences);
       this.get('fps-debug').hidden = !this.preferences.showFps;
       this.root.classList.toggle('reduced-motion', this.preferences.reducedMotion);
+      this.root.classList.toggle('high-contrast', this.preferences.highContrast);
     };
-    for (const element of [quality, music, effects, motion, fps]) {
+    for (const element of [quality, music, effects, motion, contrast, fps]) {
       element.addEventListener('change', change);
       element.addEventListener('input', change);
     }
     this.get('fps-debug').hidden = !this.preferences.showFps;
     this.root.classList.toggle('reduced-motion', this.preferences.reducedMotion);
+    this.root.classList.toggle('high-contrast', this.preferences.highContrast);
 
     const labels: Record<BindingAction, string> = {
       left: 'LEFT', right: 'RIGHT', throttle: 'ACCELERATE', brake: 'BRAKE',

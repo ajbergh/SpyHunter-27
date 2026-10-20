@@ -91,3 +91,7 @@ Read the original [MASTER DEVELOPMENT PROMPT](docs/MASTER_DEVELOPMENT_PROMPT.md)
 ## IP note
 
 The working title is provisional. This is an independent homage and is not affiliated with the original game's rights holders. Commercial branding must be reviewed before public release.
+
+### Release and asset provenance
+
+See [Release readiness](docs/RELEASE_READINESS.md) for outstanding QA gates and [Asset provenance](docs/ASSET_PROVENANCE.md) for original creative sources and third-party dependencies. Commercial distribution under the provisional title requires a trademark review.

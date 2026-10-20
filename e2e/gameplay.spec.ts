@@ -110,12 +110,15 @@ test('custom keyboard mappings persist and update visible control hints', async 
   await expect(page.locator('#bindings-grid [data-action="fire"] strong')).toHaveText('Z');
   await expect(page.locator('#control-keys')).toContainText('Z FIRE');
   await page.locator('#reduced-motion').check();
+  await page.locator('#high-contrast').check();
   await page.getByRole('button', { name: /apply and return/i }).click();
   await page.reload();
   await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
   await expect(page.locator('#bindings-grid [data-action="fire"] strong')).toHaveText('Z');
   await expect(page.locator('#reduced-motion')).toBeChecked();
+  await expect(page.locator('#high-contrast')).toBeChecked();
   await expect(page.locator('.cabinet')).toHaveClass(/reduced-motion/);
+  await expect(page.locator('.cabinet')).toHaveClass(/high-contrast/);
 });
 
 test('reaches mission terminated from real collisions and supports clean redeploy', async ({ page }) => {

@@ -101,3 +101,14 @@ h2 { font-size: 88px; line-height: .9; }
 .binding-status { font:700 11px 'Rajdhani',sans-serif; color:#b6d2e0; min-height:18px; margin:3px 0; }
 .cabinet.reduced-motion .scanlines { display:none; }
 .cabinet.reduced-motion *, .cabinet.reduced-motion *::before, .cabinet.reduced-motion *::after { transition-duration:.01ms!important; animation-duration:.01ms!important; }
+
+/* High-contrast instrumentation, independent of target color and audio. */
+.cabinet.high-contrast .hud-block,
+.cabinet.high-contrast .special-line,
+.cabinet.high-contrast .combo-counter,
+.cabinet.high-contrast .fps-debug { background:#000f19; border-color:#ffffff; color:#f2faff; text-shadow:none; }
+.cabinet.high-contrast .hud-block strong,
+.cabinet.high-contrast .special-line b,
+.cabinet.high-contrast .hud-block .micro,
+.cabinet.high-contrast .environment-name { color:#ffffff; text-shadow:0 1px 2px #000; }
+.cabinet.high-contrast .penalty { background:#1b0000; color:#fff7bd; border:2px solid #fff7bd; }
