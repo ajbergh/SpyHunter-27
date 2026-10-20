@@ -122,14 +122,19 @@ test('custom keyboard mappings persist and update visible control hints', async 
 });
 
 test('reaches mission terminated from real collisions and supports clean redeploy', async ({ page }) => {
-  test.setTimeout(50000);
+  test.setTimeout(80000);
   const crashes: string[] = [];
   page.on('pageerror', e => crashes.push(e.message));
   await page.goto('/');
+  // Software WebGL shadow rendering must not distort simulation time during
+  // a long collision-recovery regression. Use the actual Low user preset.
+  await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
+  await page.locator('#quality-select').selectOption('low');
+  await page.getByRole('button', { name: /apply and return/i }).click();
   await page.getByRole('button', { name: /initiate pursuit/i }).click();
   await page.keyboard.down('d');
   await page.keyboard.down('w');
-  await expect(page.locator('#gameover')).toBeVisible({ timeout: 35000 });
+  await expect(page.locator('#gameover')).toBeVisible({ timeout: 65000 });
   await page.keyboard.up('d');
   await page.keyboard.up('w');
   await expect(page.locator('#result-time')).toContainText(/\d\d:\d\d/);
