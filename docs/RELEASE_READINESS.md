@@ -19,7 +19,7 @@ This project is **in active development**, not a signed-off release candidate. P
 - [ ] Record 1080p average/1% low FPS on mainstream discrete and integrated GPUs, at each quality preset.
 - [ ] Check WebGL context loss/recovery and memory trends after a 30-minute play session.
 - [ ] Test Chrome, Edge, Firefox and Safari where WebGL2 support exists; keyboard and at least two gamepad layouts.
-- [ ] Inspect screenshots for road seams, contrast, speed readability and effects visibility; approve visual baselines.
+- [ ] Compare new scenic perspective, sculpted-vehicle and neon-city screenshots against real visual references; inspect road/terrain seams, model normals, reflections, shadows, contrast, speed readability and motion comfort; approve visual baselines.
 - [ ] Check accessible keyboard navigation, key rebinding, reduced motion, high-contrast HUD and mute.
 - [ ] Review third-party license notices, original art/audio provenance and product title legal clearance.
 - [x] Generate and commit package-lock.json from npm registry through GitHub Actions.

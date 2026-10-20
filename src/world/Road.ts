@@ -5,13 +5,11 @@ import { splitMedianHalfWidth, SPLIT_PERIOD, SPLIT_START } from './SplitRoad';
 import { bridgeZone, groundHeightAt } from './BridgePlan';
 import { PavementMaterials } from '../rendering/PavementMaterials';
 import type { Quality } from '../gameplay/Settings';
+import { buildTerrain, terrainRelief } from './TerrainDetail';
 
 const LENGTH = 30;
 const COUNT = 10;
 const ROAD_HALF = 10;
-const BACKGROUND: Record<Biome, number> = {
-  forest: 0x162d29, desert: 0x795039, snow: 0xd6e2e4, city: 0x121b2e, water: 0x123b50,
-};
 const ROAD_COLOR: Record<Biome, number> = {
   forest: 0x273039, desert: 0x464347, snow: 0x5b6874, city: 0x1c2639, water: 0x176388,
 };
@@ -130,8 +128,13 @@ export class Road {
   private makeTile(anchor: number): THREE.Group {
     const biome = biomeAt(anchor);
     const group = new THREE.Group();
-    const earth = new THREE.Mesh(strip(anchor, 85, -15, 15, -0.22, 24, groundHeightAt),
-      new THREE.MeshStandardMaterial({ color: BACKGROUND[biome], roughness: 1, side: THREE.DoubleSide }));
+    const earth = new THREE.Mesh(buildTerrain(anchor, biome),
+      new THREE.MeshStandardMaterial({
+        vertexColors: true, roughness: 0.97,
+        metalness: biome === 'city' ? 0.2 : 0,
+        side: THREE.DoubleSide, flatShading: true,
+      }));
+    earth.receiveShadow = true;
     group.add(earth);
     const lane = new THREE.Mesh(strip(anchor, ROAD_HALF, -15.07, 15.07, -0.055),
       biome === 'water' ? this.waterMaterial : this.pavement.get(biome, ROAD_COLOR[biome]));
@@ -245,7 +248,9 @@ export class Road {
         const seed = seededRandom(Math.floor(anchor * 100) + i * 197 + (side + 2) * 211);
         const x = side * (13.5 + 11 * seed);
         const prop = this.makeProp(biome, seed, i);
-        prop.position.set(x + roadCenterAt(anchor - z) - roadCenterAt(anchor), 0, z);
+        const world = anchor - z;
+        prop.position.set(x + roadCenterAt(world) - roadCenterAt(anchor),
+          groundHeightAt(world) + terrainRelief(biome, world, x) + 0.22, z);
         group.add(prop);
       }
     }
@@ -274,11 +279,13 @@ export class Road {
       mesh(new THREE.ConeGeometry(1.6 + seed * 0.6, 5.5 + seed * 2, 7),
         new THREE.MeshStandardMaterial({ color: canopy, roughness: 1, flatShading: true }), 0, 4.2);
       if (this.quality === 'high') {
-        mesh(new THREE.ConeGeometry(1.05 + seed * 0.3, 3.2, 7),
-          new THREE.MeshStandardMaterial({
-            color: biome === 'snow' ? 0xe7f4fa : 0x436e57,
-            roughness: 1, flatShading: true,
-          }), 0, 6.55);
+        const needle = new THREE.MeshStandardMaterial({
+          color: biome === 'snow' ? 0xe7f4fa : 0x436e57,
+          roughness: 1, flatShading: true,
+        });
+        mesh(new THREE.ConeGeometry(1.8 + seed * 0.3, 3.0, 7), needle, 0, 3.6);
+        mesh(new THREE.ConeGeometry(1.45 + seed * 0.3, 3.3, 7), needle, 0, 5.05);
+        mesh(new THREE.ConeGeometry(1.05 + seed * 0.3, 3.2, 7), needle, 0, 6.55);
       }
     } else if (biome === 'desert') {
       mesh(new THREE.DodecahedronGeometry(1.5 + seed, 0),
@@ -287,9 +294,16 @@ export class Road {
       if (this.quality === 'high') {
         mesh(new THREE.DodecahedronGeometry(0.75 + seed * 0.7, 0),
           new THREE.MeshStandardMaterial({ color: 0xd29a68, roughness: 1 }), 1.45, 0.45);
+        const sandstone = new THREE.MeshStandardMaterial({
+          color: seed > 0.5 ? 0xb66f4d : 0xa96545, roughness: 0.98,
+          flatShading: true,
+        });
+        const height = 4.5 + seed * 7;
+        mesh(new THREE.CylinderGeometry(2.2, 3.9, height, 7), sandstone, 2.2, height / 2);
+        mesh(new THREE.CylinderGeometry(3.1, 2.35, 0.7, 7), sandstone, 2.2, height + 0.26);
       }
     } else if (biome === 'city') {
-      const h = 5 + 13 * seed;
+      const h = 8 + 22 * seed;
       mesh(new THREE.BoxGeometry(5, h, 5),
         new THREE.MeshStandardMaterial({
           color: index % 2 ? 0x263548 : 0x344354,
@@ -302,10 +316,43 @@ export class Road {
       });
       mesh(new THREE.BoxGeometry(4.35, 0.13, 0.16), facade, 0, h * 0.66, -2.59);
       if (this.quality !== 'low') {
+        // Hundreds of independently illuminated apartment windows as a
+        // single instanced draw call per building rather than per-pane meshes.
+        const floors = Math.max(3, Math.floor(h / 1.45));
+        const total = floors * 5;
+        const windows = new THREE.InstancedMesh(
+          new THREE.BoxGeometry(0.46, 0.48, 0.065),
+          new THREE.MeshStandardMaterial({
+            color: seed > 0.5 ? 0x74c8ff : 0xffdfaa,
+            emissive: seed > 0.5 ? 0x36a8ed : 0xffb255,
+            emissiveIntensity: this.quality === 'high' ? 2.0 : 1.1,
+            roughness: 0.2,
+          }), total);
+        const dummy = new THREE.Object3D();
+        let n = 0;
+        for (let floor = 0; floor < floors; floor++) {
+          for (let col = 0; col < 5; col++) {
+            const on = seededRandom(Math.floor(seed * 10000) + floor * 71 + col * 149) > 0.24;
+            dummy.position.set(-1.8 + col * 0.9, 1.5 + floor * 1.45, -2.57);
+            dummy.scale.setScalar(on ? 1 : 0.03);
+            dummy.updateMatrix();
+            windows.setMatrixAt(n++, dummy.matrix);
+          }
+        }
+        group.add(windows);
         mesh(new THREE.BoxGeometry(3.35, 0.11, 0.16), facade, 0, h * 0.36, -2.59);
         if (this.quality === 'high') {
           mesh(new THREE.BoxGeometry(0.16, Math.max(2.2, h * 0.72), 0.18),
             facade, -2.46, h * 0.50, -2.52);
+          const rooftop = new THREE.MeshStandardMaterial({
+            color: 0x1c334f, metalness: 0.65, roughness: 0.33,
+          });
+          mesh(new THREE.BoxGeometry(4.1, 0.26, 4.1), rooftop, 0, h + 0.2);
+          mesh(new THREE.CylinderGeometry(0.07, 0.07, 3.5, 7), facade,
+            0, h + 1.9);
+          // Building face sign reads as a holographic lightbox from above.
+          const ad = new THREE.MeshBasicMaterial({ color: seed > 0.5 ? 0x1ecfe8 : 0xf152af });
+          mesh(new THREE.BoxGeometry(1.7, 2.15, 0.2), ad, 1.05, h * 0.54, -2.75);
         }
       }
     } else {

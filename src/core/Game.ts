@@ -3,6 +3,9 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import type { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { createFilmicPass, setFilmicReducedMotion } from '../rendering/FilmicPass';
 import { GameLoop } from './GameLoop';
 import { Input } from './Input';
 import { MAX_LIVES, PLAYER_Z, approach, distancePoints, intersects, scoreForTarget, spawnInterval } from './logic';
@@ -41,9 +44,10 @@ import { planSquadTactics } from '../gameplay/SquadTactics';
 
 export class Game {
   private readonly scene = new THREE.Scene();
-  private readonly camera = new THREE.OrthographicCamera(-20, 20, 35, -35, 0.1, 350);
+  private readonly camera = new THREE.PerspectiveCamera(55, 1, 0.1, 420);
   private readonly renderer: THREE.WebGLRenderer;
   private composer: EffectComposer | null = null;
+  private filmic: ShaderPass | null = null;
   private preferences = loadPreferences();
   private renderTime = 0;
   private averageFps = 60;
@@ -101,9 +105,17 @@ export class Game {
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.26;
+    // Procedural studio reflection environment: real PMREM specular response
+    // on clearcoat, glass and metals without remote or licensed image assets.
+    const pmrem = new THREE.PMREMGenerator(this.renderer);
+    const room = new RoomEnvironment();
+    this.scene.environment = pmrem.fromScene(room, 0.04).texture;
+    this.scene.environmentIntensity = 0.82;
+    room.dispose();
+    pmrem.dispose();
     this.ui.stage.appendChild(this.renderer.domElement);
-    this.camera.position.set(0, 66, 38);
-    this.camera.lookAt(0, 0, -19);
+    this.camera.position.set(0, 48, 38);
+    this.camera.lookAt(0, 0, -28);
     this.visuals = new VisualDirector(this.scene, this.renderer);
     this.road = new Road(this.scene);
     this.wake = new BoatWake(this.scene);
@@ -136,12 +148,7 @@ export class Game {
     const height = Math.max(1, this.ui.stage.clientHeight);
     this.renderer.setSize(width, height, false);
     this.composer?.setSize(width, height);
-    const halfHeight = 36;
-    const halfWidth = halfHeight * width / height;
-    this.camera.left = -halfWidth;
-    this.camera.right = halfWidth;
-    this.camera.top = halfHeight;
-    this.camera.bottom = -halfHeight;
+    this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
   }
 
@@ -159,9 +166,12 @@ export class Game {
     if (settings.quality === 'high' && !this.composer) {
       this.composer = new EffectComposer(this.renderer);
       this.composer.addPass(new RenderPass(this.scene, this.camera));
-      this.composer.addPass(new UnrealBloomPass(new THREE.Vector2(1, 1), 0.55, 0.38, 0.84));
+      this.composer.addPass(new UnrealBloomPass(new THREE.Vector2(1, 1), 0.63, 0.36, 0.82));
+      this.filmic = createFilmicPass();
+      this.composer.addPass(this.filmic);
       this.composer.addPass(new OutputPass());
     }
+    if (this.filmic) setFilmicReducedMotion(this.filmic, settings.reducedMotion);
     this.resize();
   }
 
@@ -291,6 +301,10 @@ export class Game {
     }
 
     this.player.step(dt, controls, this.road.biome, GAME_MODES[this.mode].speedScale);
+    const targetFov = this.preferences.reducedMotion ? 55 :
+      55 + Math.min(4, Math.max(0, (this.player.speed - 30) * 0.17));
+    this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, targetFov, Math.min(1, dt * 0.9));
+    this.camera.updateProjectionMatrix();
     this.streaks.step(dt, this.player.speed);
     this.boundaryCooldown = Math.max(0, this.boundaryCooldown - dt);
     if (this.boundaryCooldown === 0 && boundaryStrike(
@@ -671,6 +685,7 @@ export class Game {
     this.waterHazards.renderAt(center);
     this.streaks.renderAt(center);
     this.van.mesh.position.x = 6.4 + center(this.van.mesh.position.z);
+    if (this.filmic) this.filmic.uniforms.uTime.value = performance.now() * 0.001;
     if (this.preferences.quality === 'high' && this.composer) this.composer.render();
     else this.renderer.render(this.scene, this.camera);
     const now = performance.now();

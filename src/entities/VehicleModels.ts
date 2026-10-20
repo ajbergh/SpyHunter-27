@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { sculptMesh, bodyPaint, glassPaint, addWheelAssembly, addDecalBar } from './VehicleSculpt';
 
 const metal = (color: number, roughness = 0.38): THREE.MeshStandardMaterial =>
   new THREE.MeshStandardMaterial({ color, metalness: 0.68, roughness });
@@ -29,48 +30,57 @@ function box(group: THREE.Group, size: [number, number, number], pos: [number, n
 /** Original low-poly interceptor silhouette, built entirely from geometry. Front is -Z. */
 export function makeInterceptor(): THREE.Group {
   const group = new THREE.Group();
-  const paint = new THREE.MeshPhysicalMaterial({
-    color: 0xe5f0f7, metalness: 0.75, roughness: 0.24,
-    clearcoat: 0.94, clearcoatRoughness: 0.12,
+  const pearl = bodyPaint(0xe9f0f5, true);
+  const carbon = new THREE.MeshStandardMaterial({
+    color: 0x101923, metalness: 0.46, roughness: 0.58,
   });
-  const chrome = metal(0x8db9ca, 0.19);
-  const accent = new THREE.MeshStandardMaterial({
-    color: 0x2a627c, emissive: 0x1190bc, emissiveIntensity: 0.82,
-    metalness: 0.7, roughness: 0.28,
+  const glass = glassPaint(0x164c73);
+  const chrome = new THREE.MeshStandardMaterial({
+    color: 0xa0c4d0, metalness: 0.91, roughness: 0.18,
   });
-  const black = metal(0x101723);
-  const glass = new THREE.MeshPhysicalMaterial({
-    color: 0x16496c, metalness: 0.43, roughness: 0.09,
-    clearcoat: 1, clearcoatRoughness: 0.09, emissive: 0x051e2f,
-  });
-  const light = new THREE.MeshStandardMaterial({ color: 0x6beaff, emissive: 0x24a9fa, emissiveIntensity: 2 });
-  const tail = new THREE.MeshStandardMaterial({ color: 0xff3549, emissive: 0xe51233, emissiveIntensity: 2 });
-  box(group, [2.45, 0.48, 5.2], [0, 0.55, 0], paint);
-  // Flush lower diffuser and asymmetric illuminated shoulder lines.
-  box(group, [2.4, 0.11, 5.22], [0, 0.37, 0], black);
-  box(group, [1.85, 0.15, 2.0], [0, 0.91, -1.26], paint);
-  box(group, [1.94, 0.11, 4.65], [0, 0.84, 0.02], black);
-  box(group, [1.9, 0.68, 2.1], [0, 1.05, 0.22], glass);
-  box(group, [1.75, 0.1, 1.05], [0, 1.01, -1.46], paint);
+  // Purpose-sculpted wedge shell: the shoulder line tapers into a narrow nose
+  // and broad, muscular haunches rather than reading as stacked cuboids.
+  sculptMesh(group, [
+    { z: -2.85, halfWidth: 0.70, deck: 0.53 },
+    { z: -2.62, halfWidth: 1.04, deck: 0.70 },
+    { z: -1.82, halfWidth: 1.20, deck: 0.84 },
+    { z: -0.92, halfWidth: 1.23, deck: 0.86 },
+    { z: 0.38, halfWidth: 1.24, deck: 0.88 },
+    { z: 1.60, halfWidth: 1.27, deck: 0.87 },
+    { z: 2.29, halfWidth: 1.12, deck: 0.73 },
+    { z: 2.79, halfWidth: 0.88, deck: 0.57 },
+  ], pearl);
+  sculptMesh(group, [
+    { z: -1.06, halfWidth: 0.70, deck: 0.90, floor: 0.83 },
+    { z: -0.55, halfWidth: 0.90, deck: 1.42, floor: 0.89 },
+    { z: 0.69, halfWidth: 0.88, deck: 1.44, floor: 0.89 },
+    { z: 1.36, halfWidth: 0.60, deck: 0.91, floor: 0.82 },
+  ], glass);
+  // Black panoramic spine and visible roof armor segments.
+  box(group, [0.12, 0.09, 2.02], [0, 1.47, 0.08], chrome);
+  box(group, [0.95, 0.045, 0.82], [0, 1.53, 0.41], carbon);
+  box(group, [0.9, 0.055, 1.18], [0, 0.93, -1.86], carbon);
   for (const side of [-1, 1]) {
-    box(group, [0.10, 0.075, 3.6], [side * 1.18, 0.88, -0.3], accent);
-    box(group, [0.42, 0.12, 0.93], [side * 0.61, 0.91, -1.43], chrome);
-    box(group, [0.36, 0.37, 1.15], [side * 1.03, 0.68, -1.65], paint);
-    box(group, [0.3, 0.32, 0.28], [side * 1.05, 0.55, -2.58], light);
-    box(group, [0.3, 0.2, 0.25], [side * 1.06, 0.65, 2.6], tail);
-    box(group, [0.2, 0.2, 1.08], [side * 0.51, 0.7, -2.41], black);
-    for (const z of [-1.57, 1.57]) {
-      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.52, 0.28, 12), black);
-      wheel.rotation.z = Math.PI / 2;
-      wheel.position.set(side * 1.33, 0.52, z);
-      group.add(wheel);
-    }
+    // Radiused wheel arches and deep side intake pockets.
+    box(group, [0.22, 0.24, 0.94], [side * 1.15, 0.76, -1.76], pearl);
+    box(group, [0.22, 0.25, 1.06], [side * 1.16, 0.78, 1.68], pearl);
+    addWheelAssembly(group, side * 1.28, -1.79, 0.53);
+    addWheelAssembly(group, side * 1.30, 1.66, 0.54);
+    addDecalBar(group, [0.10, 0.07, 3.42], [side * 1.23, 0.91, -0.20], 0x20c6fa, true);
+    addDecalBar(group, [0.37, 0.16, 0.18], [side * 0.92, 0.67, -2.81], 0x8eefff, true);
+    addDecalBar(group, [0.41, 0.17, 0.14], [side * 0.94, 0.66, 2.78], 0xff284b, true);
+    addDecalBar(group, [0.47, 0.10, 0.32], [side * 0.75, 0.93, -2.06], 0xbed9e2);
+    addDecalBar(group, [0.07, 0.08, 1.2], [side * 0.45, 0.96, -1.67], 0x6d8b99);
+    addDecalBar(group, [0.22, 0.30, 0.82], [side * 1.13, 0.54, 0.43], 0x111b28);
   }
-  box(group, [2.2, 0.13, 0.6], [0, 0.74, 2.28], black);
-  box(group, [1.62, 0.18, 0.22], [0, 0.8, -2.61], chrome);
-  box(group, [1.82, 0.11, 0.16], [0, 0.78, 2.65], tail);
-  box(group, [1.2, 0.08, 0.45], [0, 1.43, 1.08], chrome);
-  addGroundShadow(group, 1.45, 2.9);
+  // Distinct layered diffusers, canards and rear aero package.
+  box(group, [2.24, 0.17, 0.31], [0, 0.47, -2.77], carbon);
+  box(group, [1.64, 0.11, 0.15], [0, 0.65, -2.93], chrome);
+  for (const z of [2.12, 2.42]) box(group, [1.48, 0.08, 0.16], [0, 0.86, z], carbon);
+  box(group, [2.33, 0.10, 0.54], [0, 1.04, 2.27], carbon);
+  for (const side of [-1, 1]) box(group, [0.16, 0.25, 0.45], [side * 1.06, 0.91, 2.18], chrome);
+  box(group, [1.45, 0.10, 0.29], [0, 0.59, 2.85], chrome);
+  addGroundShadow(group, 1.58, 3.10);
   return group;
 }
 
@@ -79,33 +89,49 @@ export function makeTrafficVehicle(hostile: boolean, color: number, variant = 0)
   if (variant === 5) return makeSpeedboat(hostile, color);
   if (variant === 6) return makeSwitchblade(color);
   const group = new THREE.Group();
-  const body = metal(color, 0.49);
+  const body = bodyPaint(color);
   const dark = metal(0x151b27);
-  const windows = new THREE.MeshStandardMaterial({ color: hostile ? 0x421b2a : 0x223b49, metalness: 0.55, roughness: 0.19 });
+  const windows = glassPaint(hostile ? 0x401e31 : 0x234b64);
   const width = variant === 2 ? 2.8 : variant === 1 ? 1.8 : 2.25;
   const length = variant === 3 ? 6.7 : variant === 2 ? 6.3 : variant === 1 ? 4 : 4.8;
-  box(group, [width, 0.57, length], [0, 0.58, 0], body);
-  box(group, [width * 0.78, 0.54, length * 0.4], [0, 1.06, 0.05], windows);
-  box(group, [width * 0.85, 0.13, 0.2], [0, 0.68, -length / 2], hostile ? metal(0xff4b43) : dark);
+  const half = width / 2;
+  const h = length / 2;
+  sculptMesh(group, [
+    { z: -h, halfWidth: half * 0.7, deck: 0.60 },
+    { z: -h + 0.25, halfWidth: half * 0.94, deck: 0.79 },
+    { z: -h * 0.48, halfWidth: half, deck: 0.94 },
+    { z: h * 0.58, halfWidth: half, deck: 0.92 },
+    { z: h - 0.27, halfWidth: half * 0.95, deck: 0.76 },
+    { z: h, halfWidth: half * 0.79, deck: 0.60 },
+  ], body);
+  sculptMesh(group, [
+    { z: -h * 0.42, halfWidth: half * 0.64, deck: 0.95, floor: 0.89 },
+    { z: -h * 0.20, halfWidth: half * 0.76, deck: variant === 2 ? 1.78 : 1.47, floor: 0.90 },
+    { z: h * 0.27, halfWidth: half * 0.75, deck: variant === 2 ? 1.78 : 1.47, floor: 0.90 },
+    { z: h * 0.56, halfWidth: half * 0.62, deck: 0.96, floor: 0.88 },
+  ], windows);
+  box(group, [width * 0.85, 0.12, 0.20], [0, 0.66, -h], dark);
   for (const side of [-1, 1]) {
     for (const z of [-length * 0.31, length * 0.31]) {
-      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.28, 10), dark);
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.49, 0.49, 0.30, 14), dark);
       wheel.rotation.z = Math.PI / 2;
-      wheel.position.set(side * (width / 2 + 0.13), 0.5, z);
+      wheel.position.set(side * (half + 0.10), 0.51, z);
+      wheel.castShadow = true;
       group.add(wheel);
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.32, 10),
+        metal(0x8eafc1, 0.28));
+      hub.rotation.z = Math.PI / 2;
+      hub.position.copy(wheel.position);
+      group.add(hub);
     }
-    const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.33, 0.18, 0.1), new THREE.MeshBasicMaterial({ color: hostile ? 0xff334e : 0xffd9a2 }));
-    lamp.position.set(side * width * 0.32, 0.65, -length / 2 - 0.04);
-    group.add(lamp);
+    addDecalBar(group, [0.10, 0.06, length * 0.62],
+      [side * (half - 0.13), 0.95, 0], hostile ? 0xb23e56 : 0x78abbf);
+    addDecalBar(group, [0.29, 0.18, 0.13],
+      [side * half * 0.75, 0.74, -h - 0.03], hostile ? 0xff4c60 : 0xffe5a7, true);
+    addDecalBar(group, [0.27, 0.17, 0.14],
+      [side * half * 0.73, 0.72, h + 0.03], 0xff324d, true);
   }
-  if (hostile) box(group, [width * 0.72, 0.13, 0.65], [0, 1.4, length * 0.15], dark);
-  for (const side of [-1, 1]) {
-    box(group, [0.09, 0.07, length * 0.64], [side * (width / 2 - 0.12), 0.91, 0],
-      new THREE.MeshStandardMaterial({
-        color: hostile ? 0xb34955 : 0x91bcc9,
-        metalness: 0.79, roughness: 0.28,
-      }));
-  }
+  if (hostile) box(group, [width * 0.68, 0.12, 0.57], [0, 1.56, length * 0.15], dark);
   addGroundShadow(group, width * 0.66, length * 0.59);
   if (variant === 3 && hostile) {
     const red = new THREE.MeshBasicMaterial({ color: 0xff514a });

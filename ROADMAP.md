@@ -103,7 +103,10 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 
 ## Phase 4 — Visual/audio quality pass
 
-- [ ] High-quality original interceptor, enemies, truck, props and variant assets.
+- [x] Sculpted interceptor and road-car primary hull geometry, enhanced cockpit clearcoat, detailed wheel assemblies, reflective original procedural PMREM lighting and dramatic perspective driving camera.
+- [x] Procedural biome terrain heightfields with canyon mesas/snow peaks/forested ridges, high-rise city facades and instanced emissive window grids.
+- [x] High-preset filmic vignette, subtle optical separation and grain (reduced-motion aware).
+- [ ] Authored production-grade interceptor/truck/boat/aircraft meshes, baked details and original hero set-piece assets.
 - [ ] Real-time lighting, reflection approximations and optional shadows.
 - [x] Single-draw-call GPU weather particles (snow, dust, city rain, river mist) with quality budgets.
 - [ ] Skid marks, more physical debris and atmospheric grading.
@@ -112,7 +115,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] Bounded one-draw-call edge speed streaks with quality/reduced-motion safeguards.
 - [ ] Human-approved art direction and real-GPU frame time validation, especially on high.
 - [x] Scene-wide biome-specific filmic grade and environmental reflections via wet material response and procedural rippled highlights.
-- [ ] Probe-based true environment reflections, authored decals and advanced volumetric lighting.
+- [x] Procedural PMREM reflection environment for car clearcoat and metal, without externally licensed imagery.
+- [ ] Scene-matched dynamic reflection probes, original authored decals, HDRI art direction and advanced volumetric lighting.
 - [x] Original adaptive synthesized espionage riff and speed-sensitive engine drone.
 - [x] Five distinct original synthesized biome arrangements with percussive pulses, threat-adaptive pace, dual-layer reactive engine audio, separate warning and resupply signals.
 - [ ] Richer authored/sample-based music production and environmental recordings.

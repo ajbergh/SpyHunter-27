@@ -262,3 +262,28 @@ test('upgraded animated water shader works on high-quality WebGL2', async ({ pag
   await page.screenshot({ path: 'test-results/cinematic-water-high.png' });
   expect(errors).toEqual([]);
 });
+
+test('original sculpted interceptor and dimensional terrain render in cinematic perspective', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', err => errors.push(err.message));
+  await page.goto('/?testDistance=1360');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#environment-name')).toContainText('DESERT');
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  await page.screenshot({ path: 'test-results/terrain-sculpted-desert.png' });
+  expect(errors).toEqual([]);
+});
+
+test('detailed 3D skyline and vehicle studio reflections render with high grade', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', err => errors.push(err.message));
+  await page.goto('/?testDistance=3330');
+  await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
+  await page.locator('#quality-select').selectOption('high');
+  await page.getByRole('button', { name: /apply and return/i }).click();
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#environment-name')).toContainText('NEON CITY');
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  await page.screenshot({ path: 'test-results/aaa-direction-neon-city.png' });
+  expect(errors).toEqual([]);
+});
