@@ -260,7 +260,7 @@ export class Road {
       // than colliding with the playable road/guardrail corridor.
       const seed = seededRandom(Math.round(anchor) * 109 + 17);
       const side = seed < 0.5 ? -1 : 1;
-      const x = side * (30 + seed * 6);
+      const x = side * (19.0 + seed * 3.8);
       const world = anchor;
       const landmark = makeLandmark(biome, seed);
       landmark.position.set(x + roadCenterAt(world) - roadCenterAt(anchor),

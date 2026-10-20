@@ -296,7 +296,7 @@ test('detailed 3D skyline and vehicle studio reflections render with high grade'
 test('cinematic environment hero landmarks render on high preset', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', err => errors.push(err.message));
-  await page.goto('/?testDistance=3370');
+  await page.goto('/?testDistance=3340');
   await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
   await page.locator('#quality-select').selectOption('high');
   await page.getByRole('button', { name: /apply and return/i }).click();
