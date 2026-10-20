@@ -44,14 +44,12 @@ export class Road {
       }`,
     side: THREE.DoubleSide,
   });
-  private readonly scene: THREE.Scene;
   private readonly tiles: Tile[] = [];
   private travelled = 0;
   private time = 0;
   private lastBiome: Biome = 'forest';
 
   constructor(scene: THREE.Scene) {
-    this.scene = scene;
     for (let i = 0; i < COUNT; i++) {
       const anchor = 145 - i * LENGTH;
       const group = this.makeTile(anchor);
