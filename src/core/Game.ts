@@ -3,6 +3,7 @@ import { GameLoop } from './GameLoop';
 import { Input } from './Input';
 import { MAX_LIVES, PLAYER_Z, approach, distancePoints, intersects, scoreForTarget, spawnInterval } from './logic';
 import { Road } from '../world/Road';
+import { BoatWake } from '../world/BoatWake';
 import { Player } from '../entities/Player';
 import { TrafficVehicle } from '../entities/Traffic';
 import { Projectiles } from '../combat/Projectiles';
@@ -25,6 +26,7 @@ export class Game {
   private readonly input = new Input();
   private readonly audio = new AudioManager();
   private readonly road: Road;
+  private readonly wake: BoatWake;
   private readonly player: Player;
   private readonly bullets: Projectiles;
   private readonly specials: SpecialWeapons;
@@ -63,6 +65,7 @@ export class Game {
     sun.position.set(-18, 47, -28);
     this.scene.add(sun, new THREE.HemisphereLight(0x6fa8c8, 0x182526, 2.2));
     this.road = new Road(this.scene);
+    this.wake = new BoatWake(this.scene);
     this.player = new Player(this.scene);
     this.bullets = new Projectiles(this.scene);
     this.specials = new SpecialWeapons(this.scene);
@@ -106,6 +109,7 @@ export class Game {
     this.enemyShots.reset();
     this.van.reset();
     this.road.reset();
+    this.wake.reset();
     this.player.reset();
     this.scoring.reset();
     this.distance = 0;
@@ -183,6 +187,7 @@ export class Game {
         ? 'BOATHOUSE TRANSFER — SPEEDBOAT DEPLOYED'
         : 'BOATHOUSE TRANSFER — INTERCEPTOR RESTORED');
     }
+    this.wake.step(dt, this.player.speed, this.player.x, this.player.isBoat);
     this.distance += this.player.speed * dt;
     this.scoring.tick(dt, distancePoints(this.player.speed, dt));
     this.airSpawnClock -= dt;
@@ -229,7 +234,7 @@ export class Game {
     for (const car of this.traffic) {
       car.step(dt, this.player.speed, this.player.x);
       if (car.tryFire(this.player.x)) {
-        this.enemyShots.spawn(car.x, car.z + car.halfLength, this.player.x);
+        this.enemyShots.spawn(car.x, car.z + car.halfLength, this.player.x, car.role === 'boat');
         this.flash(car.x, car.z + car.halfLength, 0.14, 0xff563b);
       }
     }
@@ -384,6 +389,7 @@ export class Game {
     this.air.renderAt(center);
     this.enemyShots.renderAt(center);
     this.effects.renderAt(center);
+    this.wake.renderAt(center);
     this.van.mesh.position.x = 6.4 + center(this.van.mesh.position.z);
     this.renderer.render(this.scene, this.camera);
   }

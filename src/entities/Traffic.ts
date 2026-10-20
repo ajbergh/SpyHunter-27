@@ -88,7 +88,7 @@ export class TrafficVehicle {
 
   /** Enforcer rounds fire only from a stable attack lane and respect smoke/oil disruption. */
   tryFire(playerX: number): boolean {
-    if (this.role !== 'enforcer' || this.state !== 'intercept' ||
+    if ((this.role !== 'enforcer' && this.role !== 'boat') || this.state !== 'intercept' ||
         this.fireClock > 0 || this.z < -38 || this.z > -6 ||
         Math.abs(this.x - playerX) > 6.5) return false;
     this.fireClock = 2.4;

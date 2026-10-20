@@ -8,6 +8,7 @@ export class EnemyProjectiles {
   private readonly rounds: HostileRound[] = [];
   private readonly geometry = new THREE.ConeGeometry(0.22, 1, 7);
   private readonly material = new THREE.MeshBasicMaterial({ color: 0xff6246 });
+  private readonly torpedo = new THREE.MeshBasicMaterial({ color: 0x65e7ff });
 
   constructor(private readonly scene: THREE.Scene) {
     for (let i = 0; i < 30; i++) {
@@ -21,7 +22,7 @@ export class EnemyProjectiles {
 
   get activeCount(): number { return this.rounds.filter((round) => round.active).length; }
 
-  spawn(x: number, z: number, targetX: number): boolean {
+  spawn(x: number, z: number, targetX: number, water = false): boolean {
     const round = this.rounds.find((item) => !item.active);
     if (!round) return false;
     round.x = x;
@@ -29,6 +30,7 @@ export class EnemyProjectiles {
     // Direction locked at firing time. These do not magically track the player.
     round.velocityX = clamp((targetX - x) * 0.58, -7, 7);
     round.active = true;
+    round.mesh.material = water ? this.torpedo : this.material;
     round.mesh.visible = true;
     round.mesh.position.set(x, 0.73, z);
     return true;
