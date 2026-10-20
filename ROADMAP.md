@@ -116,6 +116,7 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] High-quality EffectComposer bloom, cinematic color/exposure grading, five smoothly blended biome light rigs and fog palettes, scalable 0/512/2048 soft shadows.
 - [x] Seamless seeded asphalt microtextures, clearcoat hero paint and windshields, ground-contact shadows, city neon facades, layered forest canopy, and animated multilayer water glints.
 - [x] Bounded one-draw-call edge speed streaks with quality/reduced-motion safeguards.
+- [x] Cinematic camera reframed against actual in-game screenshots for more prominent hero vehicle and reduced empty road; mathematical lane/vehicle screen coverage tests.
 - [ ] Human-approved art direction and real-GPU frame time validation, especially on high.
 - [x] Scene-wide biome-specific filmic grade and environmental reflections via wet material response and procedural rippled highlights.
 - [x] Procedural PMREM reflection environment for car clearcoat and metal, without externally licensed imagery.

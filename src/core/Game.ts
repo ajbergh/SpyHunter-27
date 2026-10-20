@@ -15,6 +15,7 @@ import { WaterHazards } from '../world/WaterHazards';
 import { Weather } from '../rendering/Weather';
 import { VisualDirector } from '../rendering/VisualDirector';
 import { SpeedStreaks } from '../rendering/SpeedStreaks';
+import { CAMERA_FRAME, cinematicFov } from '../rendering/CameraFraming';
 import { Player } from '../entities/Player';
 import { TrafficVehicle } from '../entities/Traffic';
 import { Projectiles } from '../combat/Projectiles';
@@ -44,7 +45,7 @@ import { planSquadTactics } from '../gameplay/SquadTactics';
 
 export class Game {
   private readonly scene = new THREE.Scene();
-  private readonly camera = new THREE.PerspectiveCamera(55, 1, 0.1, 420);
+  private readonly camera = new THREE.PerspectiveCamera(CAMERA_FRAME.baseFov, 1, 0.1, 420);
   private readonly renderer: THREE.WebGLRenderer;
   private composer: EffectComposer | null = null;
   private filmic: ShaderPass | null = null;
@@ -114,8 +115,8 @@ export class Game {
     room.dispose();
     pmrem.dispose();
     this.ui.stage.appendChild(this.renderer.domElement);
-    this.camera.position.set(0, 48, 38);
-    this.camera.lookAt(0, 0, -28);
+    this.camera.position.set(0, CAMERA_FRAME.height, CAMERA_FRAME.positionZ);
+    this.camera.lookAt(0, 0, CAMERA_FRAME.targetZ);
     this.visuals = new VisualDirector(this.scene, this.renderer);
     this.road = new Road(this.scene);
     this.wake = new BoatWake(this.scene);
@@ -301,8 +302,7 @@ export class Game {
     }
 
     this.player.step(dt, controls, this.road.biome, GAME_MODES[this.mode].speedScale);
-    const targetFov = this.preferences.reducedMotion ? 55 :
-      55 + Math.min(4, Math.max(0, (this.player.speed - 30) * 0.17));
+    const targetFov = cinematicFov(this.player.speed, this.preferences.reducedMotion);
     this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, targetFov, Math.min(1, dt * 0.9));
     this.camera.updateProjectionMatrix();
     this.streaks.step(dt, this.player.speed);
