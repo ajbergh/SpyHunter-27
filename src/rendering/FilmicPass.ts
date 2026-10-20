@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 
 /** Deliberately restrained cinematic grade: subtle optical edge response,
