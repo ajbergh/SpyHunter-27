@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { approach, clamp, type RectHitbox } from '../core/logic';
 import { makeTrafficVehicle } from './VehicleModels';
 
-export type EnemyRole = 'civilian' | 'interceptor' | 'weaver' | 'blocker';
+export type EnemyRole = 'civilian' | 'interceptor' | 'weaver' | 'blocker' | 'enforcer';
 export type EnemyState = 'approach' | 'intercept' | 'disrupted' | 'spinning';
 
 export class TrafficVehicle {
@@ -17,19 +17,20 @@ export class TrafficVehicle {
   z: number;
   state: EnemyState = 'approach';
   private sway = 0;
+  private fireClock = 1.3;
   private spinTimer = 0;
   private disruption = 0;
   private spinDirection: number;
 
   constructor(scene: THREE.Scene, x: number, z: number, hostile: boolean, variant: number, color: number, speed: number) {
     this.hostile = hostile;
-    this.role = !hostile ? 'civilian' : variant === 2 ? 'blocker' : variant === 1 ? 'weaver' : 'interceptor';
+    this.role = !hostile ? 'civilian' : variant === 3 ? 'enforcer' : variant === 2 ? 'blocker' : variant === 1 ? 'weaver' : 'interceptor';
     this.x = x;
     this.z = z;
     this.speed = speed;
     this.spinDirection = x >= 0 ? 1 : -1;
     this.halfWidth = variant === 2 ? 1.4 : variant === 1 ? 0.95 : 1.13;
-    this.halfLength = variant === 2 ? 3.05 : variant === 1 ? 1.98 : 2.37;
+    this.halfLength = variant === 3 ? 3.32 : variant === 2 ? 3.05 : variant === 1 ? 1.98 : 2.37;
     this.hp = hostile && variant === 2 ? 4 : hostile ? 2 : 1;
     this.mesh = makeTrafficVehicle(hostile, color, variant);
     this.mesh.position.set(x, 0.12, z);
@@ -46,6 +47,7 @@ export class TrafficVehicle {
   step(dt: number, playerSpeed: number, playerX: number): void {
     this.spinTimer = Math.max(0, this.spinTimer - dt);
     this.disruption = Math.max(0, this.disruption - dt);
+    this.fireClock = Math.max(0, this.fireClock - dt);
     this.z += Math.max(8, playerSpeed - this.speed * (this.disruption > 0 ? 0.5 : 1)) * dt;
     if (this.spinTimer > 0) {
       this.state = 'spinning';
@@ -61,6 +63,8 @@ export class TrafficVehicle {
       if (this.role === 'interceptor') {
         const target = clamp(playerX + Math.sin(this.sway * 2.1) * 1.0, -7.4, 7.4);
         this.x = approach(this.x, target, 0.7, dt);
+      } else if (this.role === 'enforcer') {
+        this.x = approach(this.x, clamp(playerX, -6.4, 6.4), 0.15, dt);
       } else if (this.role === 'weaver') {
         this.x = clamp(this.x + Math.sin(this.sway * 5.0) * dt * 6, -7.4, 7.4);
       }
@@ -71,6 +75,15 @@ export class TrafficVehicle {
       this.mesh.rotation.y = approach(this.mesh.rotation.y, 0, 4, dt);
     }
     this.mesh.position.set(this.x, 0.12, this.z);
+  }
+
+  /** Enforcer rounds fire only from a stable attack lane and respect smoke/oil disruption. */
+  tryFire(playerX: number): boolean {
+    if (this.role !== 'enforcer' || this.state !== 'intercept' ||
+        this.fireClock > 0 || this.z < -38 || this.z > -6 ||
+        Math.abs(this.x - playerX) > 6.5) return false;
+    this.fireClock = 2.4;
+    return true;
   }
 
   hitbox(): RectHitbox { return { x: this.x, z: this.z, halfWidth: this.halfWidth, halfLength: this.halfLength }; }

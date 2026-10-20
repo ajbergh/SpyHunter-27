@@ -59,3 +59,6 @@ h2 { font-size: 88px; line-height: .9; }
 .van-line { border-left-color:#f8ba6a; }
 .penalty { position:absolute; z-index:4; top:96px; left:50%; transform:translateX(-50%); padding:6px 12px; background:#461b1beb; color:#ffaaa0; border:1px solid #ff7d64; font-size:13px; font-weight:800; letter-spacing:.1em; white-space:nowrap; pointer-events:none; }
 @media(max-width:520px) { .special-hud { right:5px; top:96px; font-size:9px; } .special-line { min-width:104px; padding:4px 5px; } }
+
+.radar-line { border-left-color: #ff815c; color: #a8c8d5; }
+.radar-line b { color: #ffaf70; }

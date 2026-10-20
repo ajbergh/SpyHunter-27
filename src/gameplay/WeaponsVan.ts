@@ -7,6 +7,10 @@ export type VanState = 'idle' | 'approaching' | 'docking';
 export class WeaponsVan {
   readonly mesh = new THREE.Group();
   private readonly ramp: THREE.Mesh;
+  private readonly doorLeft: THREE.Mesh;
+  private readonly doorRight: THREE.Mesh;
+  private readonly beacon: THREE.Mesh;
+  private elapsed = 0;
   private state: VanState = 'idle';
   private cooldown = 0;
   private dockTimer = 0;
@@ -37,6 +41,9 @@ export class WeaponsVan {
     }
     this.ramp = add([3.05, 0.15, 3.2], [0, 0.58, 5.35], dark);
     this.ramp.rotation.x = -0.06;
+    this.doorLeft = add([1.45, 1.9, 0.12], [-0.76, 1.63, 3.91], dark);
+    this.doorRight = add([1.45, 1.9, 0.12], [0.76, 1.63, 3.91], dark);
+    this.beacon = add([1.2, 0.25, 0.6], [0, 3.05, -1.5], amber);
     this.mesh.position.set(this.lane, 0, -85);
     this.mesh.visible = false;
     scene.add(this.mesh);
@@ -49,10 +56,16 @@ export class WeaponsVan {
   }
 
   get isDocking(): boolean { return this.state === 'docking'; }
+  get progress(): number { return this.state === 'docking' ? 1 - Math.max(0, this.dockTimer) / 1.3 : 0; }
 
   reset(): void {
     this.state = 'idle';
     this.cooldown = 0;
+    this.elapsed = 0;
+    this.dockTimer = 0;
+    this.ramp.rotation.x = -0.06;
+    this.doorLeft.rotation.y = 0;
+    this.doorRight.rotation.y = 0;
     this.mesh.visible = false;
     this.mesh.position.set(this.lane, 0, -85);
   }
@@ -63,14 +76,22 @@ export class WeaponsVan {
     this.mesh.visible = true;
     this.mesh.position.set(this.lane, 0, -85);
     this.ramp.rotation.x = -0.06;
+    this.doorLeft.rotation.y = 0;
+    this.doorRight.rotation.y = 0;
     this.cooldown = 45;
     return true;
   }
 
   step(dt: number, playerSpeed: number, playerX: number): 'docked' | 'missed' | null {
     this.cooldown = Math.max(0, this.cooldown - dt);
+    this.elapsed += dt;
+    this.beacon.scale.x = 0.8 + Math.abs(Math.sin(this.elapsed * 5)) * 0.5;
     if (this.state === 'idle') return null;
     if (this.state === 'docking') {
+      this.mesh.position.z += Math.min(22, playerSpeed * 0.5) * dt;
+      this.ramp.rotation.x = Math.min(0.6, this.ramp.rotation.x + dt * 1.4);
+      this.doorLeft.rotation.y = Math.max(0, this.doorLeft.rotation.y - dt * 0.8);
+      this.doorRight.rotation.y = Math.min(0, this.doorRight.rotation.y + dt * 0.8);
       this.dockTimer -= dt;
       if (this.dockTimer <= 0) {
         this.state = 'idle';
@@ -79,7 +100,11 @@ export class WeaponsVan {
       return null;
     }
     this.mesh.position.z += Math.max(11, playerSpeed - 11) * dt;
-    if (this.mesh.position.z > -45) this.ramp.rotation.x = Math.min(0.12, this.ramp.rotation.x + dt * 0.7);
+    if (this.mesh.position.z > -45) {
+      this.ramp.rotation.x = Math.min(0.12, this.ramp.rotation.x + dt * 0.7);
+      this.doorLeft.rotation.y = Math.min(Math.PI / 2, this.doorLeft.rotation.y + dt * 1.4);
+      this.doorRight.rotation.y = Math.max(-Math.PI / 2, this.doorRight.rotation.y - dt * 1.4);
+    }
     // Trigger only when the player's nose is aligned with the exposed loading ramp.
     const rearZ = this.mesh.position.z + 5.6;
     if (Math.abs(rearZ - (PLAYER_Z - 2.1)) < 2.4 &&

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GameLoop } from './GameLoop';
 import { Input } from './Input';
-import { MAX_LIVES, PLAYER_Z, distancePoints, intersects, scoreForTarget, spawnInterval } from './logic';
+import { MAX_LIVES, PLAYER_Z, approach, distancePoints, intersects, scoreForTarget, spawnInterval } from './logic';
 import { Road } from '../world/Road';
 import { Player } from '../entities/Player';
 import { TrafficVehicle } from '../entities/Traffic';
@@ -146,6 +146,7 @@ export class Game {
     }
 
     this.player.step(dt, controls);
+    this.camera.position.x = approach(this.camera.position.x, this.player.x * 0.13, 3.2, dt);
     this.road.step(this.player.speed, dt);
     this.distance += this.player.speed * dt;
     this.scoring.tick(dt, distancePoints(this.player.speed, dt));

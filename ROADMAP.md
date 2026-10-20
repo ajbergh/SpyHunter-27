@@ -31,18 +31,22 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] Collisions, lives, spawn grace, score, local high score, menu/pause/game over.
 - [x] Keyboard plus basic Gamepad API mapping.
 - [ ] Verify full browser play session, tune pacing, road scaling and collision fairness.
-- [ ] Add explicit FPS/diagnostics panel and automated browser smoke tests.
+- [ ] Add explicit FPS/diagnostics panel and extended play-session automation (basic browser smoke suite passes).
 
 **Exit:** player can begin, drive, destroy hostile cars, avoid civilians, lose lives and restart. No known blockers in a 10-minute session.
 
 ## Phase 2 — Signature arcade systems (incremental implementation)
 
 - [x] Initial distinct interceptor, weaver, blocker behaviors and disrupted/spinning states.
-- [ ] Expand enemy state machines: ranged limousines, motorcycles, helicopters, coordinated attacks.
+- [x] Enforcer ranged-limousine role with cooldown, dodgeable enemy rounds and custom weapon visuals.
+- [x] Attack helicopter with animated rotor, timed bomb warning rings and damaging blasts.
+- [ ] Expand enemy state machines: motorcycles, coordinated attacks and more complex helicopter behaviors.
 - [x] Initial guided hostile-target missiles, oil spinout hazards, smoke-based AI disruption, inventory and cooldown.
-- [ ] Refine missiles for airborne targets, visual effects and defensive weapon balancing.
+- [x] Prioritize helicopter targets with altitude-aware guided missile interception and +750 aerial scoring.
+- [ ] Refine missile contrails, air-combat visuals and balance.
 - [x] First deployable support truck with an animated ramp, approach/cooldown, alignment-based docking and inventory refill.
-- [ ] Add vehicle-inside-van camera animation, complete mechanical transitions and skill feedback.
+- [x] Animate resupply van rear doors, ramp, beacons and brief vehicle-hide/docking camera choreography.
+- [ ] Add visible interceptor interior loading/exit sequence, near-miss feedback and collision-safe reentry.
 - [x] Five-second civilian casualty NO POINTS lockout with HUD warning and casualty counter.
 - [x] Initial lane reservation check at spawn horizon.
 - [ ] Improve telegraphs, pacing director and fairness for clustered enemies.
@@ -91,8 +95,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 1. Inspect captured Chromium gameplay screenshots and tune visual readability and vehicle placement.
 2. Capture and inspect gameplay screenshots, then run a full manual play session.
 3. Make the truck docking sequence cinematic and detect near-misses clearly.
-4. Add helicopter AI, aerial bombs and missile-specific surface-to-air interactions.
-5. Add enemy ranged attacks and upgraded combat visual effects.
+4. Add motorcycle and convoy encounter behaviors, improve aerial bomb targeting/telegraphs.
+5. Expand explosion visuals and integrate cinematic truck loading/reentry.
 
 ## Architecture and quality gates
 
@@ -106,4 +110,4 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 
 ## Known limitations of first vertical slice
 
-Straight highway only, initial but incomplete enemy AI and signature weapons systems, no boat/helicopter/biome transitions, low-poly procedural artwork, simple sound, no browser E2E suite yet. Those constraints are explicit so future engineering work can advance gameplay rather than masquerade as visual completion.
+Straight highway only, initial but incomplete enemy AI and signature weapons systems, no boat/biome transitions; initial helicopter attacks now exist, low-poly procedural artwork, simple sound, no browser E2E suite yet. Those constraints are explicit so future engineering work can advance gameplay rather than masquerade as visual completion.

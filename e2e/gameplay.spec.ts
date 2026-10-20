@@ -8,6 +8,8 @@ test('boots WebGL and plays the fundamental arcade loop', async ({ page }) => {
   await expect(page.getByRole('button', { name: /initiate pursuit/i })).toBeVisible();
   await page.getByRole('button', { name: /initiate pursuit/i }).click();
   await expect(page.locator('#menu')).toBeHidden();
+  await expect(page.locator('#air-count')).toHaveText('00');
+  await expect(page.locator('#enemy-round-count')).toHaveText('00');
   const canvas = page.locator('#stage canvas');
   await expect(canvas).toBeVisible();
   await expect.poll(async () => canvas.evaluate((element) => (element as HTMLCanvasElement).width)).toBeGreaterThan(1);

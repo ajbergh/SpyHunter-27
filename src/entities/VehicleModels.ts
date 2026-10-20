@@ -45,7 +45,7 @@ export function makeTrafficVehicle(hostile: boolean, color: number, variant = 0)
   const dark = metal(0x151b27);
   const windows = new THREE.MeshStandardMaterial({ color: hostile ? 0x421b2a : 0x223b49, metalness: 0.55, roughness: 0.19 });
   const width = variant === 2 ? 2.8 : variant === 1 ? 1.8 : 2.25;
-  const length = variant === 2 ? 6.3 : variant === 1 ? 4 : 4.8;
+  const length = variant === 3 ? 6.7 : variant === 2 ? 6.3 : variant === 1 ? 4 : 4.8;
   box(group, [width, 0.57, length], [0, 0.58, 0], body);
   box(group, [width * 0.78, 0.54, length * 0.4], [0, 1.06, 0.05], windows);
   box(group, [width * 0.85, 0.13, 0.2], [0, 0.68, -length / 2], hostile ? metal(0xff4b43) : dark);
@@ -61,5 +61,10 @@ export function makeTrafficVehicle(hostile: boolean, color: number, variant = 0)
     group.add(lamp);
   }
   if (hostile) box(group, [width * 0.72, 0.13, 0.65], [0, 1.4, length * 0.15], dark);
+  if (variant === 3 && hostile) {
+    const red = new THREE.MeshBasicMaterial({ color: 0xff514a });
+    box(group, [0.65, 0.35, 1.25], [0, 1.52, -0.5], dark);
+    box(group, [0.34, 0.21, 0.8], [0, 1.62, -1.4], red);
+  }
   return group;
 }

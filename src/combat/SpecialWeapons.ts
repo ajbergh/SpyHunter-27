@@ -1,10 +1,11 @@
 import * as THREE from 'three';
 import { approach, intersects, PLAYER_Z } from '../core/logic';
 import type { TrafficVehicle } from '../entities/Traffic';
+import type { AirTarget } from './AirThreats';
 
 export type WeaponKind = 'missile' | 'oil' | 'smoke';
 export type WeaponCounts = Readonly<Record<WeaponKind, number>>;
-export type Impact = { vehicle: TrafficVehicle; kind: WeaponKind };
+export type Impact = { vehicle: TrafficVehicle; kind: WeaponKind } | { aircraft: AirTarget; kind: 'missile' };
 type Missile = { mesh: THREE.Group; x: number; z: number };
 type Hazard = { mesh: THREE.Group; kind: 'oil' | 'smoke'; x: number; z: number; life: number; affected: Set<TrafficVehicle> };
 
@@ -51,21 +52,40 @@ export class SpecialWeapons {
     return true;
   }
 
-  step(dt: number, playerSpeed: number, traffic: readonly TrafficVehicle[]): Impact[] {
+  step(dt: number, playerSpeed: number, traffic: readonly TrafficVehicle[], airTargets: readonly AirTarget[] = []): Impact[] {
     const impacts: Impact[] = [];
     this.cooldown = Math.max(0, this.cooldown - dt);
     for (let i = this.missiles.length - 1; i >= 0; i--) {
       const missile = this.missiles[i];
-      let target: TrafficVehicle | undefined;
-      for (const car of traffic) {
-        if (car.hostile && car.hp > 0 && car.z < missile.z && car.z > missile.z - 55 &&
-          (!target || car.z > target.z)) target = car;
+      // Aerial targets are prioritized when in range; other missiles target road hostiles.
+      // A missile locked on to an aircraft flies at its altitude rather than hitting cars.
+      const aircraft = airTargets
+        .filter((air) => air.hp > 0 && air.z < missile.z && air.z > missile.z - 75)
+        .sort((a, b) => b.z - a.z)[0];
+      let carTarget: TrafficVehicle | undefined;
+      if (!aircraft) {
+        for (const car of traffic) {
+          if (car.hostile && car.hp > 0 && car.z < missile.z && car.z > missile.z - 55 &&
+              (!carTarget || car.z > carTarget.z)) carTarget = car;
+        }
       }
-      if (target) missile.x = approach(missile.x, target.x, 5.5, dt);
+      const target = aircraft ?? carTarget;
+      if (target) missile.x = approach(missile.x, target.x, aircraft ? 7.3 : 5.5, dt);
       missile.z -= 82 * dt;
-      missile.mesh.position.set(missile.x, 0.83, missile.z);
+      const altitude = aircraft ? 8.7 : 0.83;
+      missile.mesh.position.set(missile.x, approach(missile.mesh.position.y, altitude, 7, dt), missile.z);
       missile.mesh.rotation.z = target ? Math.max(-0.25, Math.min(0.25, (target.x - missile.x) * -0.08)) : 0;
-      const hit = traffic.find((car) =>
+      const airHit = airTargets.find((air) => air.hp > 0 &&
+        Math.abs(missile.x - air.x) < 2.4 && Math.abs(missile.z - air.z) < 3.7 &&
+        missile.mesh.position.y > 3.5);
+      if (airHit) {
+        airHit.hp -= 3;
+        impacts.push({ aircraft: airHit, kind: 'missile' });
+        this.removeMissile(i);
+        continue;
+      }
+      // Once armed against airborne targets, don't accidentally collide with road traffic.
+      const hit = aircraft ? undefined : traffic.find((car) =>
         car.hostile && car.hp > 0 && intersects(
           { x: missile.x, z: missile.z, halfWidth: 0.52, halfLength: 0.95 }, car.hitbox()));
       if (hit) {

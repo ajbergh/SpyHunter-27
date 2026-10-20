@@ -2,7 +2,7 @@
 
 A modern, original WebGL arcade-combat driving game inspired by the feel of early 1980s vertical-scrolling highway games. Powered by **Three.js + TypeScript + Vite**.
 
-> **Project status:** Phase 2 in progress. Phase 1 driving, traffic and scoring are implemented; initial special weapons (missile, oil, smoke), civilian NO POINTS penalty, enemy roles and an alignment-based support truck are now added. Curved highways, watercraft, biome variety, specialized airborne enemies and premium art/audio remain roadmap items. Automated Chromium WebGL start/control/pause smoke testing passed; extended manual gameplay and art-quality reviews are still outstanding.
+> **Project status:** Phase 2 in progress. Phase 1 driving, traffic and scoring are implemented; initial special weapons (missile, oil, smoke), civilian NO POINTS penalty, enemy roles and an alignment-based support truck are now added. Curved highways, watercraft, biome variety, watercraft, biome variety and premium art/audio remain roadmap items. Phase 2 now includes attack helicopters with bombs and enforcer ranged fire. Automated Chromium WebGL start/control/pause smoke testing passed; extended manual gameplay and art-quality reviews are still outstanding.
 
 ## Run locally
 
@@ -51,7 +51,9 @@ The game also reads compatible gamepads (left stick to steer, right trigger to a
 - `src/entities/` owns original procedural vehicle meshes and traffic entities.
 - `src/combat/Projectiles.ts` handles pooled bullets and hit checks.
 - `src/combat/SpecialWeapons.ts` manages missile homing, oil/smoke hazard interactions, ammo and cooldown.
-- `src/gameplay/WeaponsVan.ts` implements roadside truck deployment, ramp alignment, docking and refill.
+- `src/gameplay/WeaponsVan.ts` implements roadside truck deployment, ramp alignment, animated docking and refill.
+- `src/combat/AirThreats.ts` owns aerial enemies, bomb telegraphs and blast hit detection.
+- `src/combat/EnemyProjectiles.ts` pools dodgeable enemy turret rounds.
 - `src/gameplay/Scoring.ts` implements civilian score lockout and extra-life milestones.
 - `src/ui/Interface.ts` presents accessible HTML HUD/menu overlays on the WebGL canvas.
 - `src/audio/Audio.ts` generates lightweight original synthesized arcade effects using Web Audio.

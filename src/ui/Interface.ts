@@ -30,6 +30,7 @@ export class Interface {
           <div class="special-line">[E] OIL <b id="ammo-oil">02</b></div>
           <div class="special-line">[R] SMOKE <b id="ammo-smoke">02</b></div>
           <div class="special-line van-line">VAN: <b id="van-status">READY [F]</b></div>
+          <div class="special-line radar-line">AIR <b id="air-count">00</b> · ROUNDS <b id="enemy-round-count">00</b></div>
         </div>
         <div class="penalty" id="penalty" hidden>NO POINTS <span id="penalty-time">5</span>s</div>
         <section class="panel" id="menu">
@@ -41,7 +42,7 @@ export class Interface {
           <p class="intro">INTERCEPT HOSTILES. PROTECT CIVILIANS.<br />SURVIVE THE HIGHWAY.</p>
           <button id="start-button" class="primary-button">INITIATE PURSUIT <span>↗</span></button>
           <div class="keys">A / D <span>STEER</span> · W / S <span>SPEED</span> · SPACE <span>FIRE</span><div>Q <span>MISSILE</span> · E <span>OIL</span> · R <span>SMOKE</span> · F <span>RESUPPLY</span></div></div>
-          <p class="build-tag">PHASE 1 // PLAYABLE PROTOTYPE</p>
+          <p class="build-tag">PHASE 2 // COMBAT SYSTEMS ACTIVE</p>
         </section>
         <section class="panel compact" id="paused" hidden>
           <div class="eyebrow">MISSION INTERRUPTED</div><h2>PAUSED</h2>
@@ -93,6 +94,11 @@ export class Interface {
     const warning = this.get('penalty');
     warning.hidden = penalty <= 0;
     this.get('penalty-time').textContent = String(Math.ceil(penalty));
+  }
+
+  threats(helicopters: number, enemyRounds: number): void {
+    this.get('air-count').textContent = String(helicopters).padStart(2, '0');
+    this.get('enemy-round-count').textContent = String(enemyRounds).padStart(2, '0');
   }
 
   stats(score: number, best: number, lives: number, speed: number): void {
