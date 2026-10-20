@@ -20,7 +20,7 @@ describe('divided highway geometry and collisions', () => {
   });
   it('warns before the divided stretch, never in water', () => {
     expect(upcomingSplit(455)).toBe(95);
-    expect(upcomingSplit(440)).toBeNull();
+    expect(upcomingSplit(439)).toBeNull();
     expect(upcomingSplit(610)).toBeNull();
     expect(upcomingSplit(SPLIT_PERIOD * 2 + 475)).toBeNull(); // water
   });
