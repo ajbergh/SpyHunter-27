@@ -7,6 +7,8 @@ import { Player } from '../entities/Player';
 import { TrafficVehicle } from '../entities/Traffic';
 import { Projectiles } from '../combat/Projectiles';
 import { SpecialWeapons, type WeaponKind } from '../combat/SpecialWeapons';
+import { AirThreats } from '../combat/AirThreats';
+import { EnemyProjectiles } from '../combat/EnemyProjectiles';
 import { Interface, type Screen } from '../ui/Interface';
 import { AudioManager } from '../audio/Audio';
 import { Scoring } from '../gameplay/Scoring';
@@ -26,6 +28,8 @@ export class Game {
   private readonly player: Player;
   private readonly bullets: Projectiles;
   private readonly specials: SpecialWeapons;
+  private readonly air: AirThreats;
+  private readonly enemyShots: EnemyProjectiles;
   private readonly van: WeaponsVan;
   private readonly scoring = new Scoring();
   private readonly loop: GameLoop;
@@ -37,6 +41,7 @@ export class Game {
   private lives = MAX_LIVES;
   private distance = 0;
   private spawnClock = 0;
+  private airSpawnClock = 9;
   private shotClock = 0;
   private grace = 0;
   private dockingTimer = 0;
@@ -61,6 +66,8 @@ export class Game {
     this.player = new Player(this.scene);
     this.bullets = new Projectiles(this.scene);
     this.specials = new SpecialWeapons(this.scene);
+    this.air = new AirThreats(this.scene);
+    this.enemyShots = new EnemyProjectiles(this.scene);
     this.van = new WeaponsVan(this.scene);
     try { this.best = Number(localStorage.getItem('spyhunter27-best') || 0) || 0; } catch { /* private browsing may deny storage */ }
     this.refreshHUD();
@@ -93,6 +100,8 @@ export class Game {
     this.clearExplosions();
     this.bullets.reset();
     this.specials.reset();
+    this.air.reset();
+    this.enemyShots.reset();
     this.van.reset();
     this.road.reset();
     this.player.reset();
@@ -102,6 +111,7 @@ export class Game {
     this.grace = 3;
     this.dockingTimer = 0;
     this.spawnClock = 0.8;
+    this.airSpawnClock = 9;
     this.shotClock = 0;
     this.toastClock = 0;
     this.ui.message('');
@@ -140,6 +150,12 @@ export class Game {
     if (this.dockingTimer > 0) {
       this.dockingTimer -= dt;
       this.van.step(dt, this.player.speed, this.player.x);
+      this.camera.position.x += (this.player.x - this.camera.position.x) * Math.min(1, dt * 5);
+      if (this.dockingTimer <= 0) {
+        this.player.mesh.visible = true;
+        this.player.invulnerability = 2.5;
+        this.announce('INTERCEPTOR REDEPLOYED — WEAPONS ONLINE');
+      }
       this.stepExplosions(dt);
       this.refreshHUD();
       return;
@@ -150,6 +166,14 @@ export class Game {
     this.road.step(this.player.speed, dt);
     this.distance += this.player.speed * dt;
     this.scoring.tick(dt, distancePoints(this.player.speed, dt));
+    this.airSpawnClock -= dt;
+    if (this.distance > 260 && this.airSpawnClock <= 0) {
+      if (this.air.helicopters.length === 0) {
+        this.air.spawn((Math.random() - 0.5) * 9);
+        this.announce('AIR THREAT DETECTED — MISSILES RECOMMENDED');
+      }
+      this.airSpawnClock = 17 + Math.random() * 8;
+    }
     this.grace = Math.max(0, this.grace - dt);
     this.spawnClock -= dt;
     if (this.spawnClock <= 0) {
@@ -165,6 +189,7 @@ export class Game {
     const vanEvent = this.van.step(dt, this.player.speed, this.player.x);
     if (vanEvent === 'docked') {
       this.specials.refill();
+      this.player.mesh.visible = false;
       this.scoring.enemyDestroyed(500);
       this.player.invulnerability = 2.5;
       this.dockingTimer = 1.3;
@@ -181,10 +206,34 @@ export class Game {
       this.shotClock = 0.115;
     }
     this.bullets.step(dt);
-    for (const car of this.traffic) car.step(dt, this.player.speed, this.player.x);
-    for (const impact of this.specials.step(dt, this.player.speed, this.traffic)) {
-      if (impact.kind === 'missile') {
-        this.flash(impact.vehicle.x, impact.vehicle.z, 0.5, 0xffaa42);
+    for (const car of this.traffic) {
+      car.step(dt, this.player.speed, this.player.x);
+      if (car.tryFire(this.player.x)) {
+        this.enemyShots.spawn(car.x, car.z + car.halfLength, this.player.x);
+        this.flash(car.x, car.z + car.halfLength, 0.14, 0xff563b);
+      }
+    }
+    if (this.enemyShots.step(dt, this.player.speed, this.player.hitbox()) > 0) {
+      this.damagePlayer('ENFORCER WEAPON IMPACT');
+    }
+    for (const event of this.air.step(dt, this.player.x, this.player.speed, this.player.hitbox())) {
+      if (event.kind === 'bomb-warning') this.announce('WARNING — INCOMING AERIAL BOMB');
+      if (event.kind === 'bomb-detonated') {
+        this.flash(event.x, event.z, 0.76, 0xff7134);
+        this.audio.explode();
+        if (event.playerHit) this.damagePlayer('HELICOPTER BOMB IMPACT');
+      }
+    }
+    for (const impact of this.specials.step(dt, this.player.speed, this.traffic, this.air.helicopters)) {
+      if ('aircraft' in impact) {
+        this.flash(impact.aircraft.x, impact.aircraft.z, 0.84, 0xffc65d);
+        this.audio.explode();
+        if (impact.aircraft.hp <= 0) {
+          const points = this.scoring.enemyDestroyed(750);
+          this.announce(points ? 'AIR THREAT NEUTRALIZED  +750' : 'AIR THREAT NEUTRALIZED — NO POINTS');
+        }
+      } else if (impact.kind === 'missile') {
+        this.flash(impact.vehicle.x, impact.vehicle.z, 0.52, 0xffaa42);
         this.audio.explode();
       } else {
         this.flash(impact.vehicle.x, impact.vehicle.z, 0.22, impact.kind === 'oil' ? 0x47c3ff : 0xd7f7ff);
@@ -214,14 +263,10 @@ export class Game {
         continue;
       }
       if (this.player.invulnerability <= 0 && this.grace <= 0 && intersects(this.player.hitbox(), car.hitbox())) {
-        this.flash(this.player.x, PLAYER_Z, 0.72, 0xffa342);
-        this.audio.explode();
         if (!car.hostile) this.scoring.civilianDestroyed();
         this.removeVehicle(i);
-        this.lives--;
-        if (this.lives <= 0) { this.gameOver(); break; }
-        this.player.invulnerability = 2.6;
-        this.announce('INTERCEPTOR DAMAGED  //  REDEPLOYED');
+        this.damagePlayer('VEHICLE COLLISION');
+        if (this.screen === 'gameover') break;
       }
     }
     const extraLives = this.scoring.checkExtraLives();
@@ -254,7 +299,7 @@ export class Game {
     const x = selectSpawnLane(this.traffic, -90, Math.random);
     if (x === null) return;
     const hostile = Math.random() < 0.63;
-    const variant = Math.random() < 0.17 ? 2 : Math.random() < 0.3 ? 1 : 0;
+    const variant = hostile && Math.random() < 0.16 ? 3 : Math.random() < 0.17 ? 2 : Math.random() < 0.3 ? 1 : 0;
     const colors = hostile ? [0x902d3e, 0x4c182b, 0x9e553e] : [0x7495a7, 0xc5bda9, 0x647c73, 0x8e9bae];
     const color = colors[Math.floor(Math.random() * colors.length)];
     this.traffic.push(new TrafficVehicle(this.scene, x, -90, hostile, variant, color, hostile ? 8 + Math.random() * 7 : 12 + Math.random() * 7));
@@ -263,6 +308,16 @@ export class Game {
   private removeVehicle(index: number): void {
     const [vehicle] = this.traffic.splice(index, 1);
     vehicle.dispose(this.scene);
+  }
+
+  private damagePlayer(reason: string): void {
+    if (this.player.invulnerability > 0 || this.grace > 0 || this.screen !== 'playing' || this.dockingTimer > 0) return;
+    this.flash(this.player.x, PLAYER_Z, 0.72, 0xffa342);
+    this.audio.explode();
+    this.lives--;
+    if (this.lives <= 0) { this.gameOver(); return; }
+    this.player.invulnerability = 2.6;
+    this.announce(reason + ' — INTERCEPTOR REDEPLOYED');
   }
 
   private flash(x: number, z: number, duration: number, color: number): void {
@@ -298,6 +353,7 @@ export class Game {
   private refreshHUD(): void {
     this.ui.stats(this.scoring.score, Math.max(this.best, this.scoring.score), this.lives, this.player.speed);
     this.ui.armory(this.specials.counts, this.van.status, this.scoring.lockoutRemaining);
+    this.ui.threats(this.air.helicopters.length, this.enemyShots.activeCount);
   }
 
   private gameOver(): void {
