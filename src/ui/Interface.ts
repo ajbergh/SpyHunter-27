@@ -47,6 +47,7 @@ export class Interface {
           <div class="special-line van-line">VAN: <b id="van-status">READY [F]</b></div>
           <div class="special-line radar-line">AIR <b id="air-count">00</b> · ROUNDS <b id="enemy-round-count">00</b></div>
         </div>
+        <div class="tactic-status" id="tactic-status" hidden>SQUAD TACTICS <b>PINCER</b><small>OPEN CENTER CORRIDOR</small></div>
         <div class="combo-counter" id="combo-counter" hidden>COMBO <b id="combo-value">×2</b><small id="combo-time">5.0s</small></div>
         <div class="penalty" id="penalty" hidden>NO POINTS <span id="penalty-time">5</span>s</div>
         <section class="panel" id="menu">
@@ -251,6 +252,7 @@ export class Interface {
     if (screen === 'menu' || screen === 'gameover') this.get('route-status').hidden = true;
     this.get('special-hud').hidden = screen === 'menu' || screen === 'gameover';
     if (screen === 'menu' || screen === 'gameover') this.get('combo-counter').hidden = true;
+    if (screen === 'menu' || screen === 'gameover') this.get('tactic-status').hidden = true;
     if (screen === 'menu' || screen === 'gameover') this.get('penalty').hidden = true;
   }
 
@@ -267,6 +269,10 @@ export class Interface {
   threats(helicopters: number, enemyRounds: number): void {
     this.get('air-count').textContent = String(helicopters).padStart(2, '0');
     this.get('enemy-round-count').textContent = String(enemyRounds).padStart(2, '0');
+  }
+
+  tactics(active: boolean): void {
+    this.get('tactic-status').hidden = !active;
   }
 
   route(side: RouteSide | null, leftCompleted: number, rightCompleted: number): void {

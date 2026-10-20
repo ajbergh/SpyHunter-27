@@ -37,4 +37,20 @@ describe('enforcer AI', () => {
     expect(car.x).toBeGreaterThan(-6.4);
     car.dispose(scene);
   });
+  it('paired attackers respond to a tactical target and smoke still disables it', () => {
+    const scene = new THREE.Scene();
+    const enemy = new TrafficVehicle(scene, -6.4, -30, true, 0, 0x6b1622, 11, 4);
+    const start = enemy.x;
+    for (let i = 0; i < 50; i++) enemy.step(1/60, 32, 0,
+      { type: 'pincer', targetX: -3.8 });
+    expect(enemy.x).toBeGreaterThan(start);
+    expect(enemy.squadId).toBe(4);
+    enemy.disrupt(3);
+    const disabledX = enemy.x;
+    for (let i=0;i<45;i++) enemy.step(1/60,32,0,
+      { type: 'pincer', targetX: 7 });
+    expect(enemy.x).toBeCloseTo(disabledX, 4);
+    enemy.dispose(scene);
+  });
+
 });

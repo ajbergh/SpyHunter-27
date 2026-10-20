@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { approach, clamp, type RectHitbox } from '../core/logic';
 import { makeTrafficVehicle } from './VehicleModels';
+import type { SquadOrder } from '../gameplay/SquadTactics';
 
 export type EnemyRole = 'civilian' | 'interceptor' | 'weaver' | 'blocker' | 'enforcer' | 'motorcycle' | 'boat' | 'switchblade';
 export type EnemyState = 'approach' | 'intercept' | 'disrupted' | 'spinning';
@@ -12,6 +13,7 @@ export class TrafficVehicle {
   readonly halfWidth: number;
   readonly halfLength: number;
   readonly speed: number;
+  readonly squadId: number | null;
   hp: number;
   x: number;
   z: number;
@@ -22,7 +24,8 @@ export class TrafficVehicle {
   private disruption = 0;
   private spinDirection: number;
 
-  constructor(scene: THREE.Scene, x: number, z: number, hostile: boolean, variant: number, color: number, speed: number) {
+  constructor(scene: THREE.Scene, x: number, z: number, hostile: boolean, variant: number, color: number, speed: number, squadId: number | null = null) {
+    this.squadId = squadId;
     this.hostile = hostile;
     this.role = !hostile ? 'civilian' : variant === 6 ? 'switchblade' : variant === 5 ? 'boat' : variant === 4 ? 'motorcycle' : variant === 3 ? 'enforcer' : variant === 2 ? 'blocker' : variant === 1 ? 'weaver' : 'interceptor';
     this.x = x;
@@ -44,7 +47,7 @@ export class TrafficVehicle {
     this.disruption = Math.max(this.disruption, seconds);
   }
 
-  step(dt: number, playerSpeed: number, playerX: number): void {
+  step(dt: number, playerSpeed: number, playerX: number, order?: SquadOrder): void {
     this.spinTimer = Math.max(0, this.spinTimer - dt);
     this.disruption = Math.max(0, this.disruption - dt);
     this.fireClock = Math.max(0, this.fireClock - dt);
@@ -55,12 +58,17 @@ export class TrafficVehicle {
       this.mesh.rotation.y += this.spinDirection * dt * 8;
       if (Math.abs(this.x) > 9.6) this.hp = 0;
     } else if (this.disruption > 0) {
+      this.mesh.rotation.z = approach(this.mesh.rotation.z, 0, 5, dt);
       this.state = 'disrupted';
       this.mesh.rotation.y = approach(this.mesh.rotation.y, 0, 4, dt);
     } else if (this.hostile && this.z > -48 && this.z < 8) {
       this.state = 'intercept';
       this.sway += dt;
-      if (this.role === 'interceptor') {
+      if (order?.type === 'pincer') {
+        this.x = clamp(approach(this.x, order.targetX,
+          this.role === 'switchblade' ? 1.5 : 1.05, dt), -7.4, 7.4);
+        this.mesh.rotation.z = approach(this.mesh.rotation.z, 0, 5, dt);
+      } else if (this.role === 'interceptor') {
         const target = clamp(playerX + Math.sin(this.sway * 2.1) * 1.0, -7.4, 7.4);
         this.x = approach(this.x, target, 0.7, dt);
       } else if (this.role === 'enforcer') {

@@ -202,3 +202,13 @@ test('warns before the distinct city viaduct bridge', async ({ page }) => {
   await expect(page.locator('#environment-name')).toContainText('NEON CITY');
   expect(crashes).toEqual([]);
 });
+
+test('squad pincer banner begins hidden before coordinated attacks arrive', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#tactic-status')).toBeHidden();
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  expect(errors).toEqual([]);
+});

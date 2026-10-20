@@ -95,3 +95,7 @@ The working title is provisional. This is an independent homage and is not affil
 ### Release and asset provenance
 
 See [Release readiness](docs/RELEASE_READINESS.md) for outstanding QA gates and [Asset provenance](docs/ASSET_PROVENANCE.md) for original creative sources and third-party dependencies. Commercial distribution under the provisional title requires a trademark review.
+
+### Squad tactics
+
+Paired hostile encounters now share a squad identity. When both are close enough, their AI may form a left/right pincer around the interceptor, with a clearly labeled HUD warning and a central escape gap. Coordinated movement is suppressed in forks/waterways, near civilian traffic, when the player is against an outer edge, or when an attacker is disrupted by smoke. Single vehicles retain their original role behavior.

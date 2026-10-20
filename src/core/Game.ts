@@ -33,6 +33,7 @@ import { biomeAt } from '../world/WorldPlan';
 import { splitDangerous, splitMedianHalfWidth, upcomingSplit, escapeFromMedian } from '../world/SplitRoad';
 import { RouteDirector, ROUTE_CHOICES } from '../gameplay/RouteDirector';
 import { bridgeAhead } from '../world/BridgePlan';
+import { planSquadTactics } from '../gameplay/SquadTactics';
 
 export class Game {
   private readonly scene = new THREE.Scene();
@@ -59,6 +60,7 @@ export class Game {
   private readonly routes = new RouteDirector();
   private readonly loop: GameLoop;
   private readonly traffic: TrafficVehicle[] = [];
+  private nextSquadId = 1;
   private readonly effects: ExplosionEffects;
   private screen: Screen = 'menu';
   private mode: GameMode = 'classic';
@@ -166,6 +168,8 @@ export class Game {
     void this.audio.unlock();
     for (const car of this.traffic) car.dispose(this.scene);
     this.traffic.length = 0;
+    this.nextSquadId = 1;
+    this.ui.tactics(false);
     this.clearExplosions();
     this.bullets.reset();
     this.specials.reset();
@@ -421,8 +425,11 @@ export class Game {
         }
       }
     }
+    const squadOrders = planSquadTactics(this.traffic, this.player.x,
+      this.player.isBoat || splitMedianHalfWidth(this.distance) > 0.1);
+    this.ui.tactics(squadOrders.size > 0);
     for (const car of this.traffic) {
-      car.step(dt, this.player.speed, this.player.x);
+      car.step(dt, this.player.speed, this.player.x, squadOrders.get(car));
       if (splitDangerous(this.distance - car.z, car.x, car.halfWidth)) {
         car.x = escapeFromMedian(car.x, this.distance - car.z, car.halfWidth);
         car.mesh.position.x = car.x;
@@ -526,7 +533,9 @@ export class Game {
     const routeAhead = splitMedianHalfWidth(this.distance + 90) > 1.15 ? route : null;
     const lanes = routeAhead ? [routeAhead === 'left' ? -6.4 : 6.4] : undefined;
     const encounter = planEncounter(this.traffic, this.distance, this.random, route, lanes);
-    if (encounter.type === 'pursuit-pair') this.announce('COORDINATED PURSUIT — TWO HOSTILES');
+    const squadId = encounter.type === 'pursuit-pair' && !this.player.isBoat
+      ? this.nextSquadId++ : null;
+    if (squadId !== null) this.announce('SQUAD INBOUND — ATTACKERS COORDINATING');
     for (const spawn of encounter.spawns) {
       const variant = this.player.isBoat ? 5 : spawn.variant;
       const colors = spawn.hostile
@@ -536,7 +545,7 @@ export class Game {
       const speed = variant === 4 ? 16 + this.random() * 9
         : spawn.hostile ? 8 + this.random() * 7 : 12 + this.random() * 7;
       this.traffic.push(new TrafficVehicle(
-        this.scene, spawn.x, spawn.z, spawn.hostile, variant, color, speed,
+        this.scene, spawn.x, spawn.z, spawn.hostile, variant, color, speed, squadId,
       ));
     }
   }
