@@ -4,6 +4,8 @@
 **Stack:** Three.js / WebGL2 / TypeScript / Vite  
 **Target:** Polished 60 FPS desktop browser arcade game
 
+**Latest CI verification (2026-10-20):** strict TypeScript passed, 20 unit tests passed, Vite production build passed, Chromium Playwright smoke test passed. Full manual session and visual inspection remain outstanding.
+
 ## North star
 
 Deliver the mechanical clarity and replayability of an early-1980s vertical-scrolling spy-car action game with original retro-futuristic 3D visuals. Maintain a portrait-oriented playfield within a responsive desktop UI. Preserve the forward sightline and immediate controls; graphics must support gameplay readability.
