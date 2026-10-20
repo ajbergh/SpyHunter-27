@@ -13,7 +13,8 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] Initialize repository, documentation, strict TS/Vite and dependency manifest.
 - [x] Create modular engine/world/entity/input/combat/UI/audio layout.
 - [x] Add build, type-check, unit-test scripts and CI workflow.
-- [ ] Confirm first CI run and address any environment-specific failures.
+- [x] Validate GitHub Actions type-check, all 5 unit tests and production build (2026-10-20).
+- [ ] Commit a resolved package-lock.json and switch CI from npm install to npm ci.
 - [ ] Add Playwright browser-level smoke tests and screenshot baselines.
 
 **Exit:** reproducible local setup, type-check/test/build green and CI green.
