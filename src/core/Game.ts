@@ -266,7 +266,7 @@ export class Game {
         if (!car.hostile) this.scoring.civilianDestroyed();
         this.removeVehicle(i);
         this.damagePlayer('VEHICLE COLLISION');
-        if (this.screen === 'gameover') break;
+        if (this.lives <= 0) break;
       }
     }
     const extraLives = this.scoring.checkExtraLives();
