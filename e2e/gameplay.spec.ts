@@ -358,3 +358,18 @@ test('high preset retains readable interceptor bodywork under restrained bloom',
   await page.screenshot({ path: 'test-results/balanced-neon-city-interceptor.png' });
   expect(errors).toEqual([]);
 });
+
+test('high-speed steering preserves WebGL gameplay with pooled tire skid marks', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/?testDistance=1500');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await page.keyboard.down('w');
+  await page.keyboard.down('a');
+  await page.waitForTimeout(1150);
+  await page.keyboard.up('a');
+  await page.keyboard.up('w');
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  await page.screenshot({ path: 'test-results/tire-skid-balance.png' });
+  expect(errors).toEqual([]);
+});

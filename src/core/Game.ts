@@ -17,6 +17,7 @@ import { Weather } from '../rendering/Weather';
 import { VisualDirector } from '../rendering/VisualDirector';
 import { SpeedStreaks } from '../rendering/SpeedStreaks';
 import { HeadlightBeams } from '../rendering/HeadlightBeams';
+import { SkidTrails } from '../rendering/SkidTrails';
 import { CAMERA_FRAME, cinematicFov } from '../rendering/CameraFraming';
 import { Player } from '../entities/Player';
 import { TrafficVehicle } from '../entities/Traffic';
@@ -65,6 +66,7 @@ export class Game {
   private readonly visuals: VisualDirector;
   private readonly streaks: SpeedStreaks;
   private readonly headlights: HeadlightBeams;
+  private readonly skidTrails: SkidTrails;
   private readonly player: Player;
   private readonly bullets: Projectiles;
   private readonly specials: SpecialWeapons;
@@ -128,6 +130,7 @@ export class Game {
     this.weather = new Weather(this.scene);
     this.streaks = new SpeedStreaks(this.scene);
     this.headlights = new HeadlightBeams(this.scene);
+    this.skidTrails = new SkidTrails(this.scene);
     this.player = new Player(this.scene);
     this.bullets = new Projectiles(this.scene);
     this.specials = new SpecialWeapons(this.scene);
@@ -168,6 +171,7 @@ export class Game {
     this.visuals.configure(settings.quality);
     this.streaks.setPreferences(settings.quality, settings.reducedMotion);
     this.headlights.setQuality(settings.quality);
+    this.skidTrails.setQuality(settings.quality);
     const ratio = settings.quality === 'low' ? 1 : settings.quality === 'high' ? 2 : 1.5;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, ratio));
     if (settings.quality === 'high' && !this.composer) {
@@ -210,6 +214,7 @@ export class Game {
     this.wake.reset();
     this.waterHazards.reset();
     this.streaks.reset();
+    this.skidTrails.reset();
     this.headlights.step('forest', false);
     this.player.reset();
     this.scoring.reset();
@@ -318,6 +323,8 @@ export class Game {
     this.camera.updateProjectionMatrix();
     this.streaks.step(dt, this.player.speed);
     this.headlights.step(this.road.biome, this.player.isBoat);
+    this.skidTrails.step(dt, this.player.speed, this.player.x,
+      controls.steer, controls.brake, this.road.biome, this.player.isBoat);
     this.boundaryCooldown = Math.max(0, this.boundaryCooldown - dt);
     if (this.boundaryCooldown === 0 && boundaryStrike(
       this.player.x, controls.steer, this.player.speed, this.player.isBoat
@@ -697,6 +704,7 @@ export class Game {
     this.waterHazards.renderAt(center);
     this.streaks.renderAt(center);
     this.headlights.renderAt(center, this.player.x);
+    this.skidTrails.renderAt(center);
     this.van.mesh.position.x = 6.4 + center(this.van.mesh.position.z);
     if (this.bloomPass) {
       const target = highlightBloom(this.road.biome);

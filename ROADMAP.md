@@ -192,3 +192,5 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [x] Rebalanced sun, fill and reflection levels; lower metallic paint and cockpit environment response; darker, distinct steel-blue interceptor body and carbon accents.
 - [x] Replace flat circular vehicle shadow polygons with soft, physically grounded radial contact-occlusion shader.
 - [ ] High-resolution texture art, artist-approved scene-matched reflections, tone calibration across real GPUs, and detailed visual regression comparison.
+
+- [x] Bounded 160-instance paired dynamic tire skids with curve alignment, snow traction threshold, 3.2s decay and Low-preset exclusion; deterministic unit tests.

@@ -143,3 +143,7 @@ Night driving now projects two feathered vehicle headlight cones forward on the 
 ### High-dynamic-range lighting correction (2026-10-21)
 
 A screenshot review showed that the previous High graphics preset caused the hero interceptor's bright paint, canopy and decorative emitters to blend into a white flare. Cinematic grading now uses **per-biome HDR bloom thresholds** (1.42–1.82) and lower strengths (0.14–0.29); daylight, reflection intensity and physically based clearcoat are tuned to preserve separation between painted metal, window glass, trim and road lighting. The hero sports a muted steel-blue body with a dark carbon center spine and soft radial contact shadows. A new Chromium screenshot captures the High night preset for continued human comparison. These changes improve tone separation without introducing copyrighted or remote texture assets.
+
+### Dynamic tire behavior (2026-10-21)
+
+When steering hard at speed or braking, the interceptor now leaves paired rubber traces that track the curved moving road. A fixed 160-instance GPU pool reuses the same shader, geometry and memory across the run; marks scroll and expire cleanly rather than accumulating over long sessions. Ice changes the steering threshold, and the effect disables itself on water/boats and on Low quality. Together with rebalanced HDR bloom and clearcoat, these touches improve how action and light read on the driving surface.
