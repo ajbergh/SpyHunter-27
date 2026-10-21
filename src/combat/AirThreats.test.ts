@@ -87,4 +87,33 @@ describe('air threats', () => {
     threats.reset();
   });
 
+
+  it('keeps searchlight meshes synchronized with aircraft and releases them on reset', () => {
+    const scene = new THREE.Scene();
+    const threats = new AirThreats(scene);
+    threats.setPreferences('high', false);
+    const heli = threats.spawn(-2, 'ace', -33);
+    expect(scene.children).toHaveLength(3);
+    expect(heli.searchlight.cone.visible).toBe(true);
+    expect(heli.searchlight.footprint.visible).toBe(true);
+    threats.renderAt(z => z / 100);
+    expect(heli.mesh.position.x).toBeCloseTo(heli.x + heli.z / 100);
+    expect(heli.searchlight.footprint.position.z).toBeCloseTo(heli.z - 4.1);
+    const original = heli.searchlight.cone.geometry;
+    threats.step(1 / 60, 0, 36, { x: 7, z: PLAYER_Z, halfWidth: 1, halfLength: 2 });
+    threats.renderAt(z => z / 100);
+    expect(heli.searchlight.cone.geometry).toBe(original);
+    threats.setPreferences('medium', true);
+    expect(heli.searchlight.cone.visible).toBe(false);
+    expect(heli.searchlight.footprint.visible).toBe(true);
+    threats.setPreferences('low', true);
+    expect(heli.searchlight.footprint.visible).toBe(false);
+    threats.reset();
+    expect(scene.children).toHaveLength(0);
+    threats.setPreferences('high', true);
+    expect(threats.spawn(1).searchlight.cone.visible).toBe(true);
+    threats.reset();
+    expect(scene.children).toHaveLength(0);
+  });
+
 });
