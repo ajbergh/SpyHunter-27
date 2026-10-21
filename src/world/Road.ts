@@ -7,6 +7,8 @@ import { PavementMaterials } from '../rendering/PavementMaterials';
 import type { Quality } from '../gameplay/Settings';
 import { buildTerrain, terrainRelief } from './TerrainDetail';
 import { landmarkAt, makeLandmark } from './Landmarks';
+import { makeRoadsideDetail } from './RoadsideDetail';
+import { makeRoadSurfaceDetail } from './RoadSurfaceDetail';
 
 const LENGTH = 30;
 const COUNT = 10;
@@ -141,6 +143,7 @@ export class Road {
       biome === 'water' ? this.waterMaterial : this.pavement.get(biome, ROAD_COLOR[biome]));
     lane.receiveShadow = true;
     group.add(lane);
+    group.add(makeRoadSurfaceDetail(anchor, biome, this.quality));
     const white = new THREE.MeshBasicMaterial({ color: biome === 'water' ? 0x7ad2e2 : biome === 'snow' ? 0xe8f2f6 : 0xbccfd2, side: THREE.DoubleSide });
     const amber = new THREE.MeshBasicMaterial({ color: biome === 'water' ? 0x9bdfec : 0xe5b964, side: THREE.DoubleSide });
     for (const x of [-9.65, 9.65]) {
@@ -255,6 +258,8 @@ export class Road {
         group.add(prop);
       }
     }
+    // Instanced roadside vegetation/street details preserve GPU budget.
+    group.add(makeRoadsideDetail(anchor, biome, this.quality));
     if (landmarkAt(anchor, this.quality)) {
       // Unique silhouette every few hundred metres, on the terrain rather
       // than colliding with the playable road/guardrail corridor.

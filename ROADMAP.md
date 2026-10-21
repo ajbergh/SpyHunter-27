@@ -86,7 +86,9 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] Five visually distinct biomes: forest, desert, snow, neon city and waterways.
 - [x] Distinct snow/ice lateral traction, speedboat lateral inertia and mode-adjusted speed ranges.
 - [x] GPU particle snow, desert dust, urban rain and river mist.
-- [ ] Substantial biome art/weather polish.
+- [x] Deterministic GPU-instanced roadside density across five biomes: layered forest/snow tree canopies, desert cactus and boulder clusters, bankside reeds, neon street furniture; Low/Medium/High budgets and lane-safe spacing.
+- [x] Packed procedural tyre wear, asphalt repairs and instanced reflective edge studs on non-water road tiles.
+- [ ] High-resolution authored biome surface art, cinematic weather and biome-specific modular architecture.
 - [x] Seeded deterministic roadside props and biome transitions on cumulative distance.
 - [x] Deterministic landmark set-piece geometry and quality-scaled placement.
 - [ ] Biome-specific encounter scripting and authorable art assets.
@@ -116,7 +118,7 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [x] High-quality EffectComposer bloom, cinematic color/exposure grading, five smoothly blended biome light rigs and fog palettes, scalable 0/512/2048 soft shadows.
 - [x] Seamless seeded asphalt microtextures, clearcoat hero paint and windshields, ground-contact shadows, city neon facades, layered forest canopy, and animated multilayer water glints.
 - [x] Bounded one-draw-call edge speed streaks with quality/reduced-motion safeguards.
-- [x] Cinematic camera reframed against actual in-game screenshots for more prominent hero vehicle and reduced empty road; mathematical lane/vehicle screen coverage tests.
+- [x] Cinematic camera reframed twice against CI screenshots: low near-player eye line, interceptor occupies a larger share of the portrait gameplay viewport while maintaining three visible lanes; mathematical lane/vehicle screen coverage tests.
 - [ ] Human-approved art direction and real-GPU frame time validation, especially on high.
 - [x] Scene-wide biome-specific filmic grade and environmental reflections via wet material response and procedural rippled highlights.
 - [x] Procedural PMREM reflection environment for car clearcoat and metal, without externally licensed imagery.

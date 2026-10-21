@@ -317,3 +317,30 @@ test('reworked marine environment and watercraft render without shader errors', 
   await page.screenshot({ path: 'test-results/marine-art-upgrade.png' });
   expect(errors).toEqual([]);
 });
+
+test('high-preset roadside forest canopy and close cinematic camera remain WebGL-safe', async ({ page }) => {
+  const crashes: string[] = [];
+  page.on('pageerror', error => crashes.push(error.message));
+  await page.goto('/?testDistance=245');
+  await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
+  await page.locator('#quality-select').selectOption('high');
+  await page.getByRole('button', { name: /apply and return/i }).click();
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#environment-name')).toContainText('FOREST');
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  await page.screenshot({ path: 'test-results/forest-instanced-roadside-cinematic.png' });
+  expect(crashes).toEqual([]);
+});
+
+test('road wear and desert clusters remain stable through streamed tile traversal', async ({ page }) => {
+  const crashes: string[] = [];
+  page.on('pageerror', error => crashes.push(error.message));
+  await page.goto('/?testDistance=1350');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#environment-name')).toContainText('DESERT');
+  await page.keyboard.down('w');
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  await page.screenshot({ path: 'test-results/desert-roadwear-instances.png' });
+  await page.keyboard.up('w');
+  expect(crashes).toEqual([]);
+});

@@ -10,7 +10,7 @@ describe('cinematic driving camera composition', () => {
     expect(car).toBeLessThan(0.94);
     expect(distant).toBeGreaterThan(0.05);
     expect(distant).toBeLessThan(0.50);
-    expect(nearRoadScreenFraction(648 / 680, PLAYER_Z)).toBeGreaterThan(0.45);
+    expect(nearRoadScreenFraction(648 / 680, PLAYER_Z)).toBeGreaterThan(0.68);
     expect(nearRoadScreenFraction(648 / 680, PLAYER_Z)).toBeLessThan(0.88);
   });
   it('responds mildly to speed and fully disables zoom movement under Reduced Motion', () => {

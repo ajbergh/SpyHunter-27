@@ -129,3 +129,9 @@ This is **AAA-inspired visual development**, not a claim of commercially competi
 ### Camera composition tuning
 
 Actual CI screenshots showed the original camera made the interceptor appear too small within a long empty road. The default perspective has therefore been reframed lower and closer, enlarging the hero vehicle while preserving the view of all three lanes and the road ahead. The framing is checked with camera-space coverage tests, and dynamic FOV remains small and disabled under Reduced Motion. Review the refreshed screenshots on target aspect ratios and integrated graphics before final artistic sign-off.
+
+### Roadside density and cinematic composition (2026-10-20)
+
+Terrain now includes performance-budgeted **GPU-instanced** ground detail. Forests gain multiple overlapping fir-canopy layers with bark and undergrowth; snow regions include frosted conifers and ice-toned boulders; deserts gain mineral-colored rock clusters and cacti; water banks receive reeds and shoreline stone; neon districts have glowing street furniture. Every tile's scatter is deterministically seeded by travel distance, aligned to curved terrain height, and kept outside the collision/driving corridor. Preset budgets scale density, with no runtime mesh creation per simulated frame.
+
+Roadway materials gain subtle tyre wear and seeded crack repairs, plus reflective lane-edge studs. These details occupy at most two additional draw calls per non-water tile. The perspective camera sits lower and closer than the first visual rebuild, increasing the interceptor's visible size while maintaining all driving lanes and the distant encounter horizon. New visual smoke-test captures cover High forest canopies and desert roadside surfaces. These are engineering checks, not evidence of equivalent photorealism or AAA art clearance.

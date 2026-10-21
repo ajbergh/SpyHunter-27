@@ -1,8 +1,8 @@
 /** Production composition constants chosen against 648×680 in-game captures. */
 export const CAMERA_FRAME = {
-  height: 29,
-  positionZ: 33,
-  targetZ: -14,
+  height: 23,
+  positionZ: 27,
+  targetZ: -5,
   baseFov: 52,
   maxFov: 56,
 } as const;
