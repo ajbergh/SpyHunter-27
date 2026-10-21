@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { makeInterceptor, makeTrafficVehicle, makeSpeedboat } from './VehicleModels';
+import { vehiclePaintTextures, vehicleGlassTextures } from './VehiclePaintAtlas';
 
 function stats(group: THREE.Group): { meshes: number; vertices: number; physicallyBased: number } {
   let meshes = 0, vertices = 0, physicallyBased = 0;
@@ -42,4 +43,19 @@ describe('authored vehicle silhouette quality', () => {
     expect(armored.meshes).toBeGreaterThan(15);
     expect(stats(makeSpeedboat(false)).meshes).toBeGreaterThan(3);
   });
+  it('shares body and glazing texture resources across high-density traffic', () => {
+    const paint = vehiclePaintTextures('traffic');
+    const glass = vehicleGlassTextures();
+    for (let i = 0; i < 12; i++) {
+      const car = makeTrafficVehicle(i % 2 === 0, 0x667799, i % 3);
+      const mapped = car.children.filter(o => o instanceof THREE.Mesh &&
+        o.material instanceof THREE.MeshPhysicalMaterial) as THREE.Mesh[];
+      expect(mapped.length).toBeGreaterThanOrEqual(2);
+      expect((mapped[0].material as THREE.MeshPhysicalMaterial).map).toBe(paint.albedo);
+      expect((mapped[0].material as THREE.MeshPhysicalMaterial).roughnessMap).toBe(paint.roughness);
+      expect((mapped[1].material as THREE.MeshPhysicalMaterial).map).toBe(glass.albedo);
+      expect((mapped[1].material as THREE.MeshPhysicalMaterial).roughnessMap).toBe(glass.roughness);
+    }
+  });
+
 });
