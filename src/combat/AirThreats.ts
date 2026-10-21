@@ -172,7 +172,7 @@ export class Helicopter implements AirTarget {
   }
 
   /** Returns a bomb target when the attack enters its release window. */
-  step(dt: number, playerX: number, playerSpeed: number): { x: number; z: number } | null {
+  step(dt: number, playerX: number, playerSpeed: number, playerZ = PLAYER_Z): { x: number; z: number } | null {
     this.phase += dt;
     this.searchlight.step(dt);
     this.z += Math.max(10, playerSpeed - 14) * dt;
@@ -189,7 +189,7 @@ export class Helicopter implements AirTarget {
       // Target a predicted road position with over 0.9 seconds of notice;
       // braking or changing lanes after the warning provides a real escape.
       return { x: bombingLane(this.profile, playerX, this.volley++),
-        z: PLAYER_Z - bombDropDistance(playerSpeed) };
+        z: playerZ - bombDropDistance(playerSpeed) };
     }
     return null;
   }
@@ -264,7 +264,7 @@ export class AirThreats {
         this.helicopters.splice(i, 1);
         continue;
       }
-      const target = helicopter.step(dt, playerX, playerSpeed);
+      const target = helicopter.step(dt, playerX, playerSpeed, playerHitbox.z);
       if (target) {
         this.dropBomb(target.x, target.z);
         events.push({ kind: 'bomb-warning', x: target.x, z: target.z });
