@@ -6,6 +6,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import type { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { createFilmicPass, setFilmicReducedMotion } from '../rendering/FilmicPass';
+import { highlightBloom } from '../rendering/CinematicGrade';
 import { GameLoop } from './GameLoop';
 import { Input } from './Input';
 import { MAX_LIVES, PLAYER_Z, approach, distancePoints, intersects, scoreForTarget, spawnInterval } from './logic';
@@ -50,6 +51,7 @@ export class Game {
   private readonly renderer: THREE.WebGLRenderer;
   private composer: EffectComposer | null = null;
   private filmic: ShaderPass | null = null;
+  private bloomPass: UnrealBloomPass | null = null;
   private preferences = loadPreferences();
   private renderTime = 0;
   private averageFps = 60;
@@ -107,13 +109,13 @@ export class Game {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.26;
+    this.renderer.toneMappingExposure = 1.01;
     // Procedural studio reflection environment: real PMREM specular response
     // on clearcoat, glass and metals without remote or licensed image assets.
     const pmrem = new THREE.PMREMGenerator(this.renderer);
     const room = new RoomEnvironment();
     this.scene.environment = pmrem.fromScene(room, 0.04).texture;
-    this.scene.environmentIntensity = 0.82;
+    this.scene.environmentIntensity = 0.49;
     room.dispose();
     pmrem.dispose();
     this.ui.stage.appendChild(this.renderer.domElement);
@@ -171,7 +173,11 @@ export class Game {
     if (settings.quality === 'high' && !this.composer) {
       this.composer = new EffectComposer(this.renderer);
       this.composer.addPass(new RenderPass(this.scene, this.camera));
-      this.composer.addPass(new UnrealBloomPass(new THREE.Vector2(1, 1), 0.63, 0.36, 0.82));
+      const grade = highlightBloom(this.road.biome);
+      this.bloomPass = new UnrealBloomPass(
+        new THREE.Vector2(1, 1), grade.strength, grade.radius, grade.threshold,
+      );
+      this.composer.addPass(this.bloomPass);
       this.filmic = createFilmicPass();
       this.composer.addPass(this.filmic);
       this.composer.addPass(new OutputPass());
@@ -692,6 +698,13 @@ export class Game {
     this.streaks.renderAt(center);
     this.headlights.renderAt(center, this.player.x);
     this.van.mesh.position.x = 6.4 + center(this.van.mesh.position.z);
+    if (this.bloomPass) {
+      const target = highlightBloom(this.road.biome);
+      const blend = 0.04;
+      this.bloomPass.strength += (target.strength - this.bloomPass.strength) * blend;
+      this.bloomPass.radius += (target.radius - this.bloomPass.radius) * blend;
+      this.bloomPass.threshold += (target.threshold - this.bloomPass.threshold) * blend;
+    }
     if (this.filmic) this.filmic.uniforms.uTime.value = performance.now() * 0.001;
     if (this.preferences.quality === 'high' && this.composer) this.composer.render();
     else this.renderer.render(this.scene, this.camera);

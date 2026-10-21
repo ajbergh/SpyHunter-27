@@ -5,16 +5,37 @@ const metal = (color: number, roughness = 0.38): THREE.MeshStandardMaterial =>
   new THREE.MeshStandardMaterial({ color, metalness: 0.68, roughness });
 
 function addGroundShadow(group: THREE.Group, width: number, length: number): void {
+  // Smooth contact occlusion grounds the vehicle even with shadows disabled
+  // on Low. Radial shader prevents the hard circular black patch of a disc.
   const shadow = new THREE.Mesh(
-    new THREE.CircleGeometry(1, 24),
-    new THREE.MeshBasicMaterial({
-      color: 0x01070d, transparent: true, opacity: 0.24,
-      depthWrite: false, fog: true,
+    new THREE.PlaneGeometry(2, 2),
+    new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, polygonOffset: true,
+      polygonOffsetFactor: -2,
+      uniforms: { uOpacity: { value: 0.30 } },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        varying vec2 vUv;
+        uniform float uOpacity;
+        void main() {
+          vec2 p = (vUv - 0.5) * 2.0;
+          float r = dot(p, p);
+          float alpha = pow(1.0 - smoothstep(0.03, 1.0, r), 1.6) * uOpacity;
+          gl_FragColor = vec4(0.008, 0.017, 0.029, alpha);
+        }
+      `,
     }),
   );
+  shadow.name = 'GroundContactOcclusion';
   shadow.rotation.x = -Math.PI / 2;
   shadow.scale.set(width, length, 1);
-  shadow.position.y = -0.015;
+  shadow.position.y = 0.014;
   shadow.renderOrder = 1;
   group.add(shadow);
 }
@@ -30,13 +51,13 @@ function box(group: THREE.Group, size: [number, number, number], pos: [number, n
 /** Original low-poly interceptor silhouette, built entirely from geometry. Front is -Z. */
 export function makeInterceptor(): THREE.Group {
   const group = new THREE.Group();
-  const pearl = bodyPaint(0xe9f0f5, true);
+  const pearl = bodyPaint(0x849bab, true);
   const carbon = new THREE.MeshStandardMaterial({
     color: 0x101923, metalness: 0.46, roughness: 0.58,
   });
-  const glass = glassPaint(0x164c73);
+  const glass = glassPaint(0x19374f);
   const chrome = new THREE.MeshStandardMaterial({
-    color: 0xa0c4d0, metalness: 0.91, roughness: 0.18,
+    color: 0x78949f, metalness: 0.76, roughness: 0.27,
   });
   // Purpose-sculpted wedge shell: the shoulder line tapers into a narrow nose
   // and broad, muscular haunches rather than reading as stacked cuboids.
@@ -59,6 +80,9 @@ export function makeInterceptor(): THREE.Group {
   // Black panoramic spine and visible roof armor segments.
   box(group, [0.12, 0.09, 2.02], [0, 1.47, 0.08], chrome);
   box(group, [0.95, 0.045, 0.82], [0, 1.53, 0.41], carbon);
+  // Dark carbon roof-to-bonnet center spine reads even at arcade camera scale.
+  box(group, [0.55, 0.035, 1.53], [0, 0.901, -1.77], carbon);
+  box(group, [0.83, 0.04, 0.5], [0, 0.93, 1.83], carbon);
   box(group, [0.9, 0.055, 1.18], [0, 0.93, -1.86], carbon);
   for (const side of [-1, 1]) {
     // Radiused wheel arches and deep side intake pockets.
@@ -66,9 +90,9 @@ export function makeInterceptor(): THREE.Group {
     box(group, [0.22, 0.25, 1.06], [side * 1.16, 0.78, 1.68], pearl);
     addWheelAssembly(group, side * 1.28, -1.79, 0.53);
     addWheelAssembly(group, side * 1.30, 1.66, 0.54);
-    addDecalBar(group, [0.10, 0.07, 3.42], [side * 1.23, 0.91, -0.20], 0x20c6fa, true);
-    addDecalBar(group, [0.37, 0.16, 0.18], [side * 0.92, 0.67, -2.81], 0x8eefff, true);
-    addDecalBar(group, [0.41, 0.17, 0.14], [side * 0.94, 0.66, 2.78], 0xff284b, true);
+    addDecalBar(group, [0.10, 0.07, 3.42], [side * 1.23, 0.91, -0.20], 0x238db0);
+    addDecalBar(group, [0.37, 0.16, 0.18], [side * 0.92, 0.67, -2.81], 0x9ecdda, true);
+    addDecalBar(group, [0.41, 0.17, 0.14], [side * 0.94, 0.66, 2.78], 0xc83c51, true);
     addDecalBar(group, [0.47, 0.10, 0.32], [side * 0.75, 0.93, -2.06], 0xbed9e2);
     addDecalBar(group, [0.07, 0.08, 1.2], [side * 0.45, 0.96, -1.67], 0x6d8b99);
     addDecalBar(group, [0.22, 0.30, 0.82], [side * 1.13, 0.54, 0.43], 0x111b28);

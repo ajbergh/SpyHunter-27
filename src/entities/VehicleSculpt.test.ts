@@ -21,7 +21,8 @@ describe('original studio-quality vehicle geometry', () => {
     addWheelAssembly(body, 1.2, 0.8);
     expect(body.children).toHaveLength(4);
     expect((body.children[0] as THREE.Mesh).castShadow).toBe(true);
-    expect(bodyPaint(0xeeeeee, true).clearcoat).toBe(1);
+    expect(bodyPaint(0xeeeeee, true).clearcoat).toBe(0.74);
+    expect(bodyPaint(0xeeeeee, true).metalness).toBeLessThan(0.45);
   });
   it('rejects degenerate mesh station lists', () => {
     expect(() => sculptBody([{ z: 0, halfWidth: 1, deck: 1 }])).toThrow();

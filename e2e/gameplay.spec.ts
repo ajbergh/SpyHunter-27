@@ -344,3 +344,17 @@ test('road wear and desert clusters remain stable through streamed tile traversa
   await page.keyboard.up('w');
   expect(crashes).toEqual([]);
 });
+
+test('high preset retains readable interceptor bodywork under restrained bloom', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/?testDistance=3330');
+  await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
+  await page.locator('#quality-select').selectOption('high');
+  await page.getByRole('button', { name: /apply and return/i }).click();
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#environment-name')).toContainText('NEON CITY');
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  await page.screenshot({ path: 'test-results/balanced-neon-city-interceptor.png' });
+  expect(errors).toEqual([]);
+});

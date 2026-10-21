@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { emissiveAccentIntensity } from '../rendering/CinematicGrade';
 
 export interface BodyStation {
   readonly z: number;
@@ -45,17 +46,17 @@ export function sculptBody(stations: readonly BodyStation[]): THREE.BufferGeomet
 
 export function bodyPaint(color: number, hero = false): THREE.MeshPhysicalMaterial {
   return new THREE.MeshPhysicalMaterial({
-    color, metalness: hero ? 0.68 : 0.58, roughness: hero ? 0.2 : 0.31,
-    clearcoat: hero ? 1 : 0.76,
-    clearcoatRoughness: hero ? 0.09 : 0.17,
-    envMapIntensity: 0.85,
+    color, metalness: hero ? 0.38 : 0.44, roughness: hero ? 0.34 : 0.39,
+    clearcoat: hero ? 0.74 : 0.68,
+    clearcoatRoughness: hero ? 0.17 : 0.23,
+    envMapIntensity: hero ? 0.42 : 0.48,
   });
 }
 
 export function glassPaint(color = 0x1b5479): THREE.MeshPhysicalMaterial {
   return new THREE.MeshPhysicalMaterial({
-    color, metalness: 0.43, roughness: 0.1, clearcoat: 1,
-    clearcoatRoughness: 0.07, envMapIntensity: 1.2,
+    color, metalness: 0.25, roughness: 0.28, clearcoat: 0.75,
+    clearcoatRoughness: 0.17, envMapIntensity: 0.42,
     emissive: 0x05131e,
   });
 }
@@ -96,7 +97,7 @@ export function addDecalBar(
   position: [number, number, number], color: number, glow = false,
 ): THREE.Mesh {
   const material = glow
-    ? new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 3, roughness: 0.2 })
+    ? new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: emissiveAccentIntensity('headlamp'), roughness: 0.27 })
     : new THREE.MeshStandardMaterial({ color, metalness: 0.78, roughness: 0.3 });
   const stripe = new THREE.Mesh(new THREE.BoxGeometry(...size), material);
   stripe.position.set(...position);

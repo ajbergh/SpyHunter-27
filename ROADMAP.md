@@ -185,3 +185,10 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 ## Known limitations of current prototype
 
 The highway and river are continuous and curved, but do not yet have interactive forks, complex bridges or mission-specific set pieces. Vehicle and roadside art remains procedurally stylized rather than premium authored production art. Enemies support several distinct behaviors but lack full coordinated tactical AI. River transfers are graded for center alignment and speed but lack a detailed boathouse interior transformation. Gamepad rebinding, final soundtrack production, comprehensive accessibility validation, and multi-browser/real-hardware performance qualification remain unfinished. An npm dependency lockfile is now committed and enforced by CI. Do not market this build as feature-complete or commercially cleared without completing the release checklist.
+
+### Fidelity and exposure correction (2026-10-21)
+
+- [x] Scene-specific HDR bloom thresholds above 1.4 and reduced glow strength across all five biomes to prevent vehicle bodywork from saturating white.
+- [x] Rebalanced sun, fill and reflection levels; lower metallic paint and cockpit environment response; darker, distinct steel-blue interceptor body and carbon accents.
+- [x] Replace flat circular vehicle shadow polygons with soft, physically grounded radial contact-occlusion shader.
+- [ ] High-resolution texture art, artist-approved scene-matched reflections, tone calibration across real GPUs, and detailed visual regression comparison.

@@ -20,6 +20,13 @@ describe('authored vehicle silhouette quality', () => {
     expect(info.meshes).toBeGreaterThan(30);
     expect(info.vertices).toBeGreaterThan(500);
     expect(info.physicallyBased).toBeGreaterThanOrEqual(2);
+    const hood = vehicle.children.find(o => o instanceof THREE.Mesh &&
+      o.material instanceof THREE.MeshPhysicalMaterial) as THREE.Mesh;
+    expect((hood.material as THREE.MeshPhysicalMaterial).envMapIntensity).toBeLessThan(0.5);
+    const ground = vehicle.getObjectByName('GroundContactOcclusion') as THREE.Mesh;
+    expect(ground).toBeDefined();
+    expect(ground.material).toBeInstanceOf(THREE.ShaderMaterial);
+    expect((ground.material as THREE.ShaderMaterial).transparent).toBe(true);
     expect(vehicle.children.some(o => o instanceof THREE.Mesh &&
       o.geometry instanceof THREE.BufferGeometry &&
       o.geometry.index !== null &&

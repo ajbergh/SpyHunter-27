@@ -139,3 +139,7 @@ Roadway materials gain subtle tyre wear and seeded crack repairs, plus reflectiv
 ### Soft headlight beams (2026-10-20)
 
 Night driving now projects two feathered vehicle headlight cones forward on the asphalt. A single transparent shader plane draws both beams, with biome-specific brightness and reduced work on Medium; Low disables the effect and boats hide it. The effect follows the curved road's centerline at the player and never creates additional lights, shadows, or meshes during driving.
+
+### High-dynamic-range lighting correction (2026-10-21)
+
+A screenshot review showed that the previous High graphics preset caused the hero interceptor's bright paint, canopy and decorative emitters to blend into a white flare. Cinematic grading now uses **per-biome HDR bloom thresholds** (1.42–1.82) and lower strengths (0.14–0.29); daylight, reflection intensity and physically based clearcoat are tuned to preserve separation between painted metal, window glass, trim and road lighting. The hero sports a muted steel-blue body with a dark carbon center spine and soft radial contact shadows. A new Chromium screenshot captures the High night preset for continued human comparison. These changes improve tone separation without introducing copyrighted or remote texture assets.
