@@ -24,8 +24,11 @@ describe('original studio-quality vehicle geometry', () => {
     const body = new THREE.Group();
     sculptMesh(body, [{ z: -1, halfWidth: 1, deck: 0.9 },
       { z: 1, halfWidth: 1, deck: 0.9 }], bodyPaint(0xffffff, true));
-    addWheelAssembly(body, 1.2, 0.8);
-    expect(body.children).toHaveLength(4);
+    const wheel = addWheelAssembly(body, 1.2, 0.8);
+    expect(body.children).toHaveLength(2);
+    expect(wheel.name).toBe('RearWheelPivot');
+    expect(wheel.children).toHaveLength(3);
+    expect(wheel.userData.wheelRadius).toBe(0.49);
     expect((body.children[0] as THREE.Mesh).castShadow).toBe(true);
     expect(bodyPaint(0xeeeeee, true).clearcoat).toBe(0.74);
     expect(bodyPaint(0xeeeeee, true).metalness).toBeLessThan(0.45);
