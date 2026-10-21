@@ -411,3 +411,22 @@ test('neon roadway renders pooled wet reflections under high preset without WebG
   await page.screenshot({ path: 'test-results/neon-city-wet-reflections.png' });
   expect(errors).toEqual([]);
 });
+
+test('steering and brake lights remain WebGL-safe under cinematic neon driving', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/?testDistance=3320');
+  await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
+  await page.locator('#quality-select').selectOption('high');
+  await page.getByRole('button', { name: /apply and return/i }).click();
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#environment-name')).toContainText('NEON CITY');
+  await page.keyboard.down('s');
+  await page.keyboard.down('a');
+  await page.waitForTimeout(750);
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  await page.screenshot({ path: 'test-results/steering-wheel-brake-lights-neon.png' });
+  await page.keyboard.up('a');
+  await page.keyboard.up('s');
+  expect(errors).toEqual([]);
+});
