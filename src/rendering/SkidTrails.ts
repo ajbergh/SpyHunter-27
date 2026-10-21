@@ -61,7 +61,7 @@ export class SkidTrails {
 
   step(
     dt: number, speed: number, x: number, steer: number,
-    braking: boolean, biome: Biome, isBoat: boolean,
+    braking: boolean, biome: Biome, isBoat: boolean, playerZ = PLAYER_Z,
   ): void {
     const d = Math.max(0, dt);
     for (const m of this.marks) {
@@ -79,7 +79,7 @@ export class SkidTrails {
     while (this.clock >= interval) {
       this.clock -= interval;
       // Wheel tracks stay behind the car; no particles or geometry allocations.
-      for (const side of [-1, 1]) this.mark(x + side * 0.85, PLAYER_Z + 1.64, biome);
+      for (const side of [-1, 1]) this.mark(x + side * 0.85, playerZ + 1.64, biome);
     }
     if (this.mesh.instanceColor) this.mesh.instanceColor.needsUpdate = true;
   }
