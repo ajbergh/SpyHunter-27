@@ -86,23 +86,28 @@ export function sculptMesh(
 
 export function addWheelAssembly(
   group: THREE.Group, x: number, z: number, radius = 0.49,
-): void {
+): THREE.Group {
+  // Pivot spins around its local X axle and yaws for front-wheel steering.
+  // Tread, exposed hub and inner disc move as a single assembly.
+  const pivot = new THREE.Group();
+  pivot.name = z < 0 ? 'FrontWheelPivot' : 'RearWheelPivot';
+  pivot.userData.wheelRadius = radius;
+  pivot.position.set(x, radius + 0.02, z);
   const tread = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 0.34, 20),
     new THREE.MeshStandardMaterial({ color: 0x11151e, roughness: 0.93 }));
   tread.rotation.z = Math.PI / 2;
-  tread.position.set(x, radius + 0.02, z);
   tread.castShadow = true;
-  group.add(tread);
+  pivot.add(tread);
   const disc = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.64, radius * 0.64, 0.355, 12),
     new THREE.MeshStandardMaterial({ color: 0x93abb8, metalness: 0.89, roughness: 0.26 }));
   disc.rotation.z = Math.PI / 2;
-  disc.position.copy(tread.position);
-  group.add(disc);
+  pivot.add(disc);
   const hub = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.22, radius * 0.22, 0.39, 12),
     new THREE.MeshStandardMaterial({ color: 0x273744, metalness: 0.9, roughness: 0.22 }));
   hub.rotation.z = Math.PI / 2;
-  hub.position.copy(tread.position);
-  group.add(hub);
+  pivot.add(hub);
+  group.add(pivot);
+  return pivot;
 }
 
 export function addDecalBar(

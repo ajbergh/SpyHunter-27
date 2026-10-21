@@ -161,3 +161,7 @@ The previous flat-color world backdrop is replaced by a single camera-relative *
 ### Rain-slick neon pavement (2026-10-21)
 
 The neon-city roadway gains original, shader-feathered wet patches with alternating cyan and magenta light streaks and restrained rain ripples. Each 30-metre tile packs every patch into **one draw call**, and all visible tiles share one shader and one time uniform. The patches stay inside the road corridor, follow the curved centerline and render beneath lane markings; they are disabled entirely on Low quality, while Medium/High use bounded density. This is a procedural approximation of reflected signage, not true screen-space or ray-traced reflections. Hardware frame-time and artistic approval remain release gates.
+
+### Animated vehicle drivetrain and brake signaling (2026-10-21)
+
+The interceptor, civilian and hostile road cars, motorcycles and switchblade adversaries now use articulated axle pivots for continuous wheel roll and eased front-wheel steering. Braking visibly intensifies original red tail lamps, while the player interceptor uses a subtle acceleration/braking chassis pitch (suppressed with **Reduced Motion**). The animation reads actual fixed-step driving speed rather than render frame time, caches wheel and lamp references once per vehicle, and does not change arcade collision or driving handling. Both boat variants remain wheel-free, and replay resets animation state. The final art/suspension realism and target-hardware GPU cost still require manual visual review.

@@ -77,4 +77,20 @@ describe('enforcer AI', () => {
     survivor.dispose(scene);
   });
 
+
+  it('updates visual rolling and braking in a disrupted pursuit without changing collision rules', () => {
+    const scene = new THREE.Scene();
+    const car = new TrafficVehicle(scene, 0, -20, true, 0, 0x882233, 16);
+    const wheel = car.mesh.getObjectByName('FrontWheelPivot') as THREE.Group;
+    const lamp = car.mesh.getObjectByName('BrakeLamp') as THREE.Mesh;
+    car.step(1 / 60, 35, 5);
+    expect(wheel.rotation.x).toBeLessThan(0);
+    const hitbox = car.hitbox();
+    car.disrupt(0.75);
+    for (let i = 0; i < 5; i++) car.step(1 / 60, 35, 5);
+    expect((lamp.material as THREE.MeshStandardMaterial).emissiveIntensity).toBeGreaterThan(1.4);
+    expect(car.hitbox().halfLength).toBe(hitbox.halfLength);
+    expect(car.hitbox().halfWidth).toBe(hitbox.halfWidth);
+    car.dispose(scene);
+  });
 });

@@ -214,3 +214,10 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [x] Single packed shader draw call per city tile, one shared material/time uniform, no mesh allocation per animation frame, correct stream recycle/disposal ownership.
 - [x] Unit tests for deterministic geometry/preset budgets and browser screenshot smoke coverage.
 - [ ] Scene-matched reflective light sources and actual rain accumulation, per-pixel reflections, and comparative GPU frame-time/capture approval.
+
+### Phase 4 — Vehicle dynamics and visual response (2026-10-21)
+
+- [x] Retrofit reusable, articulated axle pivots across interceptor, ground traffic, motorcycles and switchblade vehicles; physically scaled fixed-step wheel rotation and eased front steering without per-frame scene traversal.
+- [x] Functional red brake-light intensity on player braking and smoke/oil-disrupted enemies, plus subtle player chassis pitch disabled by Reduced Motion; reset-safe and excluded from boats.
+- [x] Deterministic Vitest coverage of drivetrain, player, AI and accessibility transitions, plus live cinematic-neon Chromium capture smoke test.
+- [ ] Independent wheel suspension, turn-signal behavior, high-detail tire tread/normal maps, skid-to-wheel contact matching, actual GPU profiling and target-aspect-ratio art approval.
