@@ -6,11 +6,11 @@ import { clamp } from '../core/logic';
  * No separate reverse gear: brake moves the car down-screen by reducing speed.
  *
  * Road-space -Z is forward (toward the van/traffic horizon).
- * -10 keeps the car and its nose visible; +17 preserves room at the bottom.
+ * -10 keeps its nose visible; +12 preserves its tail at the viewport bottom.
  */
 export const DRIVE_Z_MIN = -10;
-export const DRIVE_Z_MAX = 17;
-export const DRIVE_Z_NEUTRAL = 11;
+export const DRIVE_Z_MAX = 12;
+export const DRIVE_Z_NEUTRAL = 8;
 
 export function drivingTargetZ(speed: number, boat = false, speedScale = 1): number {
   const normalized = Number.isFinite(speed) ? speed / Math.max(0.2, speedScale) : 30;
