@@ -157,3 +157,7 @@ Glazing also has a third shared procedural atlas with subtle windscreen reflecti
 ### Biome sky and atmospheric depth (2026-10-21)
 
 The previous flat-color world backdrop is replaced by a single camera-relative **procedural atmospheric sky sphere**. Each of the five biomes has a distinct original zenith/horizon/haze palette and solar intensity: warm desert horizon, alpine blue, violet city glow, green-blue waterways and misted forest. Sky colors interpolate at biome transitions; a separate shader handles the sun disc and surrounding haze without texture streaming or per-frame scene allocations. The sphere renders as one backdrop draw call on all quality presets. A Chromium screenshot captures the alpine lighting. This is an intentionally stylized cinematic treatment, not full physically based volumetric atmosphere.
+
+### Rain-slick neon pavement (2026-10-21)
+
+The neon-city roadway gains original, shader-feathered wet patches with alternating cyan and magenta light streaks and restrained rain ripples. Each 30-metre tile packs every patch into **one draw call**, and all visible tiles share one shader and one time uniform. The patches stay inside the road corridor, follow the curved centerline and render beneath lane markings; they are disabled entirely on Low quality, while Medium/High use bounded density. This is a procedural approximation of reflected signage, not true screen-space or ray-traced reflections. Hardware frame-time and artistic approval remain release gates.
