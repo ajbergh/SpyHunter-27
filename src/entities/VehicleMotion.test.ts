@@ -20,12 +20,12 @@ describe('arcade vehicle visual drivetrain', () => {
     const pivots = wheelPivots(car);
     expect(pivots).toHaveLength(4);
     expect(pivots.every(p => p.children.length === 3)).toBe(true);
-    const original = pivots.map(p => p.children[0].geometry);
+    const original = pivots.map(p => (p.children[0] as THREE.Mesh).geometry);
     rig.step(1 / 60, 36, 1, true);
     expect(pivots.every(p => p.rotation.x < 0)).toBe(true);
     expect(pivots.filter(p => p.name === 'FrontWheelPivot').every(p => p.rotation.y > 0)).toBe(true);
     expect(pivots.filter(p => p.name === 'RearWheelPivot').every(p => p.rotation.y === 0)).toBe(true);
-    expect(pivots.map(p => p.children[0].geometry)).toEqual(original);
+    expect(pivots.map(p => (p.children[0] as THREE.Mesh).geometry)).toEqual(original);
     const lamps = car.getObjectsByProperty('name', 'BrakeLamp') as THREE.Mesh[];
     expect(lamps).toHaveLength(2);
     expect(lamps.every(l => (l.material as THREE.MeshStandardMaterial).emissiveIntensity > 0.98)).toBe(true);
