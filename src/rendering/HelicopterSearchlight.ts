@@ -97,12 +97,13 @@ export class HelicopterSearchlight {
     this.cone = new THREE.Mesh(CONE_GEOMETRY, coneMaterial);
     this.cone.name = 'HelicopterSearchlightCone';
     this.cone.frustumCulled = false;
-    this.cone.renderOrder = 3;
+    // Draw before translucent hazard rings so orange bomb telegraphs win.
+    this.cone.renderOrder = -2;
     this.footprint = new THREE.Mesh(FOOTPRINT_GEOMETRY, groundMaterial);
     this.footprint.name = 'HelicopterSearchlightFootprint';
     this.footprint.rotation.x = -Math.PI / 2;
     this.footprint.scale.setScalar(3.25);
-    this.footprint.renderOrder = 3;
+    this.footprint.renderOrder = -1;
     scene.add(this.cone, this.footprint);
     this.setPreferences('medium', false);
   }
