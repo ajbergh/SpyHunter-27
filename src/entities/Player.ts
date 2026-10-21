@@ -65,7 +65,7 @@ export class Player {
       // Cosmetic chassis loading adds braking/acceleration weight without
       // influencing collision geometry; reduced motion suppresses the tilt.
       const pitch = reducedMotion ? 0 : controls.brake ? -0.035 : controls.throttle ? 0.014 : 0;
-      this.car.rotation.x = approach(this.car.rotation.x, pitch, 0.4, dt);
+      this.car.rotation.x = reducedMotion ? 0 : approach(this.car.rotation.x, pitch, 0.4, dt);
     } else {
       this.car.rotation.x = 0;
     }
