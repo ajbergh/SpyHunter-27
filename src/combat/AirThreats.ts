@@ -239,8 +239,8 @@ export class AirThreats {
 
   get activeBombs(): number { return this.bombs.length; }
 
-  spawn(x: number, profile: HelicopterProfile = 'patrol'): Helicopter {
-    const helicopter = new Helicopter(this.scene, x, -85, profile,
+  spawn(x: number, profile: HelicopterProfile = 'patrol', startZ = -85): Helicopter {
+    const helicopter = new Helicopter(this.scene, x, startZ, profile,
       this.quality, this.reducedMotion);
     this.helicopters.push(helicopter);
     return helicopter;
