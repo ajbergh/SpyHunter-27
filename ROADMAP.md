@@ -1,6 +1,6 @@
 # Spy Hunter '27 — Product & Engineering Roadmap
 
-**Last updated:** 2026-10-20  
+**Last updated:** 2026-10-21  
 **Stack:** Three.js / WebGL2 / TypeScript / Vite  
 **Target:** Polished 60 FPS desktop browser arcade game
 
@@ -207,3 +207,10 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [x] One-draw-call original procedural sky sphere with distinct zenith, horizon and atmospheric haze palettes for forest, desert, snow, city and waterways, plus biome-specific solar disk intensity.
 - [x] Camera-relative rendering, smooth cross-biome sky gradients, and automated source and browser coverage.
 - [ ] Hand-authored sky textures/cloudscape layers, physically modeled atmosphere, detailed volumetric clouds and verified target-device composition.
+
+### Phase 4 — Wet-road reflection increment (2026-10-21)
+
+- [x] Seeded, corridor-bounded translucent wet asphalt patches along curved neon city road tiles; 9 Medium / 18 High patches per tile and zero on Low.
+- [x] Single packed shader draw call per city tile, one shared material/time uniform, no mesh allocation per animation frame, correct stream recycle/disposal ownership.
+- [x] Unit tests for deterministic geometry/preset budgets and browser screenshot smoke coverage.
+- [ ] Scene-matched reflective light sources and actual rain accumulation, per-pixel reflections, and comparative GPU frame-time/capture approval.
