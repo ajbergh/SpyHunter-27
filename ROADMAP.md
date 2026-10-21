@@ -228,3 +228,10 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [x] Bounded 0/1/2 extra draw calls per helicopter on Low/Medium/High, shared static geometries, no dynamic lights, no render-loop mesh allocation, and complete cleanup when helicopters leave.
 - [x] Reduced Motion locks searchlight scanning/pulsation; quality changes update existing aircraft and future spawns; deterministic unit + Chromium gameplay smoke coverage.
 - [ ] Artist-approved exposure/depth composition and target GPU profiling; actual volumetric fog scatter, occlusion against props/bridge decks, and individually authored aircraft optics.
+
+### Phase 4 — Marine wake fidelity and instancing (2026-10-21)
+
+- [x] Replace transient one-mesh-per-ring river wakes with original authored twin V-hull foam ribbons and a centerline disturbance, combined as one instanced draw.
+- [x] Strict fixed-capacity 80/40/12 High/Medium/Low wake budgets, bounded emission catch-up, no dynamic mesh/material allocation per frame, deterministic lifecycle and quality switch reset.
+- [x] Curve-aligned, steering-sensitive foam expansion and fade; original geometry, simulation-independent presentation, geometry/unit tests, and live High-waterway Playwright screenshot smoke check.
+- [ ] Physically modeled buoyancy, hull-water intersection, wake interaction with riverbanks, water spray/caustics, target GPU benchmarking, and artist-approved turbulence/scaling.
