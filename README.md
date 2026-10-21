@@ -147,3 +147,7 @@ A screenshot review showed that the previous High graphics preset caused the her
 ### Dynamic tire behavior (2026-10-21)
 
 When steering hard at speed or braking, the interceptor now leaves paired rubber traces that track the curved moving road. A fixed 160-instance GPU pool reuses the same shader, geometry and memory across the run; marks scroll and expire cleanly rather than accumulating over long sessions. Ice changes the steering threshold, and the effect disables itself on water/boats and on Low quality. Together with rebalanced HDR bloom and clearcoat, these touches improve how action and light read on the driving surface.
+
+### Original automotive PBR texture atlas (2026-10-21)
+
+Vehicles now carry physically mapped paint detail rather than uniformly colored shells. The sculpted body geometry uses longitudinal UVs and perimeter bands, allowing the original procedural **512×256 paint, roughness, and bump textures** to display distinct body-panel seams, fine metallic grain, stamped fasteners, interceptor-specific carbon striping, and subtle paint wear. There are only two cached atlas sets (interceptor and road traffic); all spawned cars share the same GPU images instead of recreating textures per traffic vehicle. The maps are generated locally with no network requests or third-party IP, and the extra geometry cost is zero. This is a production texture-pipeline foundation, not a replacement for full artist-authored, per-vehicle UVs and 4K assets.

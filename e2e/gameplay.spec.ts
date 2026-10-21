@@ -373,3 +373,16 @@ test('high-speed steering preserves WebGL gameplay with pooled tire skid marks',
   await page.screenshot({ path: 'test-results/tire-skid-balance.png' });
   expect(errors).toEqual([]);
 });
+
+test('UV-mapped vehicle panel textures render in live high-quality forest play', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/?testDistance=285');
+  await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
+  await page.locator('#quality-select').selectOption('high');
+  await page.getByRole('button', { name: /apply and return/i }).click();
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  await page.screenshot({ path: 'test-results/uv-mapped-vehicle-paint.png' });
+  expect(errors).toEqual([]);
+});

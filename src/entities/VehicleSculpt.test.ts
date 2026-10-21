@@ -11,6 +11,12 @@ describe('original studio-quality vehicle geometry', () => {
     ]);
     expect(geom.getAttribute('position').count).toBe(12);
     expect(geom.index!.count).toBe(60);
+    const uv = geom.getAttribute('uv');
+    expect(uv.getX(0)).toBe(0);
+    expect(uv.getX(4)).toBeCloseTo(0.5);
+    expect(uv.getX(8)).toBe(1);
+    expect(uv.getY(1)).toBeCloseTo(1 / 3);
+    expect(uv.getY(2)).toBeCloseTo(2 / 3);
     expect(Array.from(geom.getAttribute('normal').array as Float32Array)
       .every(n => Number.isFinite(n))).toBe(true);
   });
@@ -23,8 +29,17 @@ describe('original studio-quality vehicle geometry', () => {
     expect((body.children[0] as THREE.Mesh).castShadow).toBe(true);
     expect(bodyPaint(0xeeeeee, true).clearcoat).toBe(0.74);
     expect(bodyPaint(0xeeeeee, true).metalness).toBeLessThan(0.45);
+    const paint = bodyPaint(0x849bab, true);
+    expect(paint.map).not.toBeNull();
+    expect(paint.bumpMap).not.toBeNull();
+    expect(paint.roughnessMap).not.toBeNull();
+    expect(bodyPaint(0xaaccdd, true).map).toBe(paint.map);
+    expect(bodyPaint(0xaaccdd, false).map).not.toBe(paint.map);
   });
   it('rejects degenerate mesh station lists', () => {
     expect(() => sculptBody([{ z: 0, halfWidth: 1, deck: 1 }])).toThrow();
+    expect(() => sculptBody([
+      { z: 4, halfWidth: 1, deck: 1 }, { z: 2, halfWidth: 1, deck: 1 },
+    ])).toThrow();
   });
 });

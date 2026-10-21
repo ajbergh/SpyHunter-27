@@ -194,3 +194,9 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [ ] High-resolution texture art, artist-approved scene-matched reflections, tone calibration across real GPUs, and detailed visual regression comparison.
 
 - [x] Bounded 160-instance paired dynamic tire skids with curve alignment, snow traction threshold, 3.2s decay and Low-preset exclusion; deterministic unit tests.
+
+### Phase 4 — Surface fidelity increment (2026-10-21)
+
+- [x] Longitudinal and perimeter UVs on existing sculpted body hulls, with guard against reversed stations.
+- [x] Two cached original vehicle PBR atlases (albedo, roughness, micro-bump) with deterministic panel seams, fasteners, carbon accents and subtle paint noise; shared across traffic instances.
+- [ ] Artist-authored vehicle-specific texture sheets, UV seam correction, wear decals, high-resolution normal baking and controlled capture on target GPUs.

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { emissiveAccentIntensity } from '../rendering/CinematicGrade';
+import { vehiclePaintTextures } from './VehiclePaintAtlas';
 
 export interface BodyStation {
   readonly z: number;
@@ -17,12 +18,16 @@ export function sculptBody(stations: readonly BodyStation[]): THREE.BufferGeomet
   const vertices: number[] = [];
   const uv: number[] = [];
   const indices: number[] = [];
+  const zStart = stations[0].z;
+  const extent = stations[stations.length - 1].z - zStart;
+  if (extent <= 0) throw new Error('Vehicle stations must progress from nose to tail');
   for (const station of stations) {
     const y0 = station.floor ?? 0.35;
     const w = station.halfWidth;
     vertices.push(-w, y0, station.z, -w, station.deck, station.z,
       w, station.deck, station.z, w, y0, station.z);
-    uv.push(0, 0, 0, 1, 1, 1, 1, 0);
+    const u = (station.z - zStart) / extent;
+    uv.push(u, 0, u, 1 / 3, u, 2 / 3, u, 1);
   }
   // closed prism: sides, roof and underbody form a single sealed mesh
   for (let i = 0; i < stations.length - 1; i++) {
@@ -45,7 +50,12 @@ export function sculptBody(stations: readonly BodyStation[]): THREE.BufferGeomet
 }
 
 export function bodyPaint(color: number, hero = false): THREE.MeshPhysicalMaterial {
+  const atlas = vehiclePaintTextures(hero ? 'interceptor' : 'traffic');
   return new THREE.MeshPhysicalMaterial({
+    map: atlas.albedo,
+    roughnessMap: atlas.roughness,
+    bumpMap: atlas.height,
+    bumpScale: 0.016,
     color, metalness: hero ? 0.38 : 0.44, roughness: hero ? 0.34 : 0.39,
     clearcoat: hero ? 0.74 : 0.68,
     clearcoatRoughness: hero ? 0.17 : 0.23,
