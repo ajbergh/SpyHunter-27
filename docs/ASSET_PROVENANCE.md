@@ -32,3 +32,7 @@ Wheel pivots, original geometry, dynamically emissive tail lamps, and fixed-step
 ## Aerial visual cue provenance (2026-10-21)
 
 The attack-helicopter searchlight, ground footprint and both color profiles are original procedural Three.js shader/geometry assets generated from source. No third-party light cookies, textures, HDRIs, sounds, or external 3D models were introduced.
+
+## Marine foam wake artwork (2026-10-21)
+
+The pair of diverging foam ribbons and the rear centerline turbulence strip are original Three.js indexed geometry and vertex colors authored inside `src/world/BoatWake.ts`. Wake simulation and instance transforms are pure project TypeScript. No third-party water textures, stock wake masks, or external shaders were introduced.
