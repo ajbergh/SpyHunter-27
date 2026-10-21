@@ -40,3 +40,7 @@ The new procedural wet-pavement pass is constrained to the neon biome and Medium
 ## Vehicle dynamics art review (2026-10-21)
 
 The fixed-step animation pass animates axle hubs and brake lighting without changing arcade vehicle physics. Check wheel roll direction and rate against on-road motion, steering direction, collision and knockback transitions, brake-tail brightness under restrained HDR bloom, shadow/contact behavior during body pitch, controller inputs, 15-minute session stability, and the Reduced Motion suspension-pitch suppression. Automated unit/Chromium smoke tests do not constitute hardware or artistic signoff.
+
+## Aerial searchlight visual review (2026-10-21)
+
+Verify that pale patrol and rose ace searchlights remain distinct from the **orange bomb impact warning**, that the ground pool tracks the curved highway rather than the flight model's raw X coordinate, and that Reduced Motion locks scanning and pulsing. Compare High, Medium and Low budgets in forest, snow and neon, including fog/bloom, terrain occlusion, long pursuit sessions, and early target destruction. The procedural cone is an art-directed transparent effect rather than physically correct volumetric illumination. Real-GPU frame-time and manual perception reviews remain required.
