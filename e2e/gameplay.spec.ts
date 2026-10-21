@@ -397,3 +397,17 @@ test('biome sky gradient and solar haze render across snow and desert transition
   await page.screenshot({ path: 'test-results/new-atmosphere-arctic.png' });
   expect(errors).toEqual([]);
 });
+
+test('neon roadway renders pooled wet reflections under high preset without WebGL failures', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/?testDistance=3340');
+  await page.getByRole('button', { name: /settings \\/ audio \\/ graphics/i }).click();
+  await page.locator('#quality-select').selectOption('high');
+  await page.getByRole('button', { name: /apply and return/i }).click();
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#environment-name')).toContainText('NEON CITY');
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  await page.screenshot({ path: 'test-results/neon-city-wet-reflections.png' });
+  expect(errors).toEqual([]);
+});
