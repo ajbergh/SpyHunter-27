@@ -240,6 +240,12 @@ export class Game {
           this.player.mesh.position.x = this.player.x;
         }
       }
+      // Screenshot-only deterministic aerial encounter. Production bundles do
+      // not enter this dev harness, so normal threat timing stays unchanged.
+      const testHelicopter = new URLSearchParams(window.location.search).get('testHelicopter');
+      if (testHelicopter === 'patrol' || testHelicopter === 'ace') {
+        this.air.spawn(0, testHelicopter, -34);
+      }
     }
     this.lives = GAME_MODES[mode].lives;
     this.grace = mode === 'modern' ? 5 : 3;
