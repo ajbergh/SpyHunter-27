@@ -78,8 +78,8 @@ export class HeadlightBeams {
     (this.mesh.material.uniforms.uColor.value as THREE.Color).copy(this.tint.setHex(color));
   }
 
-  renderAt(center: (z: number) => number, playerX: number): void {
-    const z = PLAYER_Z - 12;
+  renderAt(center: (z: number) => number, playerX: number, playerZ = PLAYER_Z): void {
+    const z = playerZ - 12;
     this.mesh.position.set(playerX + center(z), 0.052, z);
   }
 }
