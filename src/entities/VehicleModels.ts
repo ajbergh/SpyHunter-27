@@ -92,7 +92,7 @@ export function makeInterceptor(): THREE.Group {
     addWheelAssembly(group, side * 1.30, 1.66, 0.54);
     addDecalBar(group, [0.10, 0.07, 3.42], [side * 1.23, 0.91, -0.20], 0x238db0);
     addDecalBar(group, [0.37, 0.16, 0.18], [side * 0.92, 0.67, -2.81], 0x9ecdda, true);
-    addDecalBar(group, [0.41, 0.17, 0.14], [side * 0.94, 0.66, 2.78], 0xc83c51, true);
+    addDecalBar(group, [0.41, 0.17, 0.14], [side * 0.94, 0.66, 2.78], 0xc83c51, true).name = 'BrakeLamp';
     addDecalBar(group, [0.47, 0.10, 0.32], [side * 0.75, 0.93, -2.06], 0xbed9e2);
     addDecalBar(group, [0.07, 0.08, 1.2], [side * 0.45, 0.96, -1.67], 0x6d8b99);
     addDecalBar(group, [0.22, 0.30, 0.82], [side * 1.13, 0.54, 0.43], 0x111b28);
@@ -137,23 +137,14 @@ export function makeTrafficVehicle(hostile: boolean, color: number, variant = 0)
   box(group, [width * 0.85, 0.12, 0.20], [0, 0.66, -h], dark);
   for (const side of [-1, 1]) {
     for (const z of [-length * 0.31, length * 0.31]) {
-      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.49, 0.49, 0.30, 14), dark);
-      wheel.rotation.z = Math.PI / 2;
-      wheel.position.set(side * (half + 0.10), 0.51, z);
-      wheel.castShadow = true;
-      group.add(wheel);
-      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.32, 10),
-        metal(0x8eafc1, 0.28));
-      hub.rotation.z = Math.PI / 2;
-      hub.position.copy(wheel.position);
-      group.add(hub);
+      addWheelAssembly(group, side * (half + 0.10), z, 0.49);
     }
     addDecalBar(group, [0.10, 0.06, length * 0.62],
       [side * (half - 0.13), 0.95, 0], hostile ? 0xb23e56 : 0x78abbf);
     addDecalBar(group, [0.29, 0.18, 0.13],
       [side * half * 0.75, 0.74, -h - 0.03], hostile ? 0xff4c60 : 0xffe5a7, true);
     addDecalBar(group, [0.27, 0.17, 0.14],
-      [side * half * 0.73, 0.72, h + 0.03], 0xff324d, true);
+      [side * half * 0.73, 0.72, h + 0.03], 0xff324d, true).name = 'BrakeLamp';
   }
   if (hostile) box(group, [width * 0.68, 0.12, 0.57], [0, 1.56, length * 0.15], dark);
   addGroundShadow(group, width * 0.66, length * 0.59);
@@ -181,13 +172,23 @@ export function makeMotorcycle(hostile: boolean, color: number): THREE.Group {
   box(group, [0.53, 0.2, 0.1], [0, 1.94, -0.37], visor);
   box(group, [0.98, 0.11, 0.16], [0, 1.07, -0.86], tire);
   for (const z of [-1.29, 1.3]) {
+    const pivot = new THREE.Group();
+    pivot.name = z < 0 ? 'FrontWheelPivot' : 'RearWheelPivot';
+    pivot.userData.wheelRadius = 0.55;
+    pivot.position.set(0, 0.54, z);
     const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.22, 14), tire);
     wheel.rotation.z = Math.PI / 2;
-    wheel.position.set(0, 0.54, z);
-    group.add(wheel);
+    wheel.castShadow = true;
+    pivot.add(wheel);
+    group.add(pivot);
   }
   const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.2, 0.15),
-    new THREE.MeshBasicMaterial({ color: hostile ? 0xff344f : 0xffb96e }));
+    new THREE.MeshStandardMaterial({
+      color: hostile ? 0xff344f : 0xffb96e,
+      emissive: hostile ? 0xff344f : 0xffb96e,
+      emissiveIntensity: 0.95, roughness: 0.32,
+    }));
+  lamp.name = 'BrakeLamp';
   lamp.position.set(0, 0.92, 1.4);
   group.add(lamp);
   return group;
