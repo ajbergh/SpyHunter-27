@@ -430,3 +430,23 @@ test('steering and brake lights remain WebGL-safe under cinematic neon driving',
   await page.keyboard.up('s');
   expect(errors).toEqual([]);
 });
+
+test('cinematic helicopter searchlight renders in neon with no WebGL errors', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('console', message => {
+    if (message.type() === 'error' && /WebGLProgram|shader|GL_INVALID_OPERATION/i.test(message.text())) {
+      errors.push(message.text());
+    }
+  });
+  await page.goto('/?testDistance=3350&testHelicopter=ace');
+  await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
+  await page.locator('#quality-select').selectOption('high');
+  await page.getByRole('button', { name: /apply and return/i }).click();
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#environment-name')).toContainText('NEON CITY');
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  await page.waitForTimeout(450);
+  await page.screenshot({ path: 'test-results/gunship-searchlight-neon-high.png' });
+  expect(errors).toEqual([]);
+});

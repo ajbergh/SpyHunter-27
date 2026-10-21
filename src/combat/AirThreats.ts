@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { sculptMesh, bodyPaint, glassPaint, addDecalBar } from '../entities/VehicleSculpt';
 import { approach, intersects, PLAYER_Z, type RectHitbox } from '../core/logic';
 import { bombingLane, helicopterCooldown, helicopterTargetX, type HelicopterProfile } from './FlightDirector';
+import { HelicopterSearchlight } from '../rendering/HelicopterSearchlight';
+import type { Quality } from '../gameplay/Settings';
 
 export const BOMB_WARNING_SECONDS = 0.92;
 
@@ -35,12 +37,14 @@ export class Helicopter implements AirTarget {
   z: number;
   private readonly rotor = new THREE.Group();
   private readonly tailRotor = new THREE.Group();
+  readonly searchlight: HelicopterSearchlight;
   private fireClock = 1.4;
   private phase = 0;
   private volley = 0;
 
   constructor(private readonly scene: THREE.Scene, startX = 0, startZ = -85,
-              profile: HelicopterProfile = 'patrol') {
+              profile: HelicopterProfile = 'patrol',
+              quality: Quality = 'medium', reducedMotion = false) {
     this.profile = profile;
     this.hpMax = profile === 'ace' ? 5 : 3;
     this.hp = this.hpMax;
@@ -158,6 +162,8 @@ export class Helicopter implements AirTarget {
     this.rotor.position.y = 1.22;
     this.mesh.add(this.rotor);
     scene.add(this.mesh);
+    this.searchlight = new HelicopterSearchlight(scene, profile);
+    this.searchlight.setPreferences(quality, reducedMotion);
     this.sync();
   }
 
@@ -168,6 +174,7 @@ export class Helicopter implements AirTarget {
   /** Returns a bomb target when the attack enters its release window. */
   step(dt: number, playerX: number, playerSpeed: number): { x: number; z: number } | null {
     this.phase += dt;
+    this.searchlight.step(dt);
     this.z += Math.max(10, playerSpeed - 14) * dt;
     if (this.z > -58 && this.z < -13) {
       this.x = approach(this.x, helicopterTargetX(this.profile, playerX, this.phase),
@@ -187,11 +194,21 @@ export class Helicopter implements AirTarget {
     return null;
   }
 
+  setSearchlightPreferences(quality: Quality, reducedMotion: boolean): void {
+    this.searchlight.setPreferences(quality, reducedMotion);
+  }
+
+  renderAt(center: (z: number) => number): void {
+    this.mesh.position.x = this.x + center(this.z);
+    this.searchlight.renderAt(this.x, this.z, this.mesh.position.y, center);
+  }
+
   get escaped(): boolean { return this.z > 48; }
 
   hitbox(): RectHitbox { return { x: this.x, z: this.z, halfWidth: 2.25, halfLength: 3.4 }; }
 
   dispose(): void {
+    this.searchlight.dispose();
     this.scene.remove(this.mesh);
     this.mesh.traverse((node) => {
       if (node instanceof THREE.Mesh) {
@@ -207,13 +224,24 @@ export class Helicopter implements AirTarget {
 export class AirThreats {
   readonly helicopters: Helicopter[] = [];
   private bombs: Bomb[] = [];
+  private quality: Quality = 'medium';
+  private reducedMotion = false;
+
+  setPreferences(quality: Quality, reducedMotion: boolean): void {
+    this.quality = quality;
+    this.reducedMotion = reducedMotion;
+    for (const helicopter of this.helicopters) {
+      helicopter.setSearchlightPreferences(quality, reducedMotion);
+    }
+  }
 
   constructor(private readonly scene: THREE.Scene) {}
 
   get activeBombs(): number { return this.bombs.length; }
 
-  spawn(x: number, profile: HelicopterProfile = 'patrol'): Helicopter {
-    const helicopter = new Helicopter(this.scene, x, -85, profile);
+  spawn(x: number, profile: HelicopterProfile = 'patrol', startZ = -85): Helicopter {
+    const helicopter = new Helicopter(this.scene, x, startZ, profile,
+      this.quality, this.reducedMotion);
     this.helicopters.push(helicopter);
     return helicopter;
   }
@@ -272,9 +300,7 @@ export class AirThreats {
   }
 
   renderAt(center: (z: number) => number): void {
-    for (const helicopter of this.helicopters) {
-      helicopter.mesh.position.x = helicopter.x + center(helicopter.z);
-    }
+    for (const helicopter of this.helicopters) helicopter.renderAt(center);
     for (const bomb of this.bombs) bomb.group.position.x = bomb.x + center(bomb.z);
   }
 

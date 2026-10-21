@@ -221,3 +221,10 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [x] Functional red brake-light intensity on player braking and smoke/oil-disrupted enemies, plus subtle player chassis pitch disabled by Reduced Motion; reset-safe and excluded from boats.
 - [x] Deterministic Vitest coverage of drivetrain, player, AI and accessibility transitions, plus live cinematic-neon Chromium capture smoke test.
 - [ ] Independent wheel suspension, turn-signal behavior, high-detail tire tread/normal maps, skid-to-wheel contact matching, actual GPU profiling and target-aspect-ratio art approval.
+
+### Phase 4 — Aerial searchlight staging (2026-10-21)
+
+- [x] Original aircraft searchlight with centered 3D cone plus a feathered, road-centerline-aligned ground pool; patrol/ace palettes preserve distinct orange bomb telegraphs.
+- [x] Bounded 0/1/2 extra draw calls per helicopter on Low/Medium/High, shared static geometries, no dynamic lights, no render-loop mesh allocation, and complete cleanup when helicopters leave.
+- [x] Reduced Motion locks searchlight scanning/pulsation; quality changes update existing aircraft and future spawns; deterministic unit + Chromium gameplay smoke coverage.
+- [ ] Artist-approved exposure/depth composition and target GPU profiling; actual volumetric fog scatter, occlusion against props/bridge decks, and individually authored aircraft optics.

@@ -165,3 +165,9 @@ The neon-city roadway gains original, shader-feathered wet patches with alternat
 ### Animated vehicle drivetrain and brake signaling (2026-10-21)
 
 The interceptor, civilian and hostile road cars, motorcycles and switchblade adversaries now use articulated axle pivots for continuous wheel roll and eased front-wheel steering. Braking visibly intensifies original red tail lamps, while the player interceptor uses a subtle acceleration/braking chassis pitch (suppressed with **Reduced Motion**). The animation reads actual fixed-step driving speed rather than render frame time, caches wheel and lamp references once per vehicle, and does not change arcade collision or driving handling. Both boat variants remain wheel-free, and replay resets animation state. The final art/suspension realism and target-hardware GPU cost still require manual visual review.
+
+### Aerial searchlight staging (2026-10-21)
+
+Attack helicopters now project an original, softened searchlight onto the curved road, using a pale cyan patrol beam or a muted rose ace-gunship beam that is deliberately distinct from the orange timed bomb-warning ring. **High** renders the translucent tapered beam and a feathered ground pool (two draw calls per helicopter); **Medium** retains only the projected pool (one draw call); **Low** omits both. Reduced Motion disables sweeping and shimmer. The effect follows aircraft motion and road bends, recycles one cached cone/circle geometry set, requires no new lighting or shadow maps, and disposes per-aircraft materials as threats leave. This is a stylized volumetric approximation, not physically ray-marched fog or a gameplay hit indicator.
+
+Chromium CI includes a reproducible development-only ace-gunship screenshot in the neon biome. Automated rendering smoke tests do not substitute for target-GPU benchmarking or human art-direction approval.

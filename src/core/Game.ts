@@ -170,6 +170,7 @@ export class Game {
     this.input.setBindings(settings.bindings);
     this.input.setGamepadBindings(settings.gamepadBindings);
     this.weather.setQuality(settings.quality);
+    this.air.setPreferences(settings.quality, settings.reducedMotion);
     this.road.setQuality(settings.quality);
     this.visuals.configure(settings.quality);
     this.streaks.setPreferences(settings.quality, settings.reducedMotion);
@@ -238,6 +239,12 @@ export class Game {
           this.player.x = Math.max(-7.1, Math.min(7.1, lane));
           this.player.mesh.position.x = this.player.x;
         }
+      }
+      // Screenshot-only deterministic aerial encounter. Production bundles do
+      // not enter this dev harness, so normal threat timing stays unchanged.
+      const testHelicopter = new URLSearchParams(window.location.search).get('testHelicopter');
+      if (testHelicopter === 'patrol' || testHelicopter === 'ace') {
+        this.air.spawn(0, testHelicopter, -34);
       }
     }
     this.lives = GAME_MODES[mode].lives;
