@@ -9,6 +9,7 @@ import { buildTerrain, terrainRelief } from './TerrainDetail';
 import { landmarkAt, makeLandmark } from './Landmarks';
 import { makeRoadsideDetail } from './RoadsideDetail';
 import { makeRoadSurfaceDetail } from './RoadSurfaceDetail';
+import { makeWetRoadMaterial, makeWetRoadReflections } from './WetRoadReflections';
 
 const LENGTH = 30;
 const COUNT = 10;
@@ -71,6 +72,7 @@ function medianRibbon(anchor: number, side: -1 | 0 | 1, width = 0): THREE.Buffer
 export class Road {
   readonly root = new THREE.Group();
   private readonly pavement = new PavementMaterials();
+  private readonly wetRoadMaterial = makeWetRoadMaterial();
   private quality: Quality = 'medium';
   readonly waterMaterial = new THREE.ShaderMaterial({
     uniforms: { uTime: { value: 0 } },
@@ -144,6 +146,12 @@ export class Road {
     lane.receiveShadow = true;
     group.add(lane);
     group.add(makeRoadSurfaceDetail(anchor, biome, this.quality));
+    // One batched, shader-feathered reflection mesh per city tile. The moving
+    // rain glints share a material and sit beneath lane paint and road wear.
+    if (biome === 'city') {
+      const wet = makeWetRoadReflections(anchor, this.quality, this.wetRoadMaterial);
+      if (wet) group.add(wet);
+    }
     const white = new THREE.MeshBasicMaterial({ color: biome === 'water' ? 0x7ad2e2 : biome === 'snow' ? 0xe8f2f6 : 0xbccfd2, side: THREE.DoubleSide });
     const amber = new THREE.MeshBasicMaterial({ color: biome === 'water' ? 0x9bdfec : 0xe5b964, side: THREE.DoubleSide });
     for (const x of [-9.65, 9.65]) {
@@ -386,6 +394,7 @@ export class Road {
     this.travelled += speed * dt;
     this.time += dt;
     this.waterMaterial.uniforms.uTime.value = this.time;
+    this.wetRoadMaterial.uniforms.uTime.value = this.time;
     for (const tile of this.tiles) {
       if (this.travelled - tile.anchor > 104) {
         tile.anchor += LENGTH * COUNT;
@@ -416,7 +425,8 @@ export class Road {
         item.geometry.dispose();
         const materials = Array.isArray(item.material) ? item.material : [item.material];
         for (const material of materials) {
-          if (material !== this.waterMaterial && !this.pavement.owns(material)) material.dispose();
+          if (material !== this.waterMaterial && material !== this.wetRoadMaterial &&
+            !this.pavement.owns(material)) material.dispose();
         }
       }
     });
@@ -426,6 +436,8 @@ export class Road {
   seek(distance: number): void {
     this.travelled = Math.max(0, distance);
     this.time = 0;
+    this.wetRoadMaterial.uniforms.uTime.value = 0;
+    this.waterMaterial.uniforms.uTime.value = 0;
     this.lastBiome = this.biome;
     for (let i = 0; i < this.tiles.length; i++) {
       const tile = this.tiles[i];
