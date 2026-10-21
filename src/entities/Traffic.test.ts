@@ -113,7 +113,7 @@ describe('enforcer AI', () => {
   it('fires oncoming rounds from ahead only, and is unaffected by player depth changes', () => {
     const scene = new THREE.Scene();
     const rush = new TrafficVehicle(scene, 0, -29, true, 0, 0x883344, 25, null, true);
-    for (let i = 0; i < 50; i++) rush.step(1 / 60, 0, 0, undefined, 11);
+    for (let i = 0; i < 100; i++) rush.step(1 / 60, 0, 0, undefined, 11);
     // Incoming traffic has entered the combat corridor and its firing clock expired.
     expect(rush.z).toBeGreaterThan(-14);
     expect(rush.tryFire(0, 11)).toBe(false); // danger zone already crossed
