@@ -15,6 +15,9 @@ describe('quality-budgeted aerial spotlight rendering', () => {
     expect(a.footprint.visible).toBe(true);
     expect(a.footprint.material.depthWrite).toBe(false);
     expect(a.cone.material.blending).toBe(THREE.AdditiveBlending);
+    // Non-damaging searchlights must not draw over active bomb warnings.
+    expect(a.cone.renderOrder).toBeLessThan(0);
+    expect(a.footprint.renderOrder).toBeLessThan(0);
     a.setPreferences('high', false);
     expect(a.cone.visible).toBe(true);
     expect(a.footprint.visible).toBe(true);
