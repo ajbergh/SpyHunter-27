@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
-import { autoPaintDetailBudget, vehiclePaintTextures, vehicleSurfaceAt } from './VehiclePaintAtlas';
+import { autoPaintDetailBudget, vehiclePaintTextures, vehicleSurfaceAt, glassSurfaceAt, vehicleGlassTextures } from './VehiclePaintAtlas';
 
 describe('original UV-mapped automotive PBR materials', () => {
   it('renders deterministic fine material grain and stamped body panel seams', () => {
@@ -29,4 +29,15 @@ describe('original UV-mapped automotive PBR materials', () => {
     expect(autoPaintDetailBudget().uniqueAtlases).toBe(2);
     expect(autoPaintDetailBudget().bytesPerAtlas).toBeLessThan(2_000_000);
   });
+  it('reuses original roof-glazing maps and varies screen-space reflected tint', () => {
+    const atlas = vehicleGlassTextures();
+    expect(vehicleGlassTextures()).toBe(atlas);
+    expect(atlas.albedo).not.toBe(atlas.roughness);
+    expect(atlas.albedo.colorSpace).toBe(THREE.SRGBColorSpace);
+    const highlight = glassSurfaceAt(0.5, 0.43);
+    const darkTrim = glassSurfaceAt(0.5, 0.03);
+    expect(highlight.color).toBeGreaterThan(darkTrim.color);
+    expect(darkTrim.roughness).toBeGreaterThan(highlight.roughness);
+  });
+
 });

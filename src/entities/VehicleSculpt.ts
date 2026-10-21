@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { emissiveAccentIntensity } from '../rendering/CinematicGrade';
-import { vehiclePaintTextures } from './VehiclePaintAtlas';
+import { vehicleGlassTextures, vehiclePaintTextures } from './VehiclePaintAtlas';
 
 export interface BodyStation {
   readonly z: number;
@@ -64,7 +64,10 @@ export function bodyPaint(color: number, hero = false): THREE.MeshPhysicalMateri
 }
 
 export function glassPaint(color = 0x1b5479): THREE.MeshPhysicalMaterial {
+  const atlas = vehicleGlassTextures();
   return new THREE.MeshPhysicalMaterial({
+    map: atlas.albedo,
+    roughnessMap: atlas.roughness,
     color, metalness: 0.25, roughness: 0.28, clearcoat: 0.75,
     clearcoatRoughness: 0.17, envMapIntensity: 0.42,
     emissive: 0x05131e,

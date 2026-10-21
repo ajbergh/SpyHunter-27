@@ -199,4 +199,5 @@ The highway and river are continuous and curved, but do not yet have interactive
 
 - [x] Longitudinal and perimeter UVs on existing sculpted body hulls, with guard against reversed stations.
 - [x] Two cached original vehicle PBR atlases (albedo, roughness, micro-bump) with deterministic panel seams, fasteners, carbon accents and subtle paint noise; shared across traffic instances.
+- [x] Cached windscreen detail atlas with restrained reflection bands, wiper arcs, edge trim and roughness variation across all 3D vehicles.
 - [ ] Artist-authored vehicle-specific texture sheets, UV seam correction, wear decals, high-resolution normal baking and controlled capture on target GPUs.

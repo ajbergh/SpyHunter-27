@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { describe, it, expect } from 'vitest';
-import { sculptBody, bodyPaint, sculptMesh, addWheelAssembly } from './VehicleSculpt';
+import { sculptBody, bodyPaint, glassPaint, sculptMesh, addWheelAssembly } from './VehicleSculpt';
 
 describe('original studio-quality vehicle geometry', () => {
   it('creates a sealed loft with roof, undertray and caps', () => {
@@ -35,6 +35,9 @@ describe('original studio-quality vehicle geometry', () => {
     expect(paint.roughnessMap).not.toBeNull();
     expect(bodyPaint(0xaaccdd, true).map).toBe(paint.map);
     expect(bodyPaint(0xaaccdd, false).map).not.toBe(paint.map);
+    expect(glassPaint().map).not.toBeNull();
+    expect(glassPaint().roughnessMap).not.toBeNull();
+    expect(glassPaint(0x233459).map).toBe(glassPaint().map);
   });
   it('rejects degenerate mesh station lists', () => {
     expect(() => sculptBody([{ z: 0, halfWidth: 1, deck: 1 }])).toThrow();

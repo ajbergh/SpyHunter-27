@@ -8,6 +8,8 @@ export type PaintStyle = 'interceptor' | 'traffic';
 
 const WIDTH = 512;
 const HEIGHT = 256;
+const INTERCEPTOR_SEAMS = [0.13, 0.33, 0.54, 0.72, 0.91] as const;
+const TRAFFIC_SEAMS = [0.16, 0.43, 0.69, 0.89] as const;
 const cache = new Map<PaintStyle, {
   albedo: THREE.DataTexture;
   roughness: THREE.DataTexture;
@@ -36,16 +38,15 @@ export function vehicleSurfaceAt(u: number, v: number, style: PaintStyle): Surfa
   const y = Math.max(0, Math.min(HEIGHT - 1, Math.floor(v * HEIGHT)));
   const n = hash(x, y, style === 'interceptor' ? 19 : 43);
   const fine = (n - 0.5) * (style === 'interceptor' ? 13 : 22);
-  const seamPositions = style === 'interceptor'
-    ? [0.13, 0.33, 0.54, 0.72, 0.91]
-    : [0.16, 0.43, 0.69, 0.89];
-  const nearest = Math.min(...seamPositions.map(t => Math.abs(u - t)));
+  const seamPositions = style === 'interceptor' ? INTERCEPTOR_SEAMS : TRAFFIC_SEAMS;
+  let nearest = 1;
+  for (const position of seamPositions) nearest = Math.min(nearest, Math.abs(u - position));
   const panelSeam = nearest < 0.0022;
   const shoulder = Math.abs(v - 0.333) < 0.004 || Math.abs(v - 0.667) < 0.004;
   const roofStripe = style === 'interceptor' &&
     v > 0.44 && v < 0.56 && u > 0.22 && u < 0.92;
   const fineCarbon = roofStripe && ((x + Math.floor(y / 3)) % 11) < 2;
-  const fastener = seamPositions.some(t => Math.abs(u - t) < 0.007) &&
+  const fastener = nearest < 0.007 &&
     Math.abs(v - 0.23) < 0.007;
   const base = style === 'interceptor' ? 244 : 236;
   const tint = roofStripe ? (fineCarbon ? 70 : 95) :
@@ -108,4 +109,49 @@ export function vehiclePaintTextures(style: PaintStyle): {
 
 export function autoPaintDetailBudget(): { uniqueAtlases: number; bytesPerAtlas: number } {
   return { uniqueAtlases: 2, bytesPerAtlas: WIDTH * HEIGHT * 4 * 3 };
+}
+
+/** Shared procedural glazing with broad reflected strips, wiper arc and trim. */
+export interface GlassSample {
+  readonly color: number;
+  readonly roughness: number;
+}
+export function glassSurfaceAt(u: number, v: number): GlassSample {
+  const x = Math.floor(Math.max(0, Math.min(0.9999, u)) * WIDTH);
+  const y = Math.floor(Math.max(0, Math.min(0.9999, v)) * HEIGHT);
+  const noise = hash(x, y, 83);
+  const reflectedBand = Math.abs(v - (0.29 + u * 0.28)) < 0.043;
+  const secondary = Math.abs(v - (0.53 + u * 0.13)) < 0.014;
+  const edge = u < 0.055 || u > 0.945 || v < 0.09 || v > 0.91;
+  const wiper = u > 0.2 && u < 0.84 &&
+    Math.abs(v - (0.47 + 0.07 * Math.cos((u - 0.52) * 4.1))) < 0.0024;
+  const color = edge ? 115 : wiper ? 125 :
+    reflectedBand ? 242 : secondary ? 212 : 182 + noise * 9;
+  return {
+    color: Math.min(255, Math.round(color)),
+    roughness: Math.round(edge ? 195 : wiper ? 174 : 85 + noise * 15),
+  };
+}
+
+let glassCache: { albedo: THREE.DataTexture; roughness: THREE.DataTexture } | null = null;
+export function vehicleGlassTextures(): {
+  albedo: THREE.DataTexture;
+  roughness: THREE.DataTexture;
+} {
+  if (glassCache) return glassCache;
+  const albedo = new Uint8Array(WIDTH * HEIGHT * 4);
+  const roughness = new Uint8Array(albedo.length);
+  for (let y = 0; y < HEIGHT; y++) {
+    for (let x = 0; x < WIDTH; x++) {
+      const sample = glassSurfaceAt((x + 0.5) / WIDTH, (y + 0.5) / HEIGHT);
+      const i = (y * WIDTH + x) * 4;
+      for (let c = 0; c < 3; c++) {
+        albedo[i + c] = sample.color;
+        roughness[i + c] = sample.roughness;
+      }
+      albedo[i + 3] = roughness[i + 3] = 255;
+    }
+  }
+  glassCache = { albedo: texture(albedo, true), roughness: texture(roughness, false) };
+  return glassCache;
 }
