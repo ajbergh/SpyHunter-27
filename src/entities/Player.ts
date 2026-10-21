@@ -2,11 +2,13 @@ import * as THREE from 'three';
 import type { Controls } from '../core/Input';
 import { approach, clamp, PLAYER_Z, ROAD_HALF_WIDTH, type RectHitbox } from '../core/logic';
 import { makeInterceptor, makeSpeedboat } from './VehicleModels';
+import { VehicleMotionRig } from './VehicleMotion';
 import type { Biome } from '../world/WorldPlan';
 
 export class Player {
   readonly mesh = new THREE.Group();
   private readonly car = makeInterceptor();
+  private readonly carMotion = new VehicleMotionRig(this.car);
   private readonly boat = makeSpeedboat(false);
   isBoat = false;
   private elapsed = 0;
@@ -29,6 +31,8 @@ export class Player {
     this.mesh.visible = true;
     this.elapsed = 0;
     this.lateralVelocity = 0;
+    this.carMotion.reset();
+    this.car.rotation.x = 0;
     this.setBoat(false);
     this.mesh.position.set(0, 0.12, PLAYER_Z);
   }
@@ -39,7 +43,7 @@ export class Player {
     this.boat.visible = enabled;
   }
 
-  step(dt: number, controls: Controls, surface: Biome = 'forest', speedScale = 1): void {
+  step(dt: number, controls: Controls, surface: Biome = 'forest', speedScale = 1, reducedMotion = false): void {
     this.elapsed += dt;
     const desired = this.isBoat
       ? controls.brake ? 13 : controls.throttle ? 46 : 29
@@ -56,6 +60,15 @@ export class Player {
     this.mesh.rotation.z = approach(this.mesh.rotation.z, -controls.steer * 0.075, 9, dt);
     this.mesh.rotation.y = approach(this.mesh.rotation.y, controls.steer * (this.isBoat ? 0.09 : 0.035), 8, dt);
     this.mesh.position.y = this.isBoat ? 0.16 + Math.sin(this.elapsed * 8) * 0.12 : 0.12;
+    if (!this.isBoat) {
+      this.carMotion.step(dt, this.speed, controls.steer, controls.brake);
+      // Cosmetic chassis loading adds braking/acceleration weight without
+      // influencing collision geometry; reduced motion suppresses the tilt.
+      const pitch = reducedMotion ? 0 : controls.brake ? -0.035 : controls.throttle ? 0.014 : 0;
+      this.car.rotation.x = approach(this.car.rotation.x, pitch, 0.4, dt);
+    } else {
+      this.car.rotation.x = 0;
+    }
     this.invulnerability = Math.max(0, this.invulnerability - dt);
     this.mesh.visible = this.invulnerability === 0 || Math.floor(this.invulnerability * 12) % 2 === 0;
   }
