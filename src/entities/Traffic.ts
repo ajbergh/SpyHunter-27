@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { approach, clamp, type RectHitbox } from '../core/logic';
 import { makeTrafficVehicle } from './VehicleModels';
+import { VehicleMotionRig } from './VehicleMotion';
 import type { SquadOrder } from '../gameplay/SquadTactics';
 
 export type EnemyRole = 'civilian' | 'interceptor' | 'weaver' | 'blocker' | 'enforcer' | 'motorcycle' | 'boat' | 'switchblade';
@@ -8,6 +9,7 @@ export type EnemyState = 'approach' | 'intercept' | 'disrupted' | 'spinning' | '
 
 export class TrafficVehicle {
   readonly mesh: THREE.Group;
+  private readonly motion: VehicleMotionRig;
   readonly hostile: boolean;
   readonly role: EnemyRole;
   readonly halfWidth: number;
@@ -36,6 +38,7 @@ export class TrafficVehicle {
     this.halfLength = variant === 5 ? 2.52 : variant === 4 ? 1.65 : variant === 3 ? 3.32 : variant === 2 ? 3.05 : variant === 1 ? 1.98 : 2.37;
     this.hp = hostile && variant === 2 ? 4 : hostile && variant === 4 ? 1 : hostile ? 2 : 1;
     this.mesh = makeTrafficVehicle(hostile, color, variant);
+    this.motion = new VehicleMotionRig(this.mesh);
     this.mesh.position.set(x, 0.12, z);
     scene.add(this.mesh);
   }
@@ -48,6 +51,7 @@ export class TrafficVehicle {
   }
 
   step(dt: number, playerSpeed: number, playerX: number, order?: SquadOrder): void {
+    const previousX = this.x;
     this.spinTimer = Math.max(0, this.spinTimer - dt);
     this.disruption = Math.max(0, this.disruption - dt);
     this.fireClock = Math.max(0, this.fireClock - dt);
@@ -105,6 +109,11 @@ export class TrafficVehicle {
       this.mesh.rotation.y = approach(this.mesh.rotation.y, 0, 4, dt);
     }
     this.mesh.position.set(this.x, 0.12, this.z);
+    // Cosmetic wheel spin uses the vehicle's own velocity, not relative road
+    // scroll. Disrupted cars illuminate their brakes; boats have no wheel rig.
+    this.motion.step(dt, this.speed,
+      (this.x - previousX) / Math.max(0.001, dt * 12),
+      this.disruption > 0 || this.spinTimer > 0);
   }
 
   /** Enforcer rounds fire only from a stable attack lane and respect smoke/oil disruption. */
