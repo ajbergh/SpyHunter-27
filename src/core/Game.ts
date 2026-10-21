@@ -176,6 +176,7 @@ export class Game {
     this.streaks.setPreferences(settings.quality, settings.reducedMotion);
     this.headlights.setQuality(settings.quality);
     this.skidTrails.setQuality(settings.quality);
+    this.wake.setQuality(settings.quality);
     const ratio = settings.quality === 'low' ? 1 : settings.quality === 'high' ? 2 : 1.5;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, ratio));
     if (settings.quality === 'high' && !this.composer) {
@@ -376,7 +377,7 @@ export class Game {
           ? 'BOATHOUSE DOCKED — SPEEDBOAT DEPLOYED +350'
           : 'BOATHOUSE DOCKED — INTERCEPTOR RESTORED +350');
     }
-    this.wake.step(dt, this.player.speed, this.player.x, this.player.isBoat);
+    this.wake.step(dt, this.player.speed, this.player.x, this.player.isBoat, controls.steer);
     this.weather.step(dt, this.player.speed, this.road.biome);
     this.visuals.step(dt, this.road.biome, this.distance / 22, this.preferences.reducedMotion);
     this.sky.step(dt, this.road.biome);

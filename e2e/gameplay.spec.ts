@@ -450,3 +450,25 @@ test('cinematic helicopter searchlight renders in neon with no WebGL errors', as
   await page.screenshot({ path: 'test-results/gunship-searchlight-neon-high.png' });
   expect(errors).toEqual([]);
 });
+
+test('high-quality waterway renders pooled V-hull foam without WebGL errors', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('console', message => {
+    if (message.type() === 'error' && /WebGLProgram|shader|GL_INVALID_OPERATION/i.test(message.text())) {
+      errors.push(message.text());
+    }
+  });
+  await page.goto('/?testDistance=4350');
+  await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
+  await page.locator('#quality-select').selectOption('high');
+  await page.getByRole('button', { name: /apply and return/i }).click();
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#environment-name')).toContainText('WATERWAY');
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  await page.keyboard.down('w');
+  await page.waitForTimeout(750);
+  await page.keyboard.up('w');
+  await page.screenshot({ path: 'test-results/v-hull-foam-waterway-high.png' });
+  expect(errors).toEqual([]);
+});
