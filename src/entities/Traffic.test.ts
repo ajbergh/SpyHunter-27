@@ -93,4 +93,38 @@ describe('enforcer AI', () => {
     expect(car.hitbox().halfWidth).toBe(hitbox.halfWidth);
     car.dispose(scene);
   });
+
+  it('drives head-on rush traffic toward the player, facing opposite with frontal shots', () => {
+    const scene = new THREE.Scene();
+    const car = new TrafficVehicle(scene, 0, -48, true, 0, 0x883344, 26, null, true);
+    expect(car.role).toBe('head-on');
+    const facing = car.mesh.getObjectByName('HeadOnFacing') as THREE.Group;
+    expect(facing.rotation.y).toBeCloseTo(Math.PI);
+    const before = car.z;
+    for (let i = 0; i < 45; i++) car.step(1 / 60, 32, 0, undefined, 6);
+    expect(car.z - before).toBeGreaterThan(32);
+    expect(facing.rotation.y).toBeCloseTo(Math.PI);
+    expect(car.state).toBe('intercept');
+    expect(car.tryFire(0, 6)).toBe(false); // near-collision safety zone
+    car.dispose(scene);
+    expect(scene.children).toHaveLength(0);
+  });
+
+  it('fires oncoming rounds from ahead only, and is unaffected by player depth changes', () => {
+    const scene = new THREE.Scene();
+    const rush = new TrafficVehicle(scene, 0, -29, true, 0, 0x883344, 25, null, true);
+    for (let i = 0; i < 50; i++) rush.step(1 / 60, 0, 0, undefined, 11);
+    // Incoming traffic has entered the combat corridor and its firing clock expired.
+    expect(rush.z).toBeGreaterThan(-14);
+    expect(rush.tryFire(0, 11)).toBe(false); // danger zone already crossed
+    rush.dispose(scene);
+
+    const gun = new TrafficVehicle(scene, 0, -32, true, 0, 0x883344, 24, null, true);
+    for (let i = 0; i < 42; i++) gun.step(1 / 60, 0, 0, undefined, 8);
+    expect(gun.state).toBe('intercept');
+    expect(gun.tryFire(0, 8)).toBe(true);
+    expect(gun.tryFire(0, 8)).toBe(false);
+    gun.dispose(scene);
+  });
+
 });
