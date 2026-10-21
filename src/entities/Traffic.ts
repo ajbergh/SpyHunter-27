@@ -1,16 +1,17 @@
 import * as THREE from 'three';
-import { approach, clamp, type RectHitbox } from '../core/logic';
+import { approach, clamp, PLAYER_Z, type RectHitbox } from '../core/logic';
 import { makeTrafficVehicle } from './VehicleModels';
 import { VehicleMotionRig } from './VehicleMotion';
 import type { SquadOrder } from '../gameplay/SquadTactics';
 
-export type EnemyRole = 'civilian' | 'interceptor' | 'weaver' | 'blocker' | 'enforcer' | 'motorcycle' | 'boat' | 'switchblade';
+export type EnemyRole = 'civilian' | 'interceptor' | 'weaver' | 'blocker' | 'enforcer' | 'motorcycle' | 'boat' | 'switchblade' | 'head-on';
 export type EnemyState = 'approach' | 'intercept' | 'disrupted' | 'spinning' | 'retreating';
 
 export class TrafficVehicle {
   readonly mesh: THREE.Group;
   private readonly motion: VehicleMotionRig;
   readonly hostile: boolean;
+  readonly oncoming: boolean;
   readonly role: EnemyRole;
   readonly halfWidth: number;
   readonly halfLength: number;
@@ -26,10 +27,12 @@ export class TrafficVehicle {
   private disruption = 0;
   private spinDirection: number;
 
-  constructor(scene: THREE.Scene, x: number, z: number, hostile: boolean, variant: number, color: number, speed: number, squadId: number | null = null) {
+  constructor(scene: THREE.Scene, x: number, z: number, hostile: boolean, variant: number, color: number, speed: number, squadId: number | null = null, oncoming = false) {
     this.squadId = squadId;
     this.hostile = hostile;
-    this.role = !hostile ? 'civilian' : variant === 6 ? 'switchblade' : variant === 5 ? 'boat' : variant === 4 ? 'motorcycle' : variant === 3 ? 'enforcer' : variant === 2 ? 'blocker' : variant === 1 ? 'weaver' : 'interceptor';
+    this.oncoming = hostile && oncoming;
+    if (this.oncoming) this.fireClock = 0.66;
+    this.role = !hostile ? 'civilian' : this.oncoming ? 'head-on' : variant === 6 ? 'switchblade' : variant === 5 ? 'boat' : variant === 4 ? 'motorcycle' : variant === 3 ? 'enforcer' : variant === 2 ? 'blocker' : variant === 1 ? 'weaver' : 'interceptor';
     this.x = x;
     this.z = z;
     this.speed = speed;
@@ -37,7 +40,17 @@ export class TrafficVehicle {
     this.halfWidth = variant === 6 ? 1.82 : variant === 5 ? 1.1 : variant === 4 ? 0.63 : variant === 2 ? 1.4 : variant === 1 ? 0.95 : 1.13;
     this.halfLength = variant === 5 ? 2.52 : variant === 4 ? 1.65 : variant === 3 ? 3.32 : variant === 2 ? 3.05 : variant === 1 ? 1.98 : 2.37;
     this.hp = hostile && variant === 2 ? 4 : hostile && variant === 4 ? 1 : hostile ? 2 : 1;
-    this.mesh = makeTrafficVehicle(hostile, color, variant);
+    const vehicle = makeTrafficVehicle(hostile, color, variant);
+    if (this.oncoming) {
+      // Rotate the real model (not the AI steering group) 180 degrees toward
+      // the player, preserving collision width and independent steering sway.
+      const facing = new THREE.Group();
+      facing.rotation.y = Math.PI;
+      facing.name = 'HeadOnFacing';
+      facing.add(vehicle);
+      this.mesh = new THREE.Group();
+      this.mesh.add(facing);
+    } else this.mesh = vehicle;
     this.motion = new VehicleMotionRig(this.mesh);
     this.mesh.position.set(x, 0.12, z);
     scene.add(this.mesh);
@@ -50,7 +63,7 @@ export class TrafficVehicle {
     this.disruption = Math.max(this.disruption, seconds);
   }
 
-  step(dt: number, playerSpeed: number, playerX: number, order?: SquadOrder): void {
+  step(dt: number, playerSpeed: number, playerX: number, order?: SquadOrder, playerZ = PLAYER_Z): void {
     const previousX = this.x;
     this.spinTimer = Math.max(0, this.spinTimer - dt);
     this.disruption = Math.max(0, this.disruption - dt);
@@ -58,6 +71,7 @@ export class TrafficVehicle {
     const fleeing = (order?.type === 'retreat' || this.state === 'retreating') &&
       this.spinTimer <= 0 && this.disruption <= 0;
     if (fleeing) this.z -= Math.max(20, 19 + this.speed * 0.55) * dt;
+    else if (this.oncoming) this.z += (playerSpeed + this.speed * (this.disruption > 0 ? 0.55 : 1)) * dt;
     else this.z += Math.max(8, playerSpeed - this.speed * (this.disruption > 0 ? 0.5 : 1)) * dt;
     if (this.spinTimer > 0) {
       this.state = 'spinning';
@@ -74,10 +88,14 @@ export class TrafficVehicle {
       this.x = approach(this.x, order?.targetX ?? escapeSide, 2.4, dt);
       this.mesh.rotation.z = approach(this.mesh.rotation.z, 0, 5, dt);
       this.mesh.rotation.y = approach(this.mesh.rotation.y, 0, 4, dt);
-    } else if (this.hostile && this.z > -48 && this.z < 8) {
+    } else if (this.hostile && this.z > playerZ - 59 && this.z < playerZ - 3) {
       this.state = 'intercept';
       this.sway += dt;
-      if (order?.type === 'pincer') {
+      if (this.oncoming) {
+        // Facing against traffic: commit to a predictable lane attack with a
+        // restrained aim bias, preserving lateral evasion time for the player.
+        this.x = approach(this.x, clamp(playerX, -6.4, 6.4), 0.55, dt);
+      } else if (order?.type === 'pincer') {
         this.x = clamp(approach(this.x, order.targetX,
           this.role === 'switchblade' ? 1.5 : 1.05, dt), -7.4, 7.4);
         this.mesh.rotation.z = approach(this.mesh.rotation.z, 0, 5, dt);
@@ -117,11 +135,14 @@ export class TrafficVehicle {
   }
 
   /** Enforcer rounds fire only from a stable attack lane and respect smoke/oil disruption. */
-  tryFire(playerX: number): boolean {
-    if ((this.role !== 'enforcer' && this.role !== 'boat') || this.state !== 'intercept' ||
-        this.fireClock > 0 || this.z < -38 || this.z > -6 ||
-        Math.abs(this.x - playerX) > 6.5) return false;
-    this.fireClock = 2.4;
+  tryFire(playerX: number, playerZ = PLAYER_Z): boolean {
+    const faceAttack = this.role === 'head-on';
+    if ((this.role !== 'enforcer' && this.role !== 'boat' && !faceAttack) ||
+        this.state !== 'intercept' || this.fireClock > 0 ||
+        this.z < playerZ - (faceAttack ? 44 : 49) ||
+        this.z > playerZ - (faceAttack ? 13 : 17) ||
+        Math.abs(this.x - playerX) > (faceAttack ? 4.5 : 6.5)) return false;
+    this.fireClock = faceAttack ? 2.8 : 2.4;
     return true;
   }
 
