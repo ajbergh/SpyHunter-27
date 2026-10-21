@@ -7,6 +7,7 @@ export interface EncounterSpawn {
   z: number;
   hostile: boolean;
   variant: number;
+  oncoming?: boolean;
 }
 export type Encounter = { type: 'traffic' | 'pursuit-pair'; spawns: EncounterSpawn[] };
 
@@ -31,10 +32,17 @@ export function planEncounter(
   const variant = hostile
     ? variantRoll < 0.11 ? 6 : variantRoll < 0.27 ? 4 : variantRoll < 0.44 ? 3 : variantRoll < 0.6 ? 2 : variantRoll < 0.76 ? 1 : 0
     : variantRoll < 0.08 ? 4 : variantRoll < 0.17 ? 2 : 0;
-  const firstSpawn: EncounterSpawn = { x: first, z: startZ, hostile, variant };
-
   const pairAllowed = hostile && distance > 420 && route !== 'left' &&
     random() < (route === 'right' ? 0.45 : 0.25);
+  // Once combat escalates, some single opponents come down the road facing
+  // the interceptor. Never stack a head-on rush with a pincer or safe left route.
+  const oncoming = hostile && distance > 350 && route !== 'left' &&
+    !pairAllowed && random() > 0.78;
+  const firstSpawn: EncounterSpawn = {
+    x: first, z: startZ, hostile,
+    variant: oncoming ? (variant === 3 ? 3 : 0) : variant,
+    oncoming,
+  };
   if (!pairAllowed) return { type: 'traffic', spawns: [firstSpawn] };
 
   const available = laneOptions.filter((lane) => lane !== first &&
