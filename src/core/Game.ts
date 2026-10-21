@@ -170,6 +170,7 @@ export class Game {
     this.input.setBindings(settings.bindings);
     this.input.setGamepadBindings(settings.gamepadBindings);
     this.weather.setQuality(settings.quality);
+    this.air.setPreferences(settings.quality, settings.reducedMotion);
     this.road.setQuality(settings.quality);
     this.visuals.configure(settings.quality);
     this.streaks.setPreferences(settings.quality, settings.reducedMotion);
