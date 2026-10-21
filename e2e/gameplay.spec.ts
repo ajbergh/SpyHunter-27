@@ -472,3 +472,44 @@ test('high-quality waterway renders pooled V-hull foam without WebGL errors', as
   await page.screenshot({ path: 'test-results/v-hull-foam-waterway-high.png' });
   expect(errors).toEqual([]);
 });
+
+test('classic speed control moves interceptor forward and backward inside the road view', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/?testDistance=140&testLane=6.4');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const car = page.locator('#stage canvas');
+  await expect(car).toBeVisible();
+  const initial = Number(await car.getAttribute('data-player-z'));
+  await page.keyboard.down('w');
+  await page.waitForTimeout(2200);
+  await page.keyboard.up('w');
+  const forward = Number(await car.getAttribute('data-player-z'));
+  expect(forward).toBeLessThan(initial - 5);
+  await page.screenshot({ path: 'test-results/arcade-driving-forward.png' });
+  await page.keyboard.down('s');
+  await page.waitForTimeout(2400);
+  await page.keyboard.up('s');
+  const backward = Number(await car.getAttribute('data-player-z'));
+  expect(backward).toBeGreaterThan(forward + 7);
+  await page.screenshot({ path: 'test-results/arcade-driving-rearward.png' });
+  expect(errors).toEqual([]);
+});
+
+test('head-on hostile appears facing the oncoming lane while player can dodge it', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('console', message => {
+    if (message.type() === 'error' && /WebGLProgram|shader|GL_INVALID_OPERATION/i.test(message.text())) {
+      errors.push(message.text());
+    }
+  });
+  await page.goto('/?testDistance=420&testLane=6.4&testHeadOn=1');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const stage = page.locator('#stage canvas');
+  await expect(stage).toBeVisible();
+  await expect(stage).toHaveAttribute('data-head-on', '1');
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: 'test-results/head-on-hostile-traffic.png' });
+  expect(errors).toEqual([]);
+});
