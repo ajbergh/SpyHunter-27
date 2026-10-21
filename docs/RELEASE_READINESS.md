@@ -44,3 +44,7 @@ The fixed-step animation pass animates axle hubs and brake lighting without chan
 ## Aerial searchlight visual review (2026-10-21)
 
 Verify that pale patrol and rose ace searchlights remain distinct from the **orange bomb impact warning**, that the ground pool tracks the curved highway rather than the flight model's raw X coordinate, and that Reduced Motion locks scanning and pulsing. Compare High, Medium and Low budgets in forest, snow and neon, including fog/bloom, terrain occlusion, long pursuit sessions, and early target destruction. The procedural cone is an art-directed transparent effect rather than physically correct volumetric illumination. Real-GPU frame-time and manual perception reviews remain required.
+
+## Waterway wake fidelity review (2026-10-21)
+
+Verify the new one-draw-call V-hull wake in High/Medium/Low quality, across centered and hard-steering river navigation. Check the pair of foam arms expand behind rather than ahead of the boat, do not interfere with projectile/barrel readability, align with the curved river surface, transition cleanly at the boathouse, and dissipate without growing draw calls or leaking objects in extended sessions. Compare foam tone and scale with water glints in camera captures; run actual integrated/dedicated GPU frame-time and long-session memory checks. Automated tests and a Chromium screenshot are smoke coverage, not visual signoff.
