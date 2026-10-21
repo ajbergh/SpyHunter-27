@@ -153,6 +153,25 @@ export class Game {
     window.addEventListener('blur', () => { if (this.screen === 'playing') this.pause(); });
     this.configure(this.preferences);
     this.resize();
+    if (import.meta.env.DEV &&
+        new URLSearchParams(window.location.search).get('testDrive') === '1') {
+      // Browser acceptance tests must advance actual fixed-step gameplay, not
+      // wall time: CI's software WebGL renderer may display only a few frames
+      // in several real seconds. This test-only bridge reads ordinary keyboard
+      // input and executes the same update method as the production game loop.
+      type TestWindow = Window & {
+        __spy27AdvanceDriving?: (frames: number) => {
+          z: number; speed: number; screen: Screen;
+        };
+      };
+      (window as TestWindow).__spy27AdvanceDriving = (frames: number) => {
+        const count = Number.isFinite(frames) ?
+          Math.min(360, Math.max(0, Math.floor(frames))) : 0;
+        for (let i = 0; i < count; i++) this.update(1 / 60);
+        this.renderer.domElement.dataset.playerZ = this.player.z.toFixed(2);
+        return { z: this.player.z, speed: this.player.speed, screen: this.screen };
+      };
+    }
     this.loop.start();
   }
 
@@ -265,6 +284,13 @@ export class Game {
     this.splitClean = true;
     this.spawnClock = 0.8;
     this.airSpawnClock = 9;
+    if (import.meta.env.DEV &&
+        new URLSearchParams(window.location.search).get('testDrive') === '1') {
+      // Isolate throttle/brake acceptance from randomly timed enemy collisions.
+      // Normal release builds and every other test retain full encounter AI.
+      this.spawnClock = 999;
+      this.airSpawnClock = 999;
+    }
     this.shotClock = 0;
     this.toastClock = 0;
     this.survivalSeconds = 0;
