@@ -632,15 +632,16 @@ export class Game {
       ? this.nextSquadId++ : null;
     if (squadId !== null) this.announce('SQUAD INBOUND — ATTACKERS COORDINATING');
     for (const spawn of encounter.spawns) {
+      if (spawn.oncoming) this.announce('HEAD-ON HOSTILE APPROACHING — EVADE OR FIRE');
       const variant = this.player.isBoat ? 5 : spawn.variant;
       const colors = spawn.hostile
         ? [0x902d3e, 0x4c182b, 0x9e553e, 0xaf3048]
         : [0x7495a7, 0xc5bda9, 0x647c73, 0x8e9bae];
       const color = colors[Math.floor(this.random() * colors.length)];
-      const speed = variant === 4 ? 16 + this.random() * 9
+      const speed = spawn.oncoming ? 23 + this.random() * 7 : variant === 4 ? 16 + this.random() * 9
         : spawn.hostile ? 8 + this.random() * 7 : 12 + this.random() * 7;
       this.traffic.push(new TrafficVehicle(
-        this.scene, spawn.x, spawn.z, spawn.hostile, variant, color, speed, squadId,
+        this.scene, spawn.x, spawn.z, spawn.hostile, variant, color, speed, squadId, spawn.oncoming,
       ));
     }
   }
