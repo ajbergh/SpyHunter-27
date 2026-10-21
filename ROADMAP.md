@@ -122,6 +122,7 @@ Deliver the mechanical clarity and replayability of an early-1980s vertical-scro
 - [ ] Human-approved art direction and real-GPU frame time validation, especially on high.
 - [x] Scene-wide biome-specific filmic grade and environmental reflections via wet material response and procedural rippled highlights.
 - [x] Procedural PMREM reflection environment for car clearcoat and metal, without externally licensed imagery.
+- [x] Headlight road projection with feathered additive two-beam shader, scene-aware color and performance quality controls.
 - [ ] Scene-matched dynamic reflection probes, original authored decals, HDRI art direction and advanced volumetric lighting.
 - [x] Original adaptive synthesized espionage riff and speed-sensitive engine drone.
 - [x] Five distinct original synthesized biome arrangements with percussive pulses, threat-adaptive pace, dual-layer reactive engine audio, separate warning and resupply signals.
