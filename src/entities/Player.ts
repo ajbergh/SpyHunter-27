@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 import type { Controls } from '../core/Input';
-import { approach, clamp, PLAYER_Z, ROAD_HALF_WIDTH, type RectHitbox } from '../core/logic';
+import { approach, clamp, ROAD_HALF_WIDTH, type RectHitbox } from '../core/logic';
 import { makeInterceptor, makeSpeedboat } from './VehicleModels';
 import { VehicleMotionRig } from './VehicleMotion';
 import type { Biome } from '../world/WorldPlan';
-import { drivingTargetZ } from '../gameplay/LongitudinalDriving';
+import { drivingTargetZ, DRIVE_Z_NEUTRAL } from '../gameplay/LongitudinalDriving';
 
 export class Player {
   readonly mesh = new THREE.Group();
@@ -15,20 +15,20 @@ export class Player {
   private elapsed = 0;
   private lateralVelocity = 0;
   x = 0;
-  z = PLAYER_Z;
+  z = DRIVE_Z_NEUTRAL;
   speed = 25;
   invulnerability = 0;
 
   constructor(scene: THREE.Scene) {
     this.mesh.add(this.car, this.boat);
     this.setBoat(false);
-    this.mesh.position.set(0, 0.12, PLAYER_Z);
+    this.mesh.position.set(0, 0.12, DRIVE_Z_NEUTRAL);
     scene.add(this.mesh);
   }
 
   reset(): void {
     this.x = 0;
-    this.z = PLAYER_Z;
+    this.z = DRIVE_Z_NEUTRAL;
     this.speed = 25;
     this.invulnerability = 0;
     this.mesh.visible = true;
@@ -37,7 +37,7 @@ export class Player {
     this.carMotion.reset();
     this.car.rotation.x = 0;
     this.setBoat(false);
-    this.mesh.position.set(0, 0.12, PLAYER_Z);
+    this.mesh.position.set(0, 0.12, DRIVE_Z_NEUTRAL);
   }
 
   setBoat(enabled: boolean): void {
