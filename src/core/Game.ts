@@ -320,7 +320,8 @@ export class Game {
       return;
     }
 
-    this.player.step(dt, controls, this.road.biome, GAME_MODES[this.mode].speedScale);
+    this.player.step(dt, controls, this.road.biome, GAME_MODES[this.mode].speedScale,
+      this.preferences.reducedMotion);
     const targetFov = cinematicFov(this.player.speed, this.preferences.reducedMotion);
     this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, targetFov, Math.min(1, dt * 0.9));
     this.camera.updateProjectionMatrix();
