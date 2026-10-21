@@ -28,3 +28,7 @@ Detailed helicopter, weapons van, speedboat, landing gear, wheel/cab, rotor and 
 ## Procedural drivetrain animation (2026-10-21)
 
 Wheel pivots, original geometry, dynamically emissive tail lamps, and fixed-step chassis response are authored entirely in the project's Three.js and TypeScript source. No sampled animation, imported model, external texture, or third-party asset is introduced by this phase.
+
+## Aerial visual cue provenance (2026-10-21)
+
+The attack-helicopter searchlight, ground footprint and both color profiles are original procedural Three.js shader/geometry assets generated from source. No third-party light cookies, textures, HDRIs, sounds, or external 3D models were introduced.
