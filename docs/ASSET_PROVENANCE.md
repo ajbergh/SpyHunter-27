@@ -24,3 +24,7 @@ Document every new external asset with source URL, author, license, and modifica
 ## Second-pass model provenance (2026-10-20)
 
 Detailed helicopter, weapons van, speedboat, landing gear, wheel/cab, rotor and five environmental landmark models are newly constructed using native Three.js geometries and original source code. No external reference image, extracted videogame model, photogrammetry data, or copyrighted franchise asset is bundled. Sculpted surface/prop materials use original procedural PBR values. Production modeling, UV baking and art clearance remain future sign-off requirements.
+
+## Procedural drivetrain animation (2026-10-21)
+
+Wheel pivots, original geometry, dynamically emissive tail lamps, and fixed-step chassis response are authored entirely in the project's Three.js and TypeScript source. No sampled animation, imported model, external texture, or third-party asset is introduced by this phase.
