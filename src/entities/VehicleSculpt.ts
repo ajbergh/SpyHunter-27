@@ -56,7 +56,7 @@ export function bodyPaint(color: number, hero = false): THREE.MeshPhysicalMateri
     roughnessMap: atlas.roughness,
     bumpMap: atlas.height,
     bumpScale: 0.016,
-    color, metalness: hero ? 0.38 : 0.44, roughness: hero ? 0.34 : 0.39,
+    color, metalness: hero ? 0.38 : 0.44, roughness: hero ? 0.68 : 0.65,
     clearcoat: hero ? 0.74 : 0.68,
     clearcoatRoughness: hero ? 0.17 : 0.23,
     envMapIntensity: hero ? 0.42 : 0.48,
@@ -68,7 +68,7 @@ export function glassPaint(color = 0x1b5479): THREE.MeshPhysicalMaterial {
   return new THREE.MeshPhysicalMaterial({
     map: atlas.albedo,
     roughnessMap: atlas.roughness,
-    color, metalness: 0.25, roughness: 0.28, clearcoat: 0.75,
+    color, metalness: 0.25, roughness: 0.60, clearcoat: 0.75,
     clearcoatRoughness: 0.17, envMapIntensity: 0.42,
     emissive: 0x05131e,
   });
