@@ -248,6 +248,9 @@ export class Game {
       if (testHelicopter === 'patrol' || testHelicopter === 'ace') {
         this.air.spawn(0, testHelicopter, -34);
       }
+      if (new URLSearchParams(window.location.search).get('testHeadOn') === '1') {
+        this.traffic.push(new TrafficVehicle(this.scene, 0, -47, true, 0, 0xb93d53, 26, null, true));
+      }
     }
     this.lives = GAME_MODES[mode].lives;
     this.grace = mode === 'modern' ? 5 : 3;
@@ -707,6 +710,12 @@ export class Game {
   }
 
   private render(): void {
+    if (import.meta.env.DEV) {
+      // Minimal observable state for deterministic Playwright composition and
+      // moving-hitbox coverage. No debug DOM updates ship in production.
+      this.renderer.domElement.dataset.playerZ = this.player.z.toFixed(2);
+      this.renderer.domElement.dataset.headOn = this.traffic.some(car => car.oncoming) ? '1' : '0';
+    }
     const center = (z: number): number => this.road.centerAt(z);
     // Road tiles scroll around a stable reference Z. The interceptor itself
     // moves through that curved corridor as acceleration/braking changes Z.
