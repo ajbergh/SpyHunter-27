@@ -434,6 +434,11 @@ test('steering and brake lights remain WebGL-safe under cinematic neon driving',
 test('cinematic helicopter searchlight renders in neon with no WebGL errors', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
+  page.on('console', message => {
+    if (message.type() === 'error' && /WebGLProgram|shader|GL_INVALID_OPERATION/i.test(message.text())) {
+      errors.push(message.text());
+    }
+  });
   await page.goto('/?testDistance=3350&testHelicopter=ace');
   await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
   await page.locator('#quality-select').selectOption('high');
