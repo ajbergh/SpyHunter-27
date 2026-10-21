@@ -476,22 +476,41 @@ test('high-quality waterway renders pooled V-hull foam without WebGL errors', as
 test('classic speed control moves interceptor forward and backward inside the road view', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/?testDistance=140&testLane=6.4');
+  // With CI's SwiftShader WebGL, real-time seconds may have only a handful of
+  // frames. Advance the *same* fixed-step game simulation with real key state,
+  // then verify collision-space depth, not just an animation or a screenshot.
+  await page.goto('/?testDistance=140&testLane=6.4&testDrive=1');
   await page.getByRole('button', { name: /initiate pursuit/i }).click();
   const car = page.locator('#stage canvas');
   await expect(car).toBeVisible();
+  const advance = async (frames: number) => page.evaluate((ticks: number) => {
+    const win = window as Window & {
+      __spy27AdvanceDriving?: (frames: number) => {
+        z: number; speed: number; screen: string;
+      };
+    };
+    if (!win.__spy27AdvanceDriving) throw new Error('Development driving harness missing');
+    return win.__spy27AdvanceDriving(ticks);
+  }, frames);
   const initial = Number(await car.getAttribute('data-player-z'));
   await page.keyboard.down('w');
-  await page.waitForTimeout(2200);
+  const accelerated = await advance(210);
   await page.keyboard.up('w');
-  const forward = Number(await car.getAttribute('data-player-z'));
+  expect(accelerated.screen).toBe('playing');
+  expect(accelerated.speed).toBeGreaterThan(48);
+  const forward = accelerated.z;
   expect(forward).toBeLessThan(initial - 5);
+  await expect.poll(async () => Number(await car.getAttribute('data-player-z')))
+    .toBeLessThan(initial - 5);
   await page.screenshot({ path: 'test-results/arcade-driving-forward.png' });
   await page.keyboard.down('s');
-  await page.waitForTimeout(2400);
+  const braked = await advance(180);
   await page.keyboard.up('s');
-  const backward = Number(await car.getAttribute('data-player-z'));
-  expect(backward).toBeGreaterThan(forward + 7);
+  expect(braked.screen).toBe('playing');
+  expect(braked.speed).toBeLessThan(14);
+  expect(braked.z).toBeGreaterThan(forward + 7);
+  await expect.poll(async () => Number(await car.getAttribute('data-player-z')))
+    .toBeGreaterThan(forward + 7);
   await page.screenshot({ path: 'test-results/arcade-driving-rearward.png' });
   expect(errors).toEqual([]);
 });
