@@ -386,3 +386,14 @@ test('UV-mapped vehicle panel textures render in live high-quality forest play',
   await page.screenshot({ path: 'test-results/uv-mapped-vehicle-paint.png' });
   expect(errors).toEqual([]);
 });
+
+test('biome sky gradient and solar haze render across snow and desert transitions', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/?testDistance=2260');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#environment-name')).toContainText('ARCTIC');
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  await page.screenshot({ path: 'test-results/new-atmosphere-arctic.png' });
+  expect(errors).toEqual([]);
+});

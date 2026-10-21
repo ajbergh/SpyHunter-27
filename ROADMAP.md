@@ -201,3 +201,9 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [x] Two cached original vehicle PBR atlases (albedo, roughness, micro-bump) with deterministic panel seams, fasteners, carbon accents and subtle paint noise; shared across traffic instances.
 - [x] Cached windscreen detail atlas with restrained reflection bands, wiper arcs, edge trim and roughness variation across all 3D vehicles.
 - [ ] Artist-authored vehicle-specific texture sheets, UV seam correction, wear decals, high-resolution normal baking and controlled capture on target GPUs.
+
+### Phase 4 — Atmospheric sky increment (2026-10-21)
+
+- [x] One-draw-call original procedural sky sphere with distinct zenith, horizon and atmospheric haze palettes for forest, desert, snow, city and waterways, plus biome-specific solar disk intensity.
+- [x] Camera-relative rendering, smooth cross-biome sky gradients, and automated source and browser coverage.
+- [ ] Hand-authored sky textures/cloudscape layers, physically modeled atmosphere, detailed volumetric clouds and verified target-device composition.

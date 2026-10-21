@@ -15,6 +15,7 @@ import { BoatWake } from '../world/BoatWake';
 import { WaterHazards } from '../world/WaterHazards';
 import { Weather } from '../rendering/Weather';
 import { VisualDirector } from '../rendering/VisualDirector';
+import { SkyAtmosphere } from '../rendering/SkyAtmosphere';
 import { SpeedStreaks } from '../rendering/SpeedStreaks';
 import { HeadlightBeams } from '../rendering/HeadlightBeams';
 import { SkidTrails } from '../rendering/SkidTrails';
@@ -64,6 +65,7 @@ export class Game {
   private readonly waterHazards: WaterHazards;
   private readonly weather: Weather;
   private readonly visuals: VisualDirector;
+  private readonly sky: SkyAtmosphere;
   private readonly streaks: SpeedStreaks;
   private readonly headlights: HeadlightBeams;
   private readonly skidTrails: SkidTrails;
@@ -124,6 +126,7 @@ export class Game {
     this.camera.position.set(0, CAMERA_FRAME.height, CAMERA_FRAME.positionZ);
     this.camera.lookAt(0, 0, CAMERA_FRAME.targetZ);
     this.visuals = new VisualDirector(this.scene, this.renderer);
+    this.sky = new SkyAtmosphere(this.scene);
     this.road = new Road(this.scene);
     this.wake = new BoatWake(this.scene);
     this.waterHazards = new WaterHazards(this.scene);
@@ -368,6 +371,7 @@ export class Game {
     this.wake.step(dt, this.player.speed, this.player.x, this.player.isBoat);
     this.weather.step(dt, this.player.speed, this.road.biome);
     this.visuals.step(dt, this.road.biome, this.distance / 22, this.preferences.reducedMotion);
+    this.sky.step(dt, this.road.biome);
     this.distance += this.player.speed * dt;
     const bridge = bridgeAhead(this.distance);
     if (bridge && bridge.start !== this.bridgeWarnAt) {
@@ -713,6 +717,7 @@ export class Game {
       this.bloomPass.radius += (target.radius - this.bloomPass.radius) * blend;
       this.bloomPass.threshold += (target.threshold - this.bloomPass.threshold) * blend;
     }
+    this.sky.follow(this.camera);
     if (this.filmic) this.filmic.uniforms.uTime.value = performance.now() * 0.001;
     if (this.preferences.quality === 'high' && this.composer) this.composer.render();
     else this.renderer.render(this.scene, this.camera);
