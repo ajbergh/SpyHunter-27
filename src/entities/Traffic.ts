@@ -105,11 +105,17 @@ export class TrafficVehicle {
       this.mesh.rotation.z = approach(this.mesh.rotation.z, 0, 5, dt);
       this.mesh.rotation.y = approach(this.mesh.rotation.y, 0, 4, dt);
     } else if (this.rearPursuer && this.passingLane !== null &&
-               this.z <= playerZ - 18 && this.z > playerZ - 52) {
-      // A slow, telegraphed reentry only after the car has cleared the nose
-      // by eighteen road units. This threatens the lane, not an instant hit.
+               this.z <= playerZ - 18) {
+      // Once a flank passes the player by 18 units it stays in the forward
+      // screening phase until it exits the road. Do not accidentally fall
+      // through to ordinary 'intercept' AI at 52 units of separation, since
+      // that changes its warning and undermines the committed lane maneuver.
+      // Only approach the player's forward lane while the car is still close
+      // enough for an observable, avoidable cut-in.
       this.state = 'screening';
-      this.x = approach(this.x, clamp(playerX, -6.4, 6.4), 0.19, dt);
+      if (this.z > playerZ - 52) {
+        this.x = approach(this.x, clamp(playerX, -6.4, 6.4), 0.19, dt);
+      }
       this.mesh.rotation.z = approach(this.mesh.rotation.z, 0, 5, dt);
       this.mesh.rotation.y = approach(this.mesh.rotation.y, 0, 4, dt);
     } else if (this.hostile && this.z > playerZ - 59 && this.z < playerZ - 3) {
