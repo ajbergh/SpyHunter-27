@@ -609,3 +609,55 @@ test('rear pursuer approaches from behind and high gear provides a readable esca
   await page.screenshot({ path: 'test-results/rear-pursuit-escape-high.png' });
   expect(errors).toEqual([]);
 });
+
+test('rear adversary selects a safe flanking lane and advertises the later cut-in', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/?testDistance=1300&testDrive=1&testLane=0&testTail=1');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const canvas = page.locator('#stage canvas');
+  await expect(canvas).toBeVisible();
+  const advance = (frames: number) => page.evaluate(ticks => {
+    const game = window as Window & {
+      __spy27AdvanceDriving?: (n: number) => {
+        screen: string; rear: { x: number; z: number; state: string } | null;
+      };
+    };
+    if (!game.__spy27AdvanceDriving) throw new Error('Driving test bridge missing');
+    return game.__spy27AdvanceDriving(ticks);
+  }, frames);
+
+  const initial = await advance(1);
+  expect(initial.rear?.state).toBe('overtaking');
+  expect(initial.rear?.x).toBeLessThan(0);
+  const passing = await advance(55);
+  expect(passing.screen).toBe('playing');
+  expect(passing.rear?.state).toBe('overtaking');
+  expect(passing.rear?.x).toBeLessThan(-4);
+  await expect(page.locator('#tactic-status')).toContainText('REAR FLANK');
+  await page.screenshot({ path: 'test-results/rear-flank-side-pass.png' });
+
+  await page.keyboard.down('w');
+  // Do not sample at a fixed wall-clock duration or one arbitrary late frame:
+  // software WebGL varies in frame pacing. Observe the actual maneuver state
+  // through deterministic ten-step batches while throttle remains held.
+  let ahead = passing;
+  let enteredScreening = false;
+  for (let batch = 0; batch < 48; batch++) {
+    ahead = await advance(10);
+    if (ahead.rear?.state === 'screening') {
+      enteredScreening = true;
+      break;
+    }
+    if (ahead.screen !== 'playing' || ahead.rear === null) break;
+  }
+  await page.keyboard.up('w');
+  expect(ahead.screen).toBe('playing');
+  expect(enteredScreening).toBe(true);
+  expect(ahead.rear).not.toBeNull();
+  expect(ahead.rear!.z).toBeLessThan(0);
+  expect(ahead.rear!.state).toBe('screening');
+  await expect(page.locator('#tactic-status')).toContainText('CUT-IN AHEAD');
+  await page.screenshot({ path: 'test-results/rear-flank-forward-screen.png' });
+  expect(errors).toEqual([]);
+});

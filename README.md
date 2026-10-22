@@ -195,3 +195,11 @@ The interceptor can now be attacked from **both ends of the highway**. After the
 General traffic now obeys signed relative motion as well: slowing down allows faster cars to travel **up** the screen rather than unrealistically drifting toward the interceptor; accelerating and overtaking them pulls them back toward the screen bottom. This makes the new low/high transmission and moving collision body matter beyond presentation alone.
 
 Validation includes unit tests for relative velocity, active-pursuer gating, lane occupancy, water/fork exclusions, steering escape and smoke disruption, plus a deterministic Chromium capture of the rear threat warning and High-gear counterplay. Attack frequency, lane readability, real gamepad behavior, and live-skill balancing still require human playtests.
+
+### Staged rear-attack overtaking and cut-in (2026-10-21)
+
+Rear pursuers no longer simply aim for the interceptor's current lane. When a pursuer approaches from behind, the fixed-step AI first looks for an unoccupied **adjacent passing lane**, keeps the player's current lane clear, and commits to its choice. If both side lanes are occupied by civilians or hostiles, the new flank is withheld instead of executing an impossible side-swipe. Once committed, the attacker remains in that lane even if the player steers across the road; movement into the passing lane is eased, not instantaneous.
+
+After safely passing the interceptor by at least **18 road-space units**, a surviving flanker can attempt a deliberately slow **forward cut-in**, creating a new ahead-of-player threat. The tactical overlay distinguishes **REAR PURSUIT**, **REAR FLANK**, and **CUT-IN AHEAD**, with clear steering/braking counterplay. No new flank maneuver is ordered while the route is divided, the support van is present, or the player is in a speedboat. Smoke/oil disruption interrupts steering without changing the real collision hitbox.
+
+Unit coverage exercises vacant/occupied flank lanes, threat proximity bounds, committed lane behavior, delayed cut-in, disruption, and fallback tracking. Playwright exercises the real simulation and captures two development-only WebGL acceptance screenshots. This remains an arcade-inspired enemy maneuver, not a reconstruction of the exact 1983 original's AI rules; gameplay tuning and physical-device review remain pending.

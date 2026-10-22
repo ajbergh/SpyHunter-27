@@ -316,15 +316,19 @@ export class Interface {
     this.get('enemy-round-count').textContent = String(enemyRounds).padStart(2, '0');
   }
 
-  tactics(pincer: boolean, retreat = false, rearPursuit = false): void {
+  tactics(pincer: boolean, retreat = false, rearPursuit = false,
+    overtaking = false, screening = false): void {
     const label = this.get('tactic-status');
     label.hidden = !(pincer || retreat || rearPursuit);
     label.querySelector('b')!.textContent =
-      pincer ? 'PINCER' : rearPursuit ? 'REAR PURSUIT' : 'RETREAT';
+      pincer ? 'PINCER' : screening ? 'CUT-IN AHEAD'
+        : overtaking ? 'REAR FLANK' : rearPursuit ? 'REAR PURSUIT' : 'RETREAT';
     label.querySelector('small')!.textContent =
-      pincer ? 'OPEN CENTER CORRIDOR'
-        : rearPursuit ? 'SHIFT HIGH OR CHANGE LANES'
-          : 'SURVIVORS BREAKING OFF';
+      pincer ? 'OPEN CENTER CORRIDOR' :
+        screening ? 'BRAKE OR CHANGE LANES' :
+          overtaking ? 'SIDE LANE PASS — STAY CLEAR' :
+            rearPursuit ? 'SHIFT HIGH OR CHANGE LANES'
+              : 'SURVIVORS BREAKING OFF';
   }
 
   route(side: RouteSide | null, leftCompleted: number, rightCompleted: number): void {

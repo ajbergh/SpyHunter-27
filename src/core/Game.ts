@@ -23,6 +23,7 @@ import { CAMERA_FRAME, cinematicFov } from '../rendering/CameraFraming';
 import { Player } from '../entities/Player';
 import { TrafficVehicle } from '../entities/Traffic';
 import { planRearPursuit } from '../gameplay/RearPursuitDirector';
+import { planRearFlank } from '../gameplay/RearFlankDirector';
 import { Projectiles } from '../combat/Projectiles';
 import { SpecialWeapons, type WeaponKind } from '../combat/SpecialWeapons';
 import { AirThreats, Helicopter } from '../combat/AirThreats';
@@ -164,6 +165,7 @@ export class Game {
       type TestWindow = Window & {
         __spy27AdvanceDriving?: (frames: number) => {
           z: number; speed: number; screen: Screen;
+          rear: { x: number; z: number; state: string } | null;
         };
       };
       (window as TestWindow).__spy27AdvanceDriving = (frames: number) => {
@@ -171,7 +173,9 @@ export class Game {
           Math.min(360, Math.max(0, Math.floor(frames))) : 0;
         for (let i = 0; i < count; i++) this.update(1 / 60);
         this.renderer.domElement.dataset.playerZ = this.player.z.toFixed(2);
-        return { z: this.player.z, speed: this.player.speed, screen: this.screen };
+        const rear = this.traffic.find(car => car.rearPursuer);
+        return { z: this.player.z, speed: this.player.speed, screen: this.screen,
+          rear: rear ? { x: rear.x, z: rear.z, state: rear.state } : null };
       };
     }
     this.loop.start();
@@ -573,11 +577,19 @@ export class Game {
       this.player.isBoat || splitMedianHalfWidth(this.distance) > 0.1);
     const pincerActive = [...squadOrders.values()].some(order => order.type === 'pincer');
     const retreatActive = [...squadOrders.values()].some(order => order.type === 'retreat');
-    this.ui.tactics(pincerActive, retreatActive,
-      this.traffic.some(car => car.role === 'rear-pursuer' && car.z > this.player.z - 8));
+    const rear = this.traffic.find(car => car.rearPursuer && car.hp > 0);
+    const forbidFlank = this.player.isBoat ||
+      splitMedianHalfWidth(this.distance + 30) > 0.1 || this.routes.side !== null ||
+      this.van.mesh.visible || this.dockingTimer > 0;
+    const flank = rear ? planRearFlank(
+      this.traffic, rear, this.player.x, this.player.z, forbidFlank,
+    ) : null;
     for (const car of this.traffic) {
       const wasRetreating = car.state === 'retreating';
-      car.step(dt, this.player.speed, this.player.x, squadOrders.get(car), this.player.z);
+      const order = car === rear && flank
+        ? { type: 'overtake' as const, targetX: flank.targetX }
+        : squadOrders.get(car);
+      car.step(dt, this.player.speed, this.player.x, order, this.player.z);
       if (!wasRetreating && car.state === 'retreating')
         this.announce('ENEMY SQUAD BROKEN — SURVIVOR DISENGAGING');
       if (splitDangerous(this.distance - car.z, car.x, car.halfWidth)) {
@@ -589,6 +601,12 @@ export class Game {
         this.flash(car.x, car.z + car.halfLength, 0.14, 0xff563b);
       }
     }
+    // The HUD must reflect the post-step state of the same simulated frame:
+    // a fixed-step browser harness (and real play) can cross the overtake /
+    // screening boundary without waiting for an additional rendered frame.
+    this.ui.tactics(pincerActive, retreatActive,
+      rear !== undefined && rear.hp > 0 && rear.z > this.player.z - 55,
+      rear?.state === 'overtaking', rear?.state === 'screening');
     if (this.enemyShots.step(dt, this.player.speed, this.player.hitbox()) > 0) {
       this.damagePlayer('ENFORCER WEAPON IMPACT');
     }
@@ -785,6 +803,7 @@ export class Game {
       this.renderer.domElement.dataset.playerZ = this.player.z.toFixed(2);
       this.renderer.domElement.dataset.headOn = this.traffic.some(car => car.oncoming) ? '1' : '0';
       this.renderer.domElement.dataset.rearPursuit = this.traffic.some(car => car.rearPursuer) ? '1' : '0';
+      this.renderer.domElement.dataset.rearState = this.traffic.find(car => car.rearPursuer)?.state ?? 'none';
     }
     const center = (z: number): number => this.road.centerAt(z);
     // Road tiles scroll around a stable reference Z. The interceptor itself
