@@ -5,10 +5,12 @@
 export class CameraImpact {
   private intensity = 0;
   private phase = 0;
+  private contactSide = 0;
 
-  hit(strength = 1): void {
+  hit(strength = 1, side = 0): void {
     if (!Number.isFinite(strength) || strength <= 0) return;
     this.intensity = Math.min(1.5, this.intensity + Math.min(1, strength));
+    this.contactSide = Number.isFinite(side) ? Math.max(-1, Math.min(1, side)) : 0;
     this.phase = 0.9;
   }
 
@@ -22,8 +24,8 @@ export class CameraImpact {
   }
 
   get lift(): number { return Math.sin(this.phase) * this.intensity * 0.20; }
-  get roll(): number { return Math.cos(this.phase) * this.intensity * 0.012; }
+  get roll(): number { return this.intensity * (Math.cos(this.phase) * 0.005 + this.contactSide * 0.006); }
   get active(): boolean { return this.intensity > 0; }
 
-  reset(): void { this.intensity = 0; this.phase = 0; }
+  reset(): void { this.intensity = 0; this.phase = 0; this.contactSide = 0; }
 }
