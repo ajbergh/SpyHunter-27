@@ -10,6 +10,7 @@ export interface ObservedVehicle {
 
 export interface CombatCue {
   readonly direction: ThreatDirection;
+  readonly formationActive: boolean;
   /** True only if the middle corridor is unoccupied by ANY living traffic. */
   readonly centerClear: boolean;
   /** Only show the roadway guide for the deliberate two-car formation. */
@@ -21,7 +22,7 @@ export function combatCue(
   traffic: readonly ObservedVehicle[], playerZ: number,
   crossPressure: boolean, boat: boolean,
 ): CombatCue {
-  if (boat) return { direction: 'none', centerClear: false, guideCenter: false };
+  if (boat) return { direction: 'none', formationActive: false, centerClear: false, guideCenter: false };
   let front = false;
   let rear = false;
   let centerClear = true;
@@ -39,7 +40,8 @@ export function combatCue(
   }
   const direction: ThreatDirection = front && rear ? 'both'
     : front ? 'front' : rear ? 'rear' : 'none';
-  return { direction, centerClear, guideCenter: crossPressure && centerClear };
+  return { direction, formationActive: crossPressure, centerClear,
+    guideCenter: crossPressure && centerClear };
 }
 
 /** The one-shot cue must not spam each 60-Hz simulation update. */
