@@ -246,4 +246,23 @@ describe('enforcer AI', () => {
     expect(scene.children).toHaveLength(0);
   });
 
+
+  it('shows partial hostile damage immediately and observes damage dealt by special weapons', () => {
+    const scene = new THREE.Scene();
+    const car = new TrafficVehicle(scene, 0, -24, true, 2, 0x974453, 10);
+    expect(car.hp).toBe(4);
+    expect(car.damageFeedback.materialCount).toBeGreaterThan(0);
+    car.hp--;
+    car.recordImpact();
+    expect(car.damageFeedback.flashing).toBe(true);
+    for (let i = 0; i < 60; i++) car.step(1 / 60, 25, 0);
+    expect(car.damageFeedback.flashing).toBe(false);
+    car.hp--; // Direct damage from splash/special weapons is observed next step.
+    car.step(1 / 60, 25, 0);
+    expect(car.damageFeedback.flashing).toBe(true);
+    expect(car.hitbox().halfWidth).toBe(1.4);
+    car.dispose(scene);
+    expect(scene.children).toHaveLength(0);
+  });
+
 });
