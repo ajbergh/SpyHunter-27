@@ -661,3 +661,44 @@ test('rear adversary selects a safe flanking lane and advertises the later cut-i
   await page.screenshot({ path: 'test-results/rear-flank-forward-screen.png' });
   expect(errors).toEqual([]);
 });
+
+test('cross-pressure ambush preserves a visible center escape corridor under WebGL', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.goto('/?testDistance=1300&testDrive=1&testLane=0&testCrossPressure=1');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const canvas = page.locator('#stage canvas');
+  await expect(canvas).toBeVisible();
+  const advance = (frames: number) => page.evaluate(ticks => {
+    const runtime = window as Window & {
+      __spy27AdvanceDriving?: (count: number) => {
+        screen: string;
+        cross: { frontX: number; frontZ: number; rearX: number; rearZ: number } | null;
+        rear: { x: number; z: number; state: string } | null;
+      };
+    };
+    if (!runtime.__spy27AdvanceDriving) throw new Error('Driving test hook unavailable');
+    return runtime.__spy27AdvanceDriving(ticks);
+  }, frames);
+
+  const entry = await advance(1);
+  expect(entry.screen).toBe('playing');
+  expect(entry.cross).not.toBeNull();
+  expect(entry.cross!.frontX).toBe(-6.4);
+  expect(entry.cross!.rearX).toBe(6.4);
+  await expect(page.locator('#tactic-status')).toBeVisible();
+  await expect(page.locator('#tactic-status')).toContainText('CROSS PRESSURE');
+  await expect(page.locator('#tactic-status')).toContainText('CENTER LANE OPEN');
+  await page.screenshot({ path: 'test-results/cross-pressure-two-direction-warning.png' });
+
+  const after = await advance(90);
+  expect(after.screen).toBe('playing');
+  expect(after.cross).not.toBeNull();
+  expect(after.cross!.frontX).toBeCloseTo(-6.4, 2);
+  expect(after.cross!.rearX).toBeCloseTo(6.4, 2);
+  expect(after.cross!.frontZ).toBeGreaterThan(entry.cross!.frontZ);
+  expect(after.cross!.rearZ).toBeLessThan(entry.cross!.rearZ);
+  expect(after.rear?.state).toBe('pressuring');
+  await expect(page.locator('#tactic-status')).toContainText('CENTER LANE OPEN');
+  expect(errors).toEqual([]);
+});
