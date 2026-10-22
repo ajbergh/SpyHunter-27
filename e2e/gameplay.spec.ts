@@ -575,3 +575,37 @@ test('manual gear shift is edge-triggered and can be rebound from settings', asy
   await expect(page.locator('[data-action="gear"] strong')).toHaveText('Z');
   expect(errors).toEqual([]);
 });
+
+test('rear pursuer approaches from behind and high gear provides a readable escape', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('console', msg => {
+    if (msg.type() === 'error' && /WebGLProgram|shader|GL_INVALID_OPERATION/i.test(msg.text()))
+      errors.push(msg.text());
+  });
+  await page.goto('/?testDistance=700&testDrive=1&testLane=-6.4&testTail=1');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const canvas = page.locator('#stage canvas');
+  await expect(canvas).toBeVisible();
+  const advance = (frames: number) => page.evaluate(ticks => {
+    const runtime = window as Window & { __spy27AdvanceDriving?: (frames: number) => unknown };
+    if (!runtime.__spy27AdvanceDriving) throw new Error('Driving test bridge missing');
+    return runtime.__spy27AdvanceDriving(ticks);
+  }, frames);
+  await advance(1);
+  await expect(page.locator('#tactic-status')).toBeVisible();
+  await expect(page.locator('#tactic-status')).toContainText('REAR PURSUIT');
+  await expect(canvas).toHaveAttribute('data-rear-pursuit', '1');
+  await page.screenshot({ path: 'test-results/rear-pursuit-interceptor-low.png' });
+  await page.keyboard.down('g');
+  await advance(1);
+  await page.keyboard.up('g');
+  await page.keyboard.down('w');
+  await advance(250);
+  await page.keyboard.up('w');
+  await expect(page.locator('#drive-gear')).toHaveText('HIGH');
+  const speed = Number((await page.locator('#speed').textContent()) ?? '0');
+  expect(speed).toBeGreaterThan(105);
+  await page.screenshot({ path: 'test-results/rear-pursuit-escape-high.png' });
+  expect(errors).toEqual([]);
+});
