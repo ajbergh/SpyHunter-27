@@ -34,6 +34,7 @@ import { AirThreats, Helicopter } from '../combat/AirThreats';
 import { EnemyProjectiles } from '../combat/EnemyProjectiles';
 import { Interface, type Screen } from '../ui/Interface';
 import { AudioManager } from '../audio/Audio';
+import type { EngineToneProfile } from '../audio/EngineResponse';
 import { Scoring } from '../gameplay/Scoring';
 import { GAME_MODES, type GameMode } from '../gameplay/GameModes';
 import { loadPreferences, type GamePreferences } from '../gameplay/Settings';
@@ -179,6 +180,7 @@ export class Game {
           z: number; speed: number; screen: Screen;
           rear: { x: number; z: number; state: string } | null;
           cameraLift: number; cameraRoll: number;
+          audioTone: EngineToneProfile | null;
           cross: { frontX: number; frontZ: number; rearX: number; rearZ: number } | null;
           beaconVisible: boolean;
         };
@@ -192,6 +194,7 @@ export class Game {
         const cross = this.crossPressure;
         return { z: this.player.z, speed: this.player.speed, screen: this.screen,
           cameraLift: this.cameraImpact.lift, cameraRoll: this.cameraImpact.roll,
+          audioTone: this.audio.toneProfile,
           rear: rear ? { x: rear.x, z: rear.z, state: rear.state } : null,
           cross: cross ? { frontX: cross.front.x, frontZ: cross.front.z,
             rearX: cross.rear.x, rearZ: cross.rear.z } : null,
@@ -428,9 +431,10 @@ export class Game {
       const gear = this.player.shiftGear();
       if (gear !== null) {
         this.announce(gear === 'high' ? 'HIGH GEAR ENGAGED — FULL SPEED' : 'LOW GEAR ENGAGED — FAST ACCELERATION');
-        this.audio.confirm();
+        this.audio.shift(gear);
       }
     }
+    const speedBeforeAudio = this.player.speed;
     this.player.step(dt, controls, this.road.biome, GAME_MODES[this.mode].speedScale,
       this.preferences.reducedMotion);
     this.cameraImpact.step(dt, this.preferences.reducedMotion);
@@ -780,7 +784,10 @@ export class Game {
     }
     this.stepExplosions(dt);
     this.audio.step(dt, this.player.speed,
-      this.traffic.length + this.air.helicopters.length * 2, this.player.isBoat, this.road.biome);
+      this.traffic.length + this.air.helicopters.length * 2, this.player.isBoat, this.road.biome,
+      { gear: this.player.gear, throttle: controls.throttle, brake: controls.brake,
+        steer: controls.steer, acceleration: dt > 0
+          ? (this.player.speed - speedBeforeAudio) / dt : 0 });
     if (this.toastClock > 0) {
       this.toastClock -= dt;
       if (this.toastClock <= 0) this.ui.message('');
