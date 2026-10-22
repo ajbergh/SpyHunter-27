@@ -782,3 +782,56 @@ test('real collision produces bounded recoil and reduced motion keeps the camera
   expect(motionFree.cameraRoll).toBe(0);
   expect(errors).toEqual([]);
 });
+
+test('engine synthesis responds to real throttle, shifting, braking and biome changes', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  const advance = (frames: number) => page.evaluate(n => {
+    const game = window as Window & {
+      __spy27AdvanceDriving?: (count: number) => {
+        screen: string;
+        audioTone: { engineHz: number; textureHz: number; textureGain: number;
+          filterHz: number; engineGain: number } | null;
+      };
+    };
+    if (!game.__spy27AdvanceDriving) throw new Error('Driving test bridge missing');
+    return game.__spy27AdvanceDriving(n);
+  }, frames);
+
+  await page.goto('/?testDistance=140&testDrive=1');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  const idle = await advance(1);
+  expect(idle.screen).toBe('playing');
+  expect(idle.audioTone).not.toBeNull();
+
+  await page.keyboard.down('w');
+  const loaded = await advance(95);
+  expect(loaded.audioTone!.engineHz).toBeGreaterThan(idle.audioTone!.engineHz);
+  expect(loaded.audioTone!.engineGain).toBeGreaterThan(idle.audioTone!.engineGain);
+  await page.keyboard.down('g');
+  await advance(1);
+  await page.keyboard.up('g');
+  const high = await advance(1);
+  expect(high.audioTone!.engineHz).toBeLessThan(loaded.audioTone!.engineHz);
+  await page.keyboard.up('w');
+  await page.keyboard.down('s');
+  const braking = await advance(35);
+  await page.keyboard.up('s');
+  expect(braking.audioTone!.engineHz).toBeLessThan(high.audioTone!.engineHz);
+  await page.screenshot({ path: 'test-results/engine-load-and-gear.png' });
+
+  await page.goto('/?testDistance=2350&testDrive=1');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const snow = await advance(1);
+  expect(snow.screen).toBe('playing');
+  expect(snow.audioTone!.textureHz).toBeGreaterThan(idle.audioTone!.textureHz);
+  expect(snow.audioTone!.textureGain).toBeGreaterThan(0);
+
+  await page.goto('/?testDistance=4350&testDrive=1');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const water = await advance(1);
+  expect(water.screen).toBe('playing');
+  expect(water.audioTone!.textureGain).toBeGreaterThan(idle.audioTone!.textureGain);
+  expect(errors).toEqual([]);
+});
