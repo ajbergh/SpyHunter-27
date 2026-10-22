@@ -782,3 +782,79 @@ test('real collision produces bounded recoil and reduced motion keeps the camera
   expect(motionFree.cameraRoll).toBe(0);
   expect(errors).toEqual([]);
 });
+
+test('spring chassis animates throttle, braking and steering but stops under Reduced Motion', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  const advance = (frames: number) => page.evaluate(n => {
+    const game = window as Window & {
+      __spy27AdvanceDriving?: (count: number) => {
+        screen: string; chassisPitch: number; chassisRoll: number; chassisHeave: number;
+      };
+    };
+    if (!game.__spy27AdvanceDriving) throw new Error('Driving bridge missing');
+    return game.__spy27AdvanceDriving(n);
+  }, frames);
+
+  await page.goto('/?testDrive=1');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  await page.keyboard.down('w');
+  const accelerating = await advance(40);
+  await page.keyboard.up('w');
+  expect(accelerating.screen).toBe('playing');
+  expect(accelerating.chassisPitch).toBeGreaterThan(0);
+  expect(accelerating.chassisHeave).toBeLessThanOrEqual(0);
+  await page.keyboard.down('d');
+  const turning = await advance(34);
+  await page.keyboard.up('d');
+  expect(turning.chassisRoll).toBeLessThan(-0.01);
+  await page.screenshot({ path: 'test-results/chassis-suspension-cornering.png' });
+  await page.keyboard.down('s');
+  const braking = await advance(35);
+  await page.keyboard.up('s');
+  expect(braking.chassisPitch).toBeLessThan(-0.01);
+
+  await page.evaluate(() => localStorage.setItem('spyhunter27-settings',
+    JSON.stringify({ reducedMotion: true })));
+  await page.reload();
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await page.keyboard.down('w');
+  const still = await advance(40);
+  await page.keyboard.up('w');
+  expect(still.chassisPitch).toBe(0);
+  expect(still.chassisRoll).toBe(0);
+  expect(still.chassisHeave).toBe(0);
+  expect(errors).toEqual([]);
+});
+
+test('left and right impact fixtures bias recoil without disturbing the player', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  const advance = (frames: number) => page.evaluate(n => {
+    const game = window as Window & {
+      __spy27AdvanceDriving?: (count: number) => {
+        screen: string; z: number; cameraLift: number; cameraRoll: number;
+      };
+    };
+    if (!game.__spy27AdvanceDriving) throw new Error('Driving bridge missing');
+    return game.__spy27AdvanceDriving(n);
+  }, frames);
+
+  await page.goto('/?testDrive=1&testImpact=1&testImpactSide=left');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const left = await advance(1);
+  expect(left.screen).toBe('playing');
+  expect(left.cameraRoll).toBeLessThan(0);
+  await page.goto('/?testDrive=1&testImpact=1&testImpactSide=right');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const right = await advance(1);
+  expect(right.screen).toBe('playing');
+  expect(right.cameraRoll).toBeGreaterThan(0);
+  expect(left.z).toBe(right.z);
+  expect(left.cameraLift).toBe(right.cameraLift);
+  await page.screenshot({ path: 'test-results/directional-collision-feedback.png' });
+  const settled = await advance(140);
+  expect(settled.cameraRoll).toBe(0);
+  expect(errors).toEqual([]);
+});
