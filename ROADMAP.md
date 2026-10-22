@@ -297,3 +297,13 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [x] Handle immediate machine-gun impacts and deferred HP changes from special weapons.
 - [x] Unit and deterministic Chromium regression coverage, including real guarded collision and Reduced Motion.
 - [ ] Add directional collision-specific camera recoil, physical suspension loading, authored paint cracks/dent geometry, richer skid/audio mix and long-session hardware playtest.
+
+### Interceptor suspension and directional recoil (2026-10-22)
+
+- [x] Build three bounded fixed-step cosmetic suspension springs for nose pitch, side roll and body squat from measured acceleration, brake command and steering.
+- [x] Keep hitbox, wheel hub steering, car world coordinates, driving acceleration and projectile trajectory untouched.
+- [x] Reset all spring pose and velocities at new mission, boat transfer and Reduced Motion; preserve existing brake lamps.
+- [x] Add left/right collision roll bias to the existing camera impulse without exceeding the prior movement envelope, including guardrail/median/vehicle contact attribution.
+- [x] Unit tests for exact bounds, deterministic replay, re-centering and reduced-motion guarantees.
+- [x] Chromium regression on live throttle, brake, steer input and directional impact fixtures.
+- [ ] Finalize controller/real-GPU road feel and compare accessibility with Reduced Motion; pursue richer vehicle suspension models, engine/load acoustics and art-directed damaged parts.
