@@ -19,6 +19,8 @@ import { SkyAtmosphere } from '../rendering/SkyAtmosphere';
 import { SpeedStreaks } from '../rendering/SpeedStreaks';
 import { HeadlightBeams } from '../rendering/HeadlightBeams';
 import { SkidTrails } from '../rendering/SkidTrails';
+import { EscapeLaneBeacon } from '../rendering/EscapeLaneBeacon';
+import { combatCue, shouldSoundThreat, type ThreatDirection } from '../gameplay/CombatReadability';
 import { CAMERA_FRAME, cinematicFov } from '../rendering/CameraFraming';
 import { Player } from '../entities/Player';
 import { TrafficVehicle } from '../entities/Traffic';
@@ -72,6 +74,7 @@ export class Game {
   private readonly streaks: SpeedStreaks;
   private readonly headlights: HeadlightBeams;
   private readonly skidTrails: SkidTrails;
+  private readonly escapeLane: EscapeLaneBeacon;
   private readonly player: Player;
   private readonly bullets: Projectiles;
   private readonly specials: SpecialWeapons;
@@ -114,6 +117,8 @@ export class Game {
   private survivalSeconds = 0;
   private roundsFired = 0;
   private roundsHit = 0;
+  private contactDirection: ThreatDirection = 'none';
+  private contactAlertClock = 0;
 
   constructor(host: HTMLElement) {
     this.ui = new Interface(host);
@@ -142,6 +147,7 @@ export class Game {
     this.streaks = new SpeedStreaks(this.scene);
     this.headlights = new HeadlightBeams(this.scene);
     this.skidTrails = new SkidTrails(this.scene);
+    this.escapeLane = new EscapeLaneBeacon(this.scene);
     this.player = new Player(this.scene);
     this.bullets = new Projectiles(this.scene);
     this.specials = new SpecialWeapons(this.scene);
@@ -210,6 +216,7 @@ export class Game {
     this.streaks.setPreferences(settings.quality, settings.reducedMotion);
     this.headlights.setQuality(settings.quality);
     this.skidTrails.setQuality(settings.quality);
+    this.escapeLane.setPreferences(settings.quality, settings.reducedMotion);
     this.wake.setQuality(settings.quality);
     const ratio = settings.quality === 'low' ? 1 : settings.quality === 'high' ? 2 : 1.5;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, ratio));
@@ -255,6 +262,7 @@ export class Game {
     this.waterHazards.reset();
     this.streaks.reset();
     this.skidTrails.reset();
+    this.escapeLane.reset();
     this.headlights.step('forest', false);
     this.player.reset();
     this.scoring.reset();
@@ -323,9 +331,15 @@ export class Game {
     this.survivalSeconds = 0;
     this.roundsFired = 0;
     this.roundsHit = 0;
+    this.contactDirection = 'none';
+    this.contactAlertClock = 0;
     this.ui.message('');
     this.screen = 'playing';
     this.ui.show(this.screen);
+    this.ui.combatStatus({
+      direction: 'none', formationActive: false,
+      centerClear: false, guideCenter: false,
+    });
     this.refreshHUD();
     this.audio.confirm();
   }
@@ -642,6 +656,16 @@ export class Game {
       rear !== undefined && rear.hp > 0 && rear.z > this.player.z - 55,
       rear?.state === 'overtaking', rear?.state === 'screening',
       this.crossPressure !== null);
+    const cue = combatCue(this.traffic, this.player.z,
+      this.crossPressure !== null, this.player.isBoat);
+    this.ui.combatStatus(cue);
+    this.escapeLane.step(dt, cue.guideCenter, this.player.isBoat);
+    this.contactAlertClock = Math.max(0, this.contactAlertClock - dt);
+    if (shouldSoundThreat(this.contactDirection, cue.direction, this.contactAlertClock)) {
+      this.audio.contact(cue.direction);
+      this.contactAlertClock = 3.5;
+    }
+    this.contactDirection = cue.direction;
     if (this.enemyShots.step(dt, this.player.speed, this.player.hitbox()) > 0) {
       this.damagePlayer('ENFORCER WEAPON IMPACT');
     }
@@ -889,6 +913,7 @@ export class Game {
     this.streaks.renderAt(center);
     this.headlights.renderAt(center, this.player.x, this.player.z);
     this.skidTrails.renderAt(center);
+    this.escapeLane.renderAt(center, this.player.z);
     this.van.mesh.position.x = 6.4 + center(this.van.mesh.position.z);
     if (this.bloomPass) {
       const target = highlightBloom(this.road.biome);
