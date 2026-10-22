@@ -5,7 +5,7 @@ import { VehicleMotionRig } from './VehicleMotion';
 import type { SquadOrder } from '../gameplay/SquadTactics';
 
 export type EnemyRole = 'civilian' | 'interceptor' | 'weaver' | 'blocker' | 'enforcer' | 'motorcycle' | 'boat' | 'switchblade' | 'head-on' | 'rear-pursuer';
-export type EnemyState = 'approach' | 'intercept' | 'disrupted' | 'spinning' | 'retreating' | 'pursuing';
+export type EnemyState = 'approach' | 'intercept' | 'disrupted' | 'spinning' | 'retreating' | 'pursuing' | 'overtaking' | 'screening';
 
 export class TrafficVehicle {
   readonly mesh: THREE.Group;
@@ -27,6 +27,7 @@ export class TrafficVehicle {
   private spinTimer = 0;
   private disruption = 0;
   private spinDirection: number;
+  private passingLane: number | null = null;
 
   constructor(scene: THREE.Scene, x: number, z: number, hostile: boolean, variant: number, color: number, speed: number, squadId: number | null = null, oncoming = false, rearPursuer = false) {
     this.squadId = squadId;
@@ -92,11 +93,23 @@ export class TrafficVehicle {
       this.x = approach(this.x, order?.targetX ?? escapeSide, 2.4, dt);
       this.mesh.rotation.z = approach(this.mesh.rotation.z, 0, 5, dt);
       this.mesh.rotation.y = approach(this.mesh.rotation.y, 0, 4, dt);
-    } else if (this.rearPursuer && this.z > playerZ + 5 && this.z < playerZ + 48) {
-      this.state = 'pursuing';
-      // Predictable, slow lane correction gives the driver a real steering
-      // escape. Smoke and oil suppress pursuit via the disruption branch.
-      this.x = approach(this.x, clamp(playerX, -6.4, 6.4), 0.45, dt);
+    } else if (this.rearPursuer && this.z > playerZ - 18 && this.z < playerZ + 48) {
+      // Commit to one safe passing lane when first given a flank order.
+      // Never dynamically follow a dodging player across multiple lanes.
+      if (this.passingLane === null && order?.type === 'overtake')
+        this.passingLane = order.targetX;
+      this.state = this.passingLane === null ? 'pursuing' : 'overtaking';
+      this.x = approach(this.x,
+        this.passingLane ?? clamp(playerX, -6.4, 6.4),
+        this.passingLane === null ? 0.45 : 1.65, dt);
+      this.mesh.rotation.z = approach(this.mesh.rotation.z, 0, 5, dt);
+      this.mesh.rotation.y = approach(this.mesh.rotation.y, 0, 4, dt);
+    } else if (this.rearPursuer && this.passingLane !== null &&
+               this.z <= playerZ - 18 && this.z > playerZ - 52) {
+      // A slow, telegraphed reentry only after the car has cleared the nose
+      // by eighteen road units. This threatens the lane, not an instant hit.
+      this.state = 'screening';
+      this.x = approach(this.x, clamp(playerX, -6.4, 6.4), 0.19, dt);
       this.mesh.rotation.z = approach(this.mesh.rotation.z, 0, 5, dt);
       this.mesh.rotation.y = approach(this.mesh.rotation.y, 0, 4, dt);
     } else if (this.hostile && this.z > playerZ - 59 && this.z < playerZ - 3) {
