@@ -24,7 +24,7 @@ export class CameraImpact {
   }
 
   get lift(): number { return Math.sin(this.phase) * this.intensity * 0.20; }
-  get roll(): number { return this.intensity * (Math.cos(this.phase) * 0.005 + this.contactSide * 0.006); }
+  get roll(): number { return this.intensity === 0 ? 0 : this.intensity * (Math.cos(this.phase) * 0.005 + this.contactSide * 0.006); }
   get active(): boolean { return this.intensity > 0; }
 
   reset(): void { this.intensity = 0; this.phase = 0; this.contactSide = 0; }
