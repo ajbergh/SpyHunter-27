@@ -337,6 +337,13 @@ export class Interface {
     escape.dataset.safe = String(cue.guideCenter);
     const escapeLabel = cue.guideCenter ? 'CENTER CORRIDOR CLEAR' : 'CENTER CORRIDOR BLOCKED';
     if (escape.textContent !== escapeLabel) escape.textContent = escapeLabel;
+    if (cue.formationActive) {
+      const tacticHint = this.get('tactic-status').querySelector('small');
+      if (tacticHint) {
+        const hint = cue.guideCenter ? 'CENTER LANE OPEN' : 'CENTER LANE BLOCKED';
+        if (tacticHint.textContent !== hint) tacticHint.textContent = hint;
+      }
+    }
   }
 
   threats(helicopters: number, enemyRounds: number): void {
@@ -353,7 +360,7 @@ export class Interface {
         screening ? 'CUT-IN AHEAD' :
           overtaking ? 'REAR FLANK' : rearPursuit ? 'REAR PURSUIT' : 'RETREAT';
     label.querySelector('small')!.textContent =
-      crossPressure ? 'WATCH CENTER CORRIDOR' :
+      crossPressure ? 'CENTER LANE OPEN' :
         pincer ? 'OPEN CENTER CORRIDOR' :
           screening ? 'BRAKE OR CHANGE LANES' :
             overtaking ? 'SIDE LANE PASS — STAY CLEAR' :
