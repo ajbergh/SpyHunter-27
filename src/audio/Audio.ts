@@ -114,7 +114,8 @@ export class AudioManager {
     drive: DriveSoundControls = {
       gear: 'low', throttle: false, brake: false, steer: 0, acceleration: 0,
     }): void {
-    this.lastTone = engineToneProfile(biome, speed, drive, inBoat);
+    const profile = engineToneProfile(biome, speed, drive, inBoat);
+    this.lastTone = profile;
     if (!this.context || this.context.state !== 'running') return;
     const currentBiome = inBoat ? 'water' : biome;
     if (currentBiome !== this.previousBiome) {
@@ -124,7 +125,6 @@ export class AudioManager {
     }
     const sound = SOUNDSCAPES[currentBiome];
     const now = this.context.currentTime;
-    const profile = this.lastTone;
     if (this.engine && this.engineGain && this.engineFilter) {
       this.engine.frequency.setTargetAtTime(profile.engineHz, now, 0.075);
       this.engineFilter.frequency.setTargetAtTime(profile.filterHz, now, 0.075);
