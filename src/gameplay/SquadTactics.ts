@@ -14,7 +14,8 @@ export interface SquadThreat {
 }
 export type SquadOrder =
   | { readonly type: 'pincer'; readonly targetX: number }
-  | { readonly type: 'retreat'; readonly targetX: number };
+  | { readonly type: 'retreat'; readonly targetX: number }
+  | { readonly type: 'overtake'; readonly targetX: number };
 
 const ELIGIBLE = new Set(['interceptor', 'switchblade', 'weaver', 'enforcer', 'motorcycle']);
 export const PINCER_HALF_SPREAD = 3.8;
