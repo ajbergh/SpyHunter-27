@@ -251,3 +251,11 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [x] Distinct HUD gear indicator, shift notification and explicit **BOAT** transmission mode; gear resets safely on restart and boat transformation.
 - [x] Unit gearbox, Player integration, settings migration and Chromium keyboard/gear persistence tests, including actual forward/rearward depth after shifting.
 - [ ] Verify original-cabinet speed curves/gear ratios, independent engine pitch and shift audio, gamepad hardware mappings, frame-time profiling, and manual collision/resupply balance across modes.
+
+### Rear chase and overtaking fidelity (2026-10-21)
+
+- [x] Restore signed, speed-correct relative traffic motion (cars overtake when player slows and are overtaken when player accelerates), without affecting head-on enemy velocity.
+- [x] Add isolated rear-attack encounters after progression with proper road-lane occupancy checks, fork/water/resupply exclusions, active-attacker limits, and bounded frequency.
+- [x] Give rear attackers a distinctive traffic role, faster pursuing velocity, readable rear tactical indicator and warning, restrained lane tracking, smoke/oil disruption and High-gear escape.
+- [x] Award small points for outrunning a tail, prevent indefinite behind-camera entities, and supply deterministic tests for encounter selection, speed mechanics, and GPU rendering.
+- [ ] Balance real-time catch-up windows, add bespoke rear-facing attack behaviors and stronger overtaking choreography, stage rear pursuit dynamically with chase cinematics, perform device-based lane-fairness and GPU QA.
