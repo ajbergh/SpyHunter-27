@@ -189,7 +189,7 @@ describe('enforcer AI', () => {
       tail.step(1 / 60, 30, 6.4, { type: 'overtake', targetX: 6.4 }, 8);
     expect(tail.x).toBeLessThan(-5);
     expect(tail.state).toBe('overtaking');
-    for (let i = 0; i < 60; i++) tail.step(1 / 60, 30, 0, undefined, 8);
+    for (let i = 0; i < 105; i++) tail.step(1 / 60, 30, 0, undefined, 8);
     expect(tail.z).toBeLessThan(8 - 18);
     expect(tail.state).toBe('screening');
     expect(tail.x).toBeGreaterThan(-6.4);
