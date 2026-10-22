@@ -745,3 +745,40 @@ test('combat radar and the in-world escape guide retract when civilians block ce
   await page.screenshot({ path: 'test-results/combat-radar-center-blocked.png' });
   expect(errors).toEqual([]);
 });
+
+test('real collision produces bounded recoil and reduced motion keeps the camera steady', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  const advance = (frames: number) => page.evaluate(ticks => {
+    const testWindow = window as Window & {
+      __spy27AdvanceDriving?: (count: number) => {
+        screen: string; cameraLift: number; cameraRoll: number;
+      };
+    };
+    if (!testWindow.__spy27AdvanceDriving) throw new Error('Driving fixture missing');
+    return testWindow.__spy27AdvanceDriving(ticks);
+  }, frames);
+
+  await page.goto('/?testDrive=1&testImpact=1');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  const hit = await advance(1);
+  expect(hit.screen).toBe('playing');
+  expect(Math.abs(hit.cameraLift)).toBeGreaterThan(0.01);
+  expect(Math.abs(hit.cameraLift)).toBeLessThan(0.3);
+  expect(Math.abs(hit.cameraRoll)).toBeLessThan(0.018);
+  await page.screenshot({ path: 'test-results/collision-camera-recoil.png' });
+  const settled = await advance(130);
+  expect(settled.cameraLift).toBe(0);
+  expect(settled.cameraRoll).toBe(0);
+
+  await page.evaluate(() => localStorage.setItem('spyhunter27-settings',
+    JSON.stringify({ reducedMotion: true })));
+  await page.reload();
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const motionFree = await advance(1);
+  expect(motionFree.screen).toBe('playing');
+  expect(motionFree.cameraLift).toBe(0);
+  expect(motionFree.cameraRoll).toBe(0);
+  expect(errors).toEqual([]);
+});

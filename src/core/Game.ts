@@ -22,6 +22,7 @@ import { SkidTrails } from '../rendering/SkidTrails';
 import { EscapeLaneBeacon } from '../rendering/EscapeLaneBeacon';
 import { combatCue, shouldSoundThreat, type ThreatDirection } from '../gameplay/CombatReadability';
 import { CAMERA_FRAME, cinematicFov } from '../rendering/CameraFraming';
+import { CameraImpact } from '../rendering/CameraImpact';
 import { Player } from '../entities/Player';
 import { TrafficVehicle } from '../entities/Traffic';
 import { planRearPursuit } from '../gameplay/RearPursuitDirector';
@@ -55,6 +56,7 @@ import { planSquadTactics } from '../gameplay/SquadTactics';
 export class Game {
   private readonly scene = new THREE.Scene();
   private readonly camera = new THREE.PerspectiveCamera(CAMERA_FRAME.baseFov, 1, 0.1, 420);
+  private readonly cameraImpact = new CameraImpact();
   private readonly renderer: THREE.WebGLRenderer;
   private composer: EffectComposer | null = null;
   private filmic: ShaderPass | null = null;
@@ -176,6 +178,7 @@ export class Game {
         __spy27AdvanceDriving?: (frames: number) => {
           z: number; speed: number; screen: Screen;
           rear: { x: number; z: number; state: string } | null;
+          cameraLift: number; cameraRoll: number;
           cross: { frontX: number; frontZ: number; rearX: number; rearZ: number } | null;
           beaconVisible: boolean;
         };
@@ -188,6 +191,7 @@ export class Game {
         const rear = this.traffic.find(car => car.rearPursuer);
         const cross = this.crossPressure;
         return { z: this.player.z, speed: this.player.speed, screen: this.screen,
+          cameraLift: this.cameraImpact.lift, cameraRoll: this.cameraImpact.roll,
           rear: rear ? { x: rear.x, z: rear.z, state: rear.state } : null,
           cross: cross ? { frontX: cross.front.x, frontZ: cross.front.z,
             rearX: cross.rear.x, rearZ: cross.rear.z } : null,
@@ -265,6 +269,9 @@ export class Game {
     this.streaks.reset();
     this.skidTrails.reset();
     this.escapeLane.reset();
+    this.cameraImpact.reset();
+    this.camera.position.y = CAMERA_FRAME.height;
+    this.camera.rotation.z = 0;
     this.headlights.step('forest', false);
     this.player.reset();
     this.scoring.reset();
@@ -350,6 +357,13 @@ export class Game {
       direction: 'none', formationActive: false,
       centerClear: false, guideCenter: false,
     });
+    if (import.meta.env.DEV &&
+        new URLSearchParams(window.location.search).get('testImpact') === '1') {
+      // Collision presentation E2E uses the same guarded damage path as
+      // ordinary game collisions, not a camera-only synthetic animation.
+      this.grace = 0;
+      this.damagePlayer('TEST COLLISION');
+    }
     this.refreshHUD();
     this.audio.confirm();
   }
@@ -419,6 +433,9 @@ export class Game {
     }
     this.player.step(dt, controls, this.road.biome, GAME_MODES[this.mode].speedScale,
       this.preferences.reducedMotion);
+    this.cameraImpact.step(dt, this.preferences.reducedMotion);
+    this.camera.position.y = CAMERA_FRAME.height + this.cameraImpact.lift;
+    this.camera.rotation.z = this.cameraImpact.roll;
     const targetFov = cinematicFov(this.player.speed, this.preferences.reducedMotion);
     this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, targetFov, Math.min(1, dt * 0.9));
     this.camera.updateProjectionMatrix();
@@ -723,6 +740,7 @@ export class Game {
       }
       while (car.hp > 0 && this.bullets.hitTest(car.hitbox())) {
         car.hp--;
+        if (car.hp > 0) car.recordImpact();
         this.roundsHit++;
         this.audio.impact();
         this.flash(car.x, car.z, 0.22, 0xffd57c);
@@ -845,6 +863,7 @@ export class Game {
     this.flash(this.player.x, this.player.z, 0.72, 0xffa342);
     this.debris.emit(this.player.x, this.player.z, true);
     this.audio.explode();
+    this.cameraImpact.hit();
     this.lives--;
     this.scoring.resetCombo();
     if (this.lives <= 0) { this.gameOver(); return; }
