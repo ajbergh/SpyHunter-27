@@ -584,9 +584,6 @@ export class Game {
     const flank = rear ? planRearFlank(
       this.traffic, rear, this.player.x, this.player.z, forbidFlank,
     ) : null;
-    this.ui.tactics(pincerActive, retreatActive,
-      rear !== undefined && rear.z > this.player.z - 55,
-      rear?.state === 'overtaking', rear?.state === 'screening');
     for (const car of this.traffic) {
       const wasRetreating = car.state === 'retreating';
       const order = car === rear && flank
@@ -604,6 +601,12 @@ export class Game {
         this.flash(car.x, car.z + car.halfLength, 0.14, 0xff563b);
       }
     }
+    // The HUD must reflect the post-step state of the same simulated frame:
+    // a fixed-step browser harness (and real play) can cross the overtake /
+    // screening boundary without waiting for an additional rendered frame.
+    this.ui.tactics(pincerActive, retreatActive,
+      rear !== undefined && rear.hp > 0 && rear.z > this.player.z - 55,
+      rear?.state === 'overtaking', rear?.state === 'screening');
     if (this.enemyShots.step(dt, this.player.speed, this.player.hitbox()) > 0) {
       this.damagePlayer('ENFORCER WEAPON IMPACT');
     }
