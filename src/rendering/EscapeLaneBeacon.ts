@@ -10,7 +10,6 @@ import { PLAYER_Z } from '../core/logic';
 export class EscapeLaneBeacon {
   readonly mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
   private reducedMotion = false;
-  private quality: Quality = 'medium';
   private elapsed = 0;
   private active = false;
 
@@ -67,7 +66,6 @@ export class EscapeLaneBeacon {
   }
 
   setPreferences(quality: Quality, reducedMotion: boolean): void {
-    this.quality = quality;
     this.reducedMotion = reducedMotion;
     this.mesh.material.uniforms.uMotion.value = reducedMotion ? 0 : 1;
     this.mesh.material.uniforms.uStrength.value =
