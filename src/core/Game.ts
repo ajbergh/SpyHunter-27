@@ -170,6 +170,7 @@ export class Game {
         __spy27AdvanceDriving?: (frames: number) => {
           z: number; speed: number; screen: Screen;
           rear: { x: number; z: number; state: string } | null;
+          cross: { frontX: number; frontZ: number; rearX: number; rearZ: number } | null;
         };
       };
       (window as TestWindow).__spy27AdvanceDriving = (frames: number) => {
@@ -178,8 +179,11 @@ export class Game {
         for (let i = 0; i < count; i++) this.update(1 / 60);
         this.renderer.domElement.dataset.playerZ = this.player.z.toFixed(2);
         const rear = this.traffic.find(car => car.rearPursuer);
+        const cross = this.crossPressure;
         return { z: this.player.z, speed: this.player.speed, screen: this.screen,
-          rear: rear ? { x: rear.x, z: rear.z, state: rear.state } : null };
+          rear: rear ? { x: rear.x, z: rear.z, state: rear.state } : null,
+          cross: cross ? { frontX: cross.front.x, frontZ: cross.front.z,
+            rearX: cross.rear.x, rearZ: cross.rear.z } : null };
       };
     }
     this.loop.start();
