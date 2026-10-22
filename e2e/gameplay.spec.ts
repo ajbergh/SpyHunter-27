@@ -702,3 +702,46 @@ test('cross-pressure ambush preserves a visible center escape corridor under Web
   await expect(page.locator('#tactic-status')).toContainText('CENTER LANE OPEN');
   expect(errors).toEqual([]);
 });
+
+test('combat radar and the in-world escape guide retract when civilians block center', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  const advance = (frames: number) => page.evaluate(ticks => {
+    const runtime = window as Window & {
+      __spy27AdvanceDriving?: (count: number) => {
+        screen: string; beaconVisible: boolean;
+        cross: { frontX: number; rearX: number } | null;
+      };
+    };
+    if (!runtime.__spy27AdvanceDriving) throw new Error('Driving fixture missing');
+    return runtime.__spy27AdvanceDriving(ticks);
+  }, frames);
+
+  await page.goto('/?testDistance=1300&testDrive=1&testLane=0&testCrossPressure=1');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  const open = await advance(1);
+  expect(open.screen).toBe('playing');
+  expect(open.beaconVisible).toBe(true);
+  expect(open.cross?.frontX).toBe(-6.4);
+  expect(open.cross?.rearX).toBe(6.4);
+  await expect(page.locator('#combat-radar')).toBeVisible();
+  await expect(page.locator('#combat-front')).toHaveText('▲ FRONT CONTACT');
+  await expect(page.locator('#combat-rear')).toHaveText('▼ REAR CONTACT');
+  await expect(page.locator('#escape-status')).toHaveText('CENTER CORRIDOR CLEAR');
+  await expect(page.locator('#tactic-status')).toContainText('CENTER LANE OPEN');
+  await page.screenshot({ path: 'test-results/combat-radar-center-guide.png' });
+
+  await page.goto('/?testDistance=1300&testDrive=1&testLane=0&testCrossPressure=1&testCenterBlocked=1');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const blocked = await advance(1);
+  expect(blocked.screen).toBe('playing');
+  expect(blocked.beaconVisible).toBe(false);
+  await expect(page.locator('#combat-front')).toHaveText('▲ FRONT CONTACT');
+  await expect(page.locator('#combat-rear')).toHaveText('▼ REAR CONTACT');
+  await expect(page.locator('#escape-status')).toHaveText('CENTER CORRIDOR BLOCKED');
+  await expect(page.locator('#escape-status')).toHaveAttribute('data-safe', 'false');
+  await expect(page.locator('#tactic-status')).toContainText('CENTER LANE BLOCKED');
+  await page.screenshot({ path: 'test-results/combat-radar-center-blocked.png' });
+  expect(errors).toEqual([]);
+});

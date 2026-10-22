@@ -137,3 +137,21 @@ h2 { font-size: 88px; line-height: .9; }
 
 /* A separate cool-toned status reinforces that enemy retreat is non-attacking. */
 .tactic-status:has(b:not(:empty)) { transition: border-color .2s ease; }
+
+/* The radar is compact, high-contrast and text-led: color is never the
+   sole carrier of front/rear detection or lane-availability information. */
+.combat-radar { position:absolute; z-index:5; bottom:52px; left:12px;
+  display:flex; flex-direction:column; gap:2px; padding:7px 9px;
+  border-left:3px solid #64d2dc; color:#d4e5ed; background:#071a2ae8;
+  font:800 11px/1.25 'Rajdhani',sans-serif; letter-spacing:.075em;
+  text-shadow:0 1px 3px #000; pointer-events:none; }
+.combat-radar[hidden], .combat-radar [hidden] { display:none; }
+.combat-radar-title { color:#b1dae5; font-size:10px; letter-spacing:.12em; }
+.combat-radar [data-active="true"] { color:#ffb77f; }
+.combat-radar [data-safe="true"] { color:#a0fff0; border-top:1px solid #496575; margin-top:3px; padding-top:4px; }
+.combat-radar [data-safe="false"] { color:#ffb5a5; border-top:1px solid #496575; margin-top:3px; padding-top:4px; }
+.cabinet.high-contrast .combat-radar { background:#000; color:#fff; border:2px solid #fff; }
+.cabinet.high-contrast .combat-radar [data-active="true"] { color:#fff2a1; }
+.cabinet.high-contrast .combat-radar [data-safe="true"] { color:#9fffe2; }
+.cabinet.high-contrast .combat-radar [data-safe="false"] { color:#fff; text-decoration:underline; }
+@media(max-width:520px) { .combat-radar { left:6px; bottom:44px; padding:5px; font-size:9px; } }

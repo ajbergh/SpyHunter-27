@@ -1,5 +1,6 @@
 import { SOUNDSCAPES, musicPace } from './Soundscape';
 import type { Biome } from '../world/WorldPlan';
+import type { ThreatDirection } from '../gameplay/CombatReadability';
 
 /** Original synthesized espionage score, reactive engine drone and arcade SFX. */
 export class AudioManager {
@@ -60,6 +61,20 @@ export class AudioManager {
   warning(): void {
     this.tone(540, 0.14, 'square', 0.095, -145);
     this.tone(880, 0.09, 'sine', 0.06, -180);
+  }
+  /** Distinct pitched signatures for front, rear and two-direction contacts.
+   *  The game decides when to sound a cue, so this never runs every frame.
+   */
+  contact(direction: ThreatDirection): void {
+    if (direction === 'none') return;
+    if (direction === 'front' || direction === 'both') {
+      this.tone(700, 0.12, 'square', 0.07, -210);
+      this.tone(880, 0.075, 'sine', 0.043, -100);
+    }
+    if (direction === 'rear' || direction === 'both') {
+      this.tone(270, 0.16, 'triangle', 0.09, 135);
+      this.tone(420, 0.12, 'square', 0.045, 120);
+    }
   }
   resupply(): void {
     this.tone(392, 0.17, 'triangle', 0.11, 130);

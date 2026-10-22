@@ -3,6 +3,7 @@ import { GAME_MODES, type GameMode } from '../gameplay/GameModes';
 import { transmissionLabel, type DriveGear } from '../gameplay/Transmission';
 import { ROUTE_CHOICES, type RouteSide } from '../gameplay/RouteDirector';
 import type { Biome } from '../world/WorldPlan';
+import type { CombatCue } from '../gameplay/CombatReadability';
 import { formatMissionDistance, formatMissionTime } from '../gameplay/SessionMetrics';
 import {
   loadPreferences, savePreferences, assignBinding, BINDING_ACTIONS,
@@ -50,6 +51,12 @@ export class Interface {
           <div class="special-line radar-line">AIR <b id="air-count">00</b> · ROUNDS <b id="enemy-round-count">00</b></div>
         </div>
         <div class="tactic-status" id="tactic-status" hidden>SQUAD TACTICS <b>PINCER</b><small>OPEN CENTER CORRIDOR</small></div>
+        <div class="combat-radar" id="combat-radar" hidden>
+          <span class="combat-radar-title">TACTICAL RADAR</span>
+          <span id="combat-front" data-active="false">▲ FRONT CLEAR</span>
+          <span id="combat-rear" data-active="false">▼ REAR CLEAR</span>
+          <span id="escape-status" data-safe="false" hidden>CENTER OPEN</span>
+        </div>
         <div class="combo-counter" id="combo-counter" hidden>COMBO <b id="combo-value">×2</b><small id="combo-time">5.0s</small></div>
         <div class="penalty" id="penalty" hidden>NO POINTS <span id="penalty-time">5</span>s</div>
         <section class="panel" id="menu">
@@ -298,6 +305,7 @@ export class Interface {
     this.get('special-hud').hidden = screen === 'menu' || screen === 'gameover';
     if (screen === 'menu' || screen === 'gameover') this.get('combo-counter').hidden = true;
     if (screen === 'menu' || screen === 'gameover') this.get('tactic-status').hidden = true;
+    if (screen !== 'playing') this.get('combat-radar').hidden = true;
     if (screen === 'menu' || screen === 'gameover') this.get('penalty').hidden = true;
   }
 
@@ -309,6 +317,33 @@ export class Interface {
     const warning = this.get('penalty');
     warning.hidden = penalty <= 0;
     this.get('penalty-time').textContent = String(Math.ceil(penalty));
+  }
+
+  combatStatus(cue: CombatCue): void {
+    const radar = this.get('combat-radar');
+    radar.hidden = cue.direction === 'none' && !cue.formationActive;
+    const front = this.get('combat-front');
+    const rear = this.get('combat-rear');
+    const activeFront = cue.direction === 'front' || cue.direction === 'both';
+    const activeRear = cue.direction === 'rear' || cue.direction === 'both';
+    const frontLabel = activeFront ? '▲ FRONT CONTACT' : '▲ FRONT CLEAR';
+    const rearLabel = activeRear ? '▼ REAR CONTACT' : '▼ REAR CLEAR';
+    if (front.textContent !== frontLabel) front.textContent = frontLabel;
+    if (rear.textContent !== rearLabel) rear.textContent = rearLabel;
+    front.dataset.active = String(activeFront);
+    rear.dataset.active = String(activeRear);
+    const escape = this.get('escape-status');
+    escape.hidden = !cue.formationActive;
+    escape.dataset.safe = String(cue.guideCenter);
+    const escapeLabel = cue.guideCenter ? 'CENTER CORRIDOR CLEAR' : 'CENTER CORRIDOR BLOCKED';
+    if (escape.textContent !== escapeLabel) escape.textContent = escapeLabel;
+    if (cue.formationActive) {
+      const tacticHint = this.get('tactic-status').querySelector('small');
+      if (tacticHint) {
+        const hint = cue.guideCenter ? 'CENTER LANE OPEN' : 'CENTER LANE BLOCKED';
+        if (tacticHint.textContent !== hint) tacticHint.textContent = hint;
+      }
+    }
   }
 
   threats(helicopters: number, enemyRounds: number): void {

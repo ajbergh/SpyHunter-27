@@ -277,3 +277,13 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [x] Hold the rear attacker's assigned lane rather than allowing instant homing into the safe corridor; use the existing forward armored blocker.
 - [x] Add CROSS PRESSURE / CENTER LANE OPEN tactical HUD state, fixed-step unit safety tests and deterministic Chromium WebGL acceptance coverage.
 - [ ] Fine-tune encounter pacing and difficulty across modes; hand-test real GPU devices, controller steering and collisions; eventually add authored cutscenes and cross-direction audio cues.
+
+### Combat presentation: directional radar + center escape-lane guide (2026-10-22)
+
+- [x] Derive front/rear/both threat telemetry from the real active hostile traffic positions and moving player depth, including health and water exclusions.
+- [x] Give cross-pressure the only projected escape corridor: a single original shader quad (one draw call) following roadway curvature in render space with no per-frame allocations.
+- [x] Hide the projected guide whenever *any* living civilian or hostile obstructs the center, updating both the combat radar and cross-pressure HUD hint to say BLOCKED rather than asserting false safety.
+- [x] Keep guide available on all graphics presets, with non-animated Reduced Motion behavior and explicit high-contrast textual status.
+- [x] Add distinct original synthesized threat-front/threat-rear signal patterns with mute, effect-volume and cooldown protection.
+- [x] Unit and Chromium regression scenarios for front/rear radar, dynamically blocked escape lane and reusable shader geometry.
+- [ ] Add spatialized vehicle-engine pitch, higher fidelity damaged-vehicle animation, reactive camera choreography, player-adjustable radar prominence and hardware-based legibility/performance acceptance.
