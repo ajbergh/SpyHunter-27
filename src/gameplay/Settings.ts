@@ -1,12 +1,12 @@
 export type Quality = 'low' | 'medium' | 'high';
 
 export const BINDING_ACTIONS = [
-  'left', 'right', 'throttle', 'brake', 'fire', 'missile', 'oil', 'smoke', 'van', 'pause',
+  'left', 'right', 'throttle', 'brake', 'gear', 'fire', 'missile', 'oil', 'smoke', 'van', 'pause',
 ] as const;
 export type BindingAction = typeof BINDING_ACTIONS[number];
 export type KeyBindings = Record<BindingAction, string>;
 export const DEFAULT_BINDINGS: KeyBindings = {
-  left: 'KeyA', right: 'KeyD', throttle: 'KeyW', brake: 'KeyS', fire: 'Space',
+  left: 'KeyA', right: 'KeyD', throttle: 'KeyW', brake: 'KeyS', gear: 'KeyG', fire: 'Space',
   missile: 'KeyQ', oil: 'KeyE', smoke: 'KeyR', van: 'KeyF', pause: 'KeyP',
 };
 /** Arrow keys and Escape stay available as accessibility fallbacks. */
@@ -21,13 +21,13 @@ export function assignBinding(
   return { ...bindings, [action]: code };
 }
 export const GAMEPAD_ACTIONS = [
-  'fire', 'missile', 'oil', 'smoke', 'van', 'pause', 'throttle', 'brake',
+  'fire', 'missile', 'oil', 'smoke', 'van', 'pause', 'throttle', 'brake', 'gear',
 ] as const;
 export type GamepadAction = typeof GAMEPAD_ACTIONS[number];
 export type GamepadBindings = Record<GamepadAction, number>;
 export const DEFAULT_GAMEPAD_BINDINGS: GamepadBindings = {
   fire: 0, missile: 1, oil: 2, smoke: 3,
-  van: 4, pause: 9, throttle: 7, brake: 6,
+  van: 4, pause: 9, throttle: 7, brake: 6, gear: 5,
 };
 export function validGamepadButton(index: unknown): index is number {
   return Number.isInteger(index) && typeof index === 'number' && index >= 0 && index <= 16;
