@@ -638,9 +638,22 @@ test('rear adversary selects a safe flanking lane and advertises the later cut-i
   await page.screenshot({ path: 'test-results/rear-flank-side-pass.png' });
 
   await page.keyboard.down('w');
-  const ahead = await advance(360);
+  // Do not sample at a fixed wall-clock duration or one arbitrary late frame:
+  // software WebGL varies in frame pacing. Observe the actual maneuver state
+  // through deterministic ten-step batches while throttle remains held.
+  let ahead = passing;
+  let enteredScreening = false;
+  for (let batch = 0; batch < 48; batch++) {
+    ahead = await advance(10);
+    if (ahead.rear?.state === 'screening') {
+      enteredScreening = true;
+      break;
+    }
+    if (ahead.screen !== 'playing' || ahead.rear === null) break;
+  }
   await page.keyboard.up('w');
   expect(ahead.screen).toBe('playing');
+  expect(enteredScreening).toBe(true);
   expect(ahead.rear).not.toBeNull();
   expect(ahead.rear!.z).toBeLessThan(0);
   expect(ahead.rear!.state).toBe('screening');
