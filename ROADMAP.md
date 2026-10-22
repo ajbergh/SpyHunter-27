@@ -235,3 +235,11 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [x] Strict fixed-capacity 80/40/12 High/Medium/Low wake budgets, bounded emission catch-up, no dynamic mesh/material allocation per frame, deterministic lifecycle and quality switch reset.
 - [x] Curve-aligned, steering-sensitive foam expansion and fade; original geometry, simulation-independent presentation, geometry/unit tests, and live High-waterway Playwright screenshot smoke check.
 - [ ] Physically modeled buoyancy, hull-water intersection, wake interaction with riverbanks, water spray/caustics, target GPU benchmarking, and artist-approved turbulence/scaling.
+
+### Gameplay fidelity — Arcade depth movement and frontal attacks (2026-10-21)
+
+- [x] Couple throttle/braking to a bounded, real player Z coordinate rather than only scrolling the highway; maintain a stable cinematic camera and preserve fixed-step lateral control.
+- [x] Move player collision checks, guns, missiles, smoke/oil, resupply ramp, headlights, tire skids and boat wakes with the actual vehicle; align vehicle X against streamed curved-road centerline at its current Z.
+- [x] Introduce separate, rotated head-on hostile vehicles with opposing relative velocity, advance warning, fair low-frequency spawn gating, forward attacks, and no mixed pincer formations.
+- [x] Unit tests for depth bounds, acceleration/braking/boat transitions, frontal encounter planning and AI; Playwright screenshots prove actual W/S vertical travel and head-on presentation.
+- [ ] Authentic gear-shifting mechanics, front/rear tactical chase choreography, authored threat-specific vehicle behaviors, target-device play sessions, collision-fairness balancing and visual QA under all aspect ratios.

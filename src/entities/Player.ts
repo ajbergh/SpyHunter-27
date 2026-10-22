@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 import type { Controls } from '../core/Input';
-import { approach, clamp, PLAYER_Z, ROAD_HALF_WIDTH, type RectHitbox } from '../core/logic';
+import { approach, clamp, ROAD_HALF_WIDTH, type RectHitbox } from '../core/logic';
 import { makeInterceptor, makeSpeedboat } from './VehicleModels';
 import { VehicleMotionRig } from './VehicleMotion';
 import type { Biome } from '../world/WorldPlan';
+import { drivingTargetZ, DRIVE_Z_NEUTRAL } from '../gameplay/LongitudinalDriving';
 
 export class Player {
   readonly mesh = new THREE.Group();
@@ -14,18 +15,20 @@ export class Player {
   private elapsed = 0;
   private lateralVelocity = 0;
   x = 0;
+  z = DRIVE_Z_NEUTRAL;
   speed = 25;
   invulnerability = 0;
 
   constructor(scene: THREE.Scene) {
     this.mesh.add(this.car, this.boat);
     this.setBoat(false);
-    this.mesh.position.set(0, 0.12, PLAYER_Z);
+    this.mesh.position.set(0, 0.12, DRIVE_Z_NEUTRAL);
     scene.add(this.mesh);
   }
 
   reset(): void {
     this.x = 0;
+    this.z = DRIVE_Z_NEUTRAL;
     this.speed = 25;
     this.invulnerability = 0;
     this.mesh.visible = true;
@@ -34,7 +37,7 @@ export class Player {
     this.carMotion.reset();
     this.car.rotation.x = 0;
     this.setBoat(false);
-    this.mesh.position.set(0, 0.12, PLAYER_Z);
+    this.mesh.position.set(0, 0.12, DRIVE_Z_NEUTRAL);
   }
 
   setBoat(enabled: boolean): void {
@@ -49,6 +52,10 @@ export class Player {
       ? controls.brake ? 13 : controls.throttle ? 46 : 29
       : controls.brake ? 10 : controls.throttle ? 54 : 30;
     this.speed = approach(this.speed, desired * speedScale, controls.brake ? 4.2 : 1.6, dt);
+    // The original arcade feel: accelerating climbs toward the screen horizon;
+    // braking drops the actual vehicle back. Hitboxes/weapons use this same Z.
+    this.z = approach(this.z, drivingTargetZ(this.speed, this.isBoat, speedScale), 2.6, dt);
+    this.mesh.position.z = this.z;
     const steerSpeed = (this.isBoat ? 8.0 : 10.0) + this.speed * 0.065;
     // Icy roads retain lateral momentum; boats bank more softly than cars.
     const traction = surface === 'snow' ? 2.2 : this.isBoat ? 5.5 : 19;
@@ -73,5 +80,5 @@ export class Player {
     this.mesh.visible = this.invulnerability === 0 || Math.floor(this.invulnerability * 12) % 2 === 0;
   }
 
-  hitbox(): RectHitbox { return { x: this.x, z: PLAYER_Z, halfWidth: 1.03, halfLength: 2.16 }; }
+  hitbox(): RectHitbox { return { x: this.x, z: this.z, halfWidth: 1.03, halfLength: 2.16 }; }
 }

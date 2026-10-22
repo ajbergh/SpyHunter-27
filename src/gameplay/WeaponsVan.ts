@@ -148,7 +148,7 @@ export class WeaponsVan {
     return true;
   }
 
-  step(dt: number, playerSpeed: number, playerX: number): VanEvent {
+  step(dt: number, playerSpeed: number, playerX: number, playerZ = PLAYER_Z): VanEvent {
     this.cooldown = Math.max(0, this.cooldown - dt);
     this.elapsed += dt;
     this.beacon.scale.x = 0.8 + Math.abs(Math.sin(this.elapsed * 5)) * 0.5;
@@ -173,7 +173,7 @@ export class WeaponsVan {
     }
     // Trigger only when the player's nose is aligned with the exposed loading ramp.
     const rearZ = this.mesh.position.z + 5.6;
-    const atRamp = Math.abs(rearZ - (PLAYER_Z - 2.1)) < 2.4;
+    const atRamp = Math.abs(rearZ - (playerZ - 2.1)) < 2.4;
     const aligned = Math.abs(playerX - this.lane) < 1.45;
     const speedCorrect = playerSpeed >= 15 && playerSpeed <= 49;
     if (atRamp && aligned && speedCorrect) {
@@ -185,7 +185,7 @@ export class WeaponsVan {
       this.approachHintGiven = true;
       return !aligned ? 'align-lane' : 'adjust-speed';
     }
-    if (this.mesh.position.z > PLAYER_Z + 17) {
+    if (this.mesh.position.z > playerZ + 17) {
       this.state = 'idle';
       this.mesh.visible = false;
       return 'missed';

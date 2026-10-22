@@ -115,10 +115,10 @@ export class BoatWake {
     this.mesh.count = BUDGET[quality];
   }
 
-  private emit(x: number, speed: number, steer: number): void {
+  private emit(x: number, speed: number, steer: number, playerZ: number): void {
     const mark = this.marks[this.cursor];
     mark.x = x;
-    mark.z = PLAYER_Z + 3.2;
+    mark.z = playerZ + 3.2;
     mark.life = LIFETIME;
     mark.heading = THREE.MathUtils.clamp(steer, -1, 1) * 0.11;
     mark.speed = THREE.MathUtils.clamp(speed, 12, 54);
@@ -128,7 +128,7 @@ export class BoatWake {
   }
 
   /** Emits a trail only in boat mode; existing foam decays after transfers. */
-  step(dt: number, speed: number, x: number, boat: boolean, steer = 0): void {
+  step(dt: number, speed: number, x: number, boat: boolean, steer = 0, playerZ = PLAYER_Z): void {
     if (!Number.isFinite(dt) || dt <= 0) return;
     const scroll = Math.max(0, Number.isFinite(speed) ? speed : 0);
     for (const mark of this.marks) {
@@ -146,7 +146,7 @@ export class BoatWake {
     const interval = EMISSION[this.quality];
     while (this.clock >= interval) {
       this.clock -= interval;
-      this.emit(x, scroll, steer);
+      this.emit(x, scroll, steer, playerZ);
     }
     if (this.mesh.instanceColor) this.mesh.instanceColor.needsUpdate = true;
   }

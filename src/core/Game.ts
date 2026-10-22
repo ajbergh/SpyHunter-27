@@ -96,6 +96,7 @@ export class Game {
   private grace = 0;
   private dockingTimer = 0;
   private dockingEntryX = 0;
+  private dockingEntryZ = PLAYER_Z;
   private boundaryCooldown = 0;
   private gateWarned = false;
   private splitWarnAt = -1;
@@ -152,6 +153,25 @@ export class Game {
     window.addEventListener('blur', () => { if (this.screen === 'playing') this.pause(); });
     this.configure(this.preferences);
     this.resize();
+    if (import.meta.env.DEV &&
+        new URLSearchParams(window.location.search).get('testDrive') === '1') {
+      // Browser acceptance tests must advance actual fixed-step gameplay, not
+      // wall time: CI's software WebGL renderer may display only a few frames
+      // in several real seconds. This test-only bridge reads ordinary keyboard
+      // input and executes the same update method as the production game loop.
+      type TestWindow = Window & {
+        __spy27AdvanceDriving?: (frames: number) => {
+          z: number; speed: number; screen: Screen;
+        };
+      };
+      (window as TestWindow).__spy27AdvanceDriving = (frames: number) => {
+        const count = Number.isFinite(frames) ?
+          Math.min(360, Math.max(0, Math.floor(frames))) : 0;
+        for (let i = 0; i < count; i++) this.update(1 / 60);
+        this.renderer.domElement.dataset.playerZ = this.player.z.toFixed(2);
+        return { z: this.player.z, speed: this.player.speed, screen: this.screen };
+      };
+    }
     this.loop.start();
   }
 
@@ -247,11 +267,15 @@ export class Game {
       if (testHelicopter === 'patrol' || testHelicopter === 'ace') {
         this.air.spawn(0, testHelicopter, -34);
       }
+      if (new URLSearchParams(window.location.search).get('testHeadOn') === '1') {
+        this.traffic.push(new TrafficVehicle(this.scene, 0, -47, true, 0, 0xb93d53, 26, null, true));
+      }
     }
     this.lives = GAME_MODES[mode].lives;
     this.grace = mode === 'modern' ? 5 : 3;
     this.dockingTimer = 0;
     this.dockingEntryX = 0;
+    this.dockingEntryZ = PLAYER_Z;
     this.boundaryCooldown = 0;
     this.gateWarned = false;
     this.splitWarnAt = -1;
@@ -260,6 +284,13 @@ export class Game {
     this.splitClean = true;
     this.spawnClock = 0.8;
     this.airSpawnClock = 9;
+    if (import.meta.env.DEV &&
+        new URLSearchParams(window.location.search).get('testDrive') === '1') {
+      // Isolate throttle/brake acceptance from randomly timed enemy collisions.
+      // Normal release builds and every other test retain full encounter AI.
+      this.spawnClock = 999;
+      this.airSpawnClock = 999;
+    }
     this.shotClock = 0;
     this.toastClock = 0;
     this.survivalSeconds = 0;
@@ -302,16 +333,16 @@ export class Game {
 
     if (this.dockingTimer > 0) {
       this.dockingTimer = Math.max(0, this.dockingTimer - dt);
-      this.van.step(dt, this.player.speed, this.player.x);
+      this.van.step(dt, this.player.speed, this.player.x, this.player.z);
       const progress = 1 - this.dockingTimer / 1.3;
       // Move the visible car up the deployed ramp and into the support van.
       this.player.mesh.position.x = this.dockingEntryX + (6.4 - this.dockingEntryX) * progress;
-      this.player.mesh.position.z = PLAYER_Z - progress * 7;
+      this.player.mesh.position.z = this.dockingEntryZ - progress * 7;
       this.player.mesh.position.y = 0.12 + Math.sin(progress * Math.PI) * 0.68;
       this.player.mesh.scale.setScalar(1 - progress * 0.13);
       this.camera.position.x = approach(this.camera.position.x, 3.4, 5, dt);
       if (this.dockingTimer === 0) {
-        this.player.mesh.position.set(this.player.x, 0.12, PLAYER_Z);
+        this.player.mesh.position.set(this.player.x, 0.12, this.player.z);
         this.player.mesh.scale.setScalar(1);
         this.player.invulnerability = 3.4;
         this.grace = 2.2;
@@ -319,7 +350,7 @@ export class Game {
         // The deployment zone must be clear before control is returned.
         for (let i = this.traffic.length - 1; i >= 0; i--) {
           const car = this.traffic[i];
-          if (Math.abs(car.z - PLAYER_Z) < 13 && Math.abs(car.x - this.player.x) < 3.4) this.removeVehicle(i);
+          if (Math.abs(car.z - this.player.z) < 13 && Math.abs(car.x - this.player.x) < 3.4) this.removeVehicle(i);
         }
         this.announce('INTERCEPTOR REDEPLOYED — WEAPONS ONLINE');
       }
@@ -336,7 +367,7 @@ export class Game {
     this.streaks.step(dt, this.player.speed);
     this.headlights.step(this.road.biome, this.player.isBoat);
     this.skidTrails.step(dt, this.player.speed, this.player.x,
-      controls.steer, controls.brake, this.road.biome, this.player.isBoat);
+      controls.steer, controls.brake, this.road.biome, this.player.isBoat, this.player.z);
     this.boundaryCooldown = Math.max(0, this.boundaryCooldown - dt);
     if (this.boundaryCooldown === 0 && boundaryStrike(
       this.player.x, controls.steer, this.player.speed, this.player.isBoat
@@ -377,7 +408,7 @@ export class Game {
           ? 'BOATHOUSE DOCKED — SPEEDBOAT DEPLOYED +350'
           : 'BOATHOUSE DOCKED — INTERCEPTOR RESTORED +350');
     }
-    this.wake.step(dt, this.player.speed, this.player.x, this.player.isBoat, controls.steer);
+    this.wake.step(dt, this.player.speed, this.player.x, this.player.isBoat, controls.steer, this.player.z);
     this.weather.step(dt, this.player.speed, this.road.biome);
     this.visuals.step(dt, this.road.biome, this.distance / 22, this.preferences.reducedMotion);
     this.sky.step(dt, this.road.biome);
@@ -457,10 +488,11 @@ export class Game {
       if (!this.player.isBoat && this.van.call()) this.announce('SUPPORT VAN INBOUND — ALIGN WITH REAR RAMP');
       else this.announce('SUPPORT VAN NOT READY');
     }
-    const vanEvent = this.player.isBoat ? null : this.van.step(dt, this.player.speed, this.player.x);
+    const vanEvent = this.player.isBoat ? null : this.van.step(dt, this.player.speed, this.player.x, this.player.z);
     if (vanEvent === 'docked') {
       this.specials.refill();
       this.dockingEntryX = this.player.x;
+      this.dockingEntryZ = this.player.z;
       const resupplyBonus = this.scoring.bonus(500);
       this.player.invulnerability = 2.5;
       this.dockingTimer = 1.3;
@@ -479,7 +511,7 @@ export class Game {
 
     this.shotClock -= dt;
     if (controls.fire && this.shotClock <= 0 && this.dockingTimer <= 0) {
-      this.roundsFired += this.bullets.fire(this.player.x, PLAYER_Z);
+      this.roundsFired += this.bullets.fire(this.player.x, this.player.z);
       this.audio.fire();
       this.shotClock = 0.115;
     }
@@ -509,14 +541,14 @@ export class Game {
     this.ui.tactics(pincerActive, retreatActive);
     for (const car of this.traffic) {
       const wasRetreating = car.state === 'retreating';
-      car.step(dt, this.player.speed, this.player.x, squadOrders.get(car));
+      car.step(dt, this.player.speed, this.player.x, squadOrders.get(car), this.player.z);
       if (!wasRetreating && car.state === 'retreating')
         this.announce('ENEMY SQUAD BROKEN — SURVIVOR DISENGAGING');
       if (splitDangerous(this.distance - car.z, car.x, car.halfWidth)) {
         car.x = escapeFromMedian(car.x, this.distance - car.z, car.halfWidth);
         car.mesh.position.x = car.x;
       }
-      if (car.tryFire(this.player.x)) {
+      if (car.tryFire(this.player.x, this.player.z)) {
         this.enemyShots.spawn(car.x, car.z + car.halfLength, this.player.x, car.role === 'boat');
         this.flash(car.x, car.z + car.halfLength, 0.14, 0xff563b);
       }
@@ -608,7 +640,7 @@ export class Game {
 
   private handleWeapons(missile: boolean, oil: boolean, smoke: boolean): void {
     const attempt = (kind: WeaponKind): void => {
-      if (this.specials.use(kind, this.player.x, this.player.isBoat)) {
+      if (this.specials.use(kind, this.player.x, this.player.isBoat, this.player.z)) {
         this.announce(kind === 'oil' && this.player.isBoat ? 'FLAMING WAKE DEPLOYED' : kind.toUpperCase() + ' DEPLOYED');
         this.audio.confirm();
       } else this.announce('WEAPON UNAVAILABLE — REQUEST RESUPPLY [F]');
@@ -629,15 +661,17 @@ export class Game {
       ? this.nextSquadId++ : null;
     if (squadId !== null) this.announce('SQUAD INBOUND — ATTACKERS COORDINATING');
     for (const spawn of encounter.spawns) {
+      const oncoming = Boolean(spawn.oncoming && !this.player.isBoat);
+      if (oncoming) this.announce('HEAD-ON HOSTILE APPROACHING — EVADE OR FIRE');
       const variant = this.player.isBoat ? 5 : spawn.variant;
       const colors = spawn.hostile
         ? [0x902d3e, 0x4c182b, 0x9e553e, 0xaf3048]
         : [0x7495a7, 0xc5bda9, 0x647c73, 0x8e9bae];
       const color = colors[Math.floor(this.random() * colors.length)];
-      const speed = variant === 4 ? 16 + this.random() * 9
+      const speed = oncoming ? 23 + this.random() * 7 : variant === 4 ? 16 + this.random() * 9
         : spawn.hostile ? 8 + this.random() * 7 : 12 + this.random() * 7;
       this.traffic.push(new TrafficVehicle(
-        this.scene, spawn.x, spawn.z, spawn.hostile, variant, color, speed, squadId,
+        this.scene, spawn.x, spawn.z, spawn.hostile, variant, color, speed, squadId, oncoming,
       ));
     }
   }
@@ -649,8 +683,8 @@ export class Game {
 
   private damagePlayer(reason: string): void {
     if (this.player.invulnerability > 0 || this.grace > 0 || this.screen !== 'playing' || this.dockingTimer > 0) return;
-    this.flash(this.player.x, PLAYER_Z, 0.72, 0xffa342);
-    this.debris.emit(this.player.x, PLAYER_Z, true);
+    this.flash(this.player.x, this.player.z, 0.72, 0xffa342);
+    this.debris.emit(this.player.x, this.player.z, true);
     this.audio.explode();
     this.lives--;
     this.scoring.resetCombo();
@@ -703,7 +737,16 @@ export class Game {
   }
 
   private render(): void {
+    if (import.meta.env.DEV) {
+      // Minimal observable state for deterministic Playwright composition and
+      // moving-hitbox coverage. No debug DOM updates ship in production.
+      this.renderer.domElement.dataset.playerZ = this.player.z.toFixed(2);
+      this.renderer.domElement.dataset.headOn = this.traffic.some(car => car.oncoming) ? '1' : '0';
+    }
     const center = (z: number): number => this.road.centerAt(z);
+    // Road tiles scroll around a stable reference Z. The interceptor itself
+    // moves through that curved corridor as acceleration/braking changes Z.
+    if (this.dockingTimer === 0) this.player.mesh.position.x = this.player.x + center(this.player.z);
     // Simulation runs in a stable lane-relative coordinate system. Only the
     // presentation layer bends positions along the generated centerline.
     for (const car of this.traffic) car.mesh.position.x = car.x + center(car.z);
@@ -716,7 +759,7 @@ export class Game {
     this.wake.renderAt(center);
     this.waterHazards.renderAt(center);
     this.streaks.renderAt(center);
-    this.headlights.renderAt(center, this.player.x);
+    this.headlights.renderAt(center, this.player.x, this.player.z);
     this.skidTrails.renderAt(center);
     this.van.mesh.position.x = 6.4 + center(this.van.mesh.position.z);
     if (this.bloomPass) {

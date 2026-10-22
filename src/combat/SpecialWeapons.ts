@@ -45,19 +45,19 @@ export class SpecialWeapons {
     return this.ammo[kind] - before;
   }
 
-  use(kind: WeaponKind, x: number, water = false): boolean {
+  use(kind: WeaponKind, x: number, water = false, playerZ = PLAYER_Z): boolean {
     if (this.ammo[kind] === 0 || this.cooldown > 0) return false;
     this.ammo[kind]--;
     this.cooldown = kind === 'missile' ? 0.65 : 0.95;
     if (kind === 'missile') {
       const mesh = this.makeMissile();
-      mesh.position.set(x, 0.8, PLAYER_Z - 3.8);
+      mesh.position.set(x, 0.8, playerZ - 3.8);
       this.scene.add(mesh);
-      this.missiles.push({ mesh, x, z: PLAYER_Z - 3.8, trailClock: 0 });
+      this.missiles.push({ mesh, x, z: playerZ - 3.8, trailClock: 0 });
     } else {
       const hazardKind = water && kind === 'oil' ? 'flame' : kind;
       const mesh = this.makeHazard(hazardKind);
-      const z = PLAYER_Z + 6;
+      const z = playerZ + 6;
       mesh.position.set(x, 0.22, z);
       this.scene.add(mesh);
       this.hazards.push({

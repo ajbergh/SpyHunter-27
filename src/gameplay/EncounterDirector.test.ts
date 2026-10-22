@@ -41,4 +41,29 @@ describe('encounter director', () => {
     expect(encounter.spawns).toHaveLength(0);
   });
 
+
+  it('introduces isolated head-on enemies after escalation without denying escape lanes', () => {
+    const values = [0.5, 0.5, 0.5, 0.95, 0.93];
+    let index = 0;
+    const encounter = planEncounter([], 850, () => values[index++ % values.length]);
+    expect(encounter.type).toBe('traffic');
+    expect(encounter.spawns).toHaveLength(1);
+    expect(encounter.spawns[0].oncoming).toBe(true);
+    expect(encounter.spawns[0].hostile).toBe(true);
+    expect(encounter.spawns[0].variant).toBe(0);
+    expect(encounter.spawns[0].z).toBe(-90);
+
+    let leftIndex = 0;
+    const left = planEncounter([], 850, () => values[leftIndex++ % values.length], 'left');
+    expect(left.spawns[0].oncoming).not.toBe(true);
+    const early = planEncounter([], 150, () => 0.95);
+    expect(early.spawns[0].oncoming).not.toBe(true);
+  });
+
+  it('keeps coordinated attackers forward-facing rather than mixing with head-on rushes', () => {
+    const encounter = planEncounter([], 900, () => 0);
+    expect(encounter.type).toBe('pursuit-pair');
+    expect(encounter.spawns.every(s => !s.oncoming)).toBe(true);
+  });
+
 });

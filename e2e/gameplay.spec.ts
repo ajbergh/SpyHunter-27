@@ -472,3 +472,63 @@ test('high-quality waterway renders pooled V-hull foam without WebGL errors', as
   await page.screenshot({ path: 'test-results/v-hull-foam-waterway-high.png' });
   expect(errors).toEqual([]);
 });
+
+test('classic speed control moves interceptor forward and backward inside the road view', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  // With CI's SwiftShader WebGL, real-time seconds may have only a handful of
+  // frames. Advance the *same* fixed-step game simulation with real key state,
+  // then verify collision-space depth, not just an animation or a screenshot.
+  await page.goto('/?testDistance=140&testLane=6.4&testDrive=1');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const car = page.locator('#stage canvas');
+  await expect(car).toBeVisible();
+  const advance = async (frames: number) => page.evaluate((ticks: number) => {
+    const win = window as Window & {
+      __spy27AdvanceDriving?: (frames: number) => {
+        z: number; speed: number; screen: string;
+      };
+    };
+    if (!win.__spy27AdvanceDriving) throw new Error('Development driving harness missing');
+    return win.__spy27AdvanceDriving(ticks);
+  }, frames);
+  const initial = Number(await car.getAttribute('data-player-z'));
+  await page.keyboard.down('w');
+  const accelerated = await advance(210);
+  await page.keyboard.up('w');
+  expect(accelerated.screen).toBe('playing');
+  expect(accelerated.speed).toBeGreaterThan(48);
+  const forward = accelerated.z;
+  expect(forward).toBeLessThan(initial - 5);
+  await expect.poll(async () => Number(await car.getAttribute('data-player-z')))
+    .toBeLessThan(initial - 5);
+  await page.screenshot({ path: 'test-results/arcade-driving-forward.png' });
+  await page.keyboard.down('s');
+  const braked = await advance(180);
+  await page.keyboard.up('s');
+  expect(braked.screen).toBe('playing');
+  expect(braked.speed).toBeLessThan(14);
+  expect(braked.z).toBeGreaterThan(forward + 7);
+  await expect.poll(async () => Number(await car.getAttribute('data-player-z')))
+    .toBeGreaterThan(forward + 7);
+  await page.screenshot({ path: 'test-results/arcade-driving-rearward.png' });
+  expect(errors).toEqual([]);
+});
+
+test('head-on hostile appears facing the oncoming lane while player can dodge it', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('console', message => {
+    if (message.type() === 'error' && /WebGLProgram|shader|GL_INVALID_OPERATION/i.test(message.text())) {
+      errors.push(message.text());
+    }
+  });
+  await page.goto('/?testDistance=420&testLane=6.4&testHeadOn=1');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const stage = page.locator('#stage canvas');
+  await expect(stage).toBeVisible();
+  await expect(stage).toHaveAttribute('data-head-on', '1');
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: 'test-results/head-on-hostile-traffic.png' });
+  expect(errors).toEqual([]);
+});
