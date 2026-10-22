@@ -4,14 +4,15 @@ import { makeTrafficVehicle } from './VehicleModels';
 import { VehicleMotionRig } from './VehicleMotion';
 import type { SquadOrder } from '../gameplay/SquadTactics';
 
-export type EnemyRole = 'civilian' | 'interceptor' | 'weaver' | 'blocker' | 'enforcer' | 'motorcycle' | 'boat' | 'switchblade' | 'head-on';
-export type EnemyState = 'approach' | 'intercept' | 'disrupted' | 'spinning' | 'retreating';
+export type EnemyRole = 'civilian' | 'interceptor' | 'weaver' | 'blocker' | 'enforcer' | 'motorcycle' | 'boat' | 'switchblade' | 'head-on' | 'rear-pursuer';
+export type EnemyState = 'approach' | 'intercept' | 'disrupted' | 'spinning' | 'retreating' | 'pursuing';
 
 export class TrafficVehicle {
   readonly mesh: THREE.Group;
   private readonly motion: VehicleMotionRig;
   readonly hostile: boolean;
   readonly oncoming: boolean;
+  readonly rearPursuer: boolean;
   readonly role: EnemyRole;
   readonly halfWidth: number;
   readonly halfLength: number;
@@ -27,12 +28,13 @@ export class TrafficVehicle {
   private disruption = 0;
   private spinDirection: number;
 
-  constructor(scene: THREE.Scene, x: number, z: number, hostile: boolean, variant: number, color: number, speed: number, squadId: number | null = null, oncoming = false) {
+  constructor(scene: THREE.Scene, x: number, z: number, hostile: boolean, variant: number, color: number, speed: number, squadId: number | null = null, oncoming = false, rearPursuer = false) {
     this.squadId = squadId;
     this.hostile = hostile;
     this.oncoming = hostile && oncoming;
+    this.rearPursuer = hostile && !this.oncoming && rearPursuer;
     if (this.oncoming) this.fireClock = 0.66;
-    this.role = !hostile ? 'civilian' : this.oncoming ? 'head-on' : variant === 6 ? 'switchblade' : variant === 5 ? 'boat' : variant === 4 ? 'motorcycle' : variant === 3 ? 'enforcer' : variant === 2 ? 'blocker' : variant === 1 ? 'weaver' : 'interceptor';
+    this.role = !hostile ? 'civilian' : this.oncoming ? 'head-on' : this.rearPursuer ? 'rear-pursuer' : variant === 6 ? 'switchblade' : variant === 5 ? 'boat' : variant === 4 ? 'motorcycle' : variant === 3 ? 'enforcer' : variant === 2 ? 'blocker' : variant === 1 ? 'weaver' : 'interceptor';
     this.x = x;
     this.z = z;
     this.speed = speed;
@@ -72,7 +74,9 @@ export class TrafficVehicle {
       this.spinTimer <= 0 && this.disruption <= 0;
     if (fleeing) this.z -= Math.max(20, 19 + this.speed * 0.55) * dt;
     else if (this.oncoming) this.z += (playerSpeed + this.speed * (this.disruption > 0 ? 0.55 : 1)) * dt;
-    else this.z += Math.max(8, playerSpeed - this.speed * (this.disruption > 0 ? 0.5 : 1)) * dt;
+    else this.z += (playerSpeed - this.speed * (this.disruption > 0 ? 0.5 : 1)) * dt;
+    // Signed relative speed matters: fast traffic can pull away when braking,
+    // and a fast rear attacker closes in from the back unless outrun in High.
     if (this.spinTimer > 0) {
       this.state = 'spinning';
       this.x += this.spinDirection * 7.5 * dt;
@@ -86,6 +90,13 @@ export class TrafficVehicle {
       this.state = 'retreating';
       const escapeSide = this.x < 0 ? -7.5 : 7.5;
       this.x = approach(this.x, order?.targetX ?? escapeSide, 2.4, dt);
+      this.mesh.rotation.z = approach(this.mesh.rotation.z, 0, 5, dt);
+      this.mesh.rotation.y = approach(this.mesh.rotation.y, 0, 4, dt);
+    } else if (this.rearPursuer && this.z > playerZ + 5 && this.z < playerZ + 48) {
+      this.state = 'pursuing';
+      // Predictable, slow lane correction gives the driver a real steering
+      // escape. Smoke and oil suppress pursuit via the disruption branch.
+      this.x = approach(this.x, clamp(playerX, -6.4, 6.4), 0.45, dt);
       this.mesh.rotation.z = approach(this.mesh.rotation.z, 0, 5, dt);
       this.mesh.rotation.y = approach(this.mesh.rotation.y, 0, 4, dt);
     } else if (this.hostile && this.z > playerZ - 59 && this.z < playerZ - 3) {
