@@ -5,7 +5,7 @@ import { VehicleMotionRig } from './VehicleMotion';
 import type { SquadOrder } from '../gameplay/SquadTactics';
 
 export type EnemyRole = 'civilian' | 'interceptor' | 'weaver' | 'blocker' | 'enforcer' | 'motorcycle' | 'boat' | 'switchblade' | 'head-on' | 'rear-pursuer';
-export type EnemyState = 'approach' | 'intercept' | 'disrupted' | 'spinning' | 'retreating' | 'pursuing' | 'overtaking' | 'screening';
+export type EnemyState = 'approach' | 'intercept' | 'disrupted' | 'spinning' | 'retreating' | 'pursuing' | 'overtaking' | 'screening' | 'pressuring';
 
 export class TrafficVehicle {
   readonly mesh: THREE.Group;
@@ -91,6 +91,13 @@ export class TrafficVehicle {
       this.state = 'retreating';
       const escapeSide = this.x < 0 ? -7.5 : 7.5;
       this.x = approach(this.x, order?.targetX ?? escapeSide, 2.4, dt);
+      this.mesh.rotation.z = approach(this.mesh.rotation.z, 0, 5, dt);
+      this.mesh.rotation.y = approach(this.mesh.rotation.y, 0, 4, dt);
+    } else if (this.rearPursuer && order?.type === 'hold-lane') {
+      // Coordinated two-direction attack: hold the assigned outer lane, even
+      // when the player steers. The neutral center corridor must remain open.
+      this.state = 'pressuring';
+      this.x = approach(this.x, order.targetX, 1.3, dt);
       this.mesh.rotation.z = approach(this.mesh.rotation.z, 0, 5, dt);
       this.mesh.rotation.y = approach(this.mesh.rotation.y, 0, 4, dt);
     } else if (this.rearPursuer && this.z > playerZ - 18 && this.z < playerZ + 48) {

@@ -268,3 +268,12 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [x] Update tactical HUD with distinct **REAR FLANK** and **CUT-IN AHEAD** warnings, retaining pincer/retreat prioritization.
 - [x] Unit and WebGL regression coverage for lane safety, collision separation, smoke disruption, and forward maneuver state.
 - [ ] Build more complete authored front/rear coordinated encounters, adjust screen-time warning thresholds, independently verify lane changes/collisions at high FPS and wide aspect ratios, and conduct manual feel/fairness testing.
+
+### Coordinated cross-pressure set piece (2026-10-22)
+
+- [x] Create a pure deterministic, two-direction ambush planner with mirrored outside-lane formation and explicit center escape lane.
+- [x] Gate deployment on escalation, centered player, clear traffic, no active water/fork/van restrictions, and no competing rear chase.
+- [x] Introduce a brief staging lull and suppress ambient traffic, extra air threats, and rear arrivals while the coordinated pair is active.
+- [x] Hold the rear attacker's assigned lane rather than allowing instant homing into the safe corridor; use the existing forward armored blocker.
+- [x] Add CROSS PRESSURE / CENTER LANE OPEN tactical HUD state, fixed-step unit safety tests and deterministic Chromium WebGL acceptance coverage.
+- [ ] Fine-tune encounter pacing and difficulty across modes; hand-test real GPU devices, controller steering and collisions; eventually add authored cutscenes and cross-direction audio cues.
