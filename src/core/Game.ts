@@ -511,7 +511,12 @@ export class Game {
     }
     this.grace = Math.max(0, this.grace - dt);
     this.crossPressureClock -= dt;
-    if (this.crossStaging > 0) this.crossStaging -= dt;
+    if (this.crossStaging > 0) {
+      this.crossStaging -= dt;
+      // -1 is the explicit ready-to-stage marker. Avoid an exact-zero
+      // floating point boundary restarting the quiet interval indefinitely.
+      if (this.crossStaging <= 0) this.crossStaging = -1;
+    }
     if (this.crossPressureClock <= 0 && this.crossStaging === 0 &&
         this.crossPressure === null && this.distance > 1150 && !this.player.isBoat &&
         splitMedianHalfWidth(this.distance + 42) <= 0.1 && this.routes.side === null &&
