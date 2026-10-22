@@ -7,6 +7,7 @@ export interface Controls {
   steer: number;
   throttle: boolean;
   brake: boolean;
+  gearPressed?: boolean;
   fire: boolean;
   missilePressed: boolean;
   oilPressed: boolean;
@@ -62,6 +63,7 @@ export class Input {
       steer: Math.max(-1, Math.min(1, keyboardSteer || stick)),
       throttle: bound('throttle') || key('ArrowUp') || pressed(this.gamepadBindings.throttle),
       brake: bound('brake') || key('ArrowDown') || pressed(this.gamepadBindings.brake),
+      gearPressed: edge('gear', bound('gear') || pressed(this.gamepadBindings.gear)),
       fire: bound('fire') || pressed(this.gamepadBindings.fire),
       missilePressed: edge('missile', bound('missile') || pressed(this.gamepadBindings.missile)),
       oilPressed: edge('oil', bound('oil') || pressed(this.gamepadBindings.oil)),

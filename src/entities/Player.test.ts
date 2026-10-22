@@ -26,6 +26,7 @@ describe('surface-dependent interceptor handling', () => {
     expect(player.isBoat).toBe(true);
     const boatSpeed = player.speed;
     player.reset();
+    player.shiftGear();
     for (let i=0;i<180;i++) player.step(1/60, controls, 'forest');
     expect(player.speed).toBeGreaterThan(boatSpeed);
   });

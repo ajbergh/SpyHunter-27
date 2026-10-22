@@ -494,6 +494,14 @@ test('classic speed control moves interceptor forward and backward inside the ro
   }, frames);
   const initial = Number(await car.getAttribute('data-player-z'));
   await page.keyboard.down('w');
+  const low = await advance(150);
+  expect(low.speed).toBeGreaterThan(38);
+  expect(low.speed).toBeLessThan(42);
+  await expect(page.locator('#drive-gear')).toHaveText('LOW');
+  await page.keyboard.down('g');
+  await advance(1);
+  await page.keyboard.up('g');
+  await expect(page.locator('#drive-gear')).toHaveText('HIGH');
   const accelerated = await advance(210);
   await page.keyboard.up('w');
   expect(accelerated.screen).toBe('playing');
@@ -530,5 +538,40 @@ test('head-on hostile appears facing the oncoming lane while player can dodge it
   await expect(stage).toHaveAttribute('data-head-on', '1');
   await page.waitForTimeout(500);
   await page.screenshot({ path: 'test-results/head-on-hostile-traffic.png' });
+  expect(errors).toEqual([]);
+});
+
+test('manual gear shift is edge-triggered and can be rebound from settings', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', err => errors.push(err.message));
+  await page.goto('/?testDrive=1&testLane=6.4');
+  await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
+  await page.locator('[data-action="gear"]').click();
+  await page.keyboard.press('z');
+  await expect(page.locator('[data-action="gear"] strong')).toHaveText('Z');
+  await page.getByRole('button', { name: /apply and return/i }).click();
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#drive-gear')).toHaveText('LOW');
+  const advance = (frames: number) => page.evaluate(ticks => {
+    const game = window as Window & { __spy27AdvanceDriving?: (n: number) => unknown };
+    if (!game.__spy27AdvanceDriving) throw new Error('Missing test drivetrain bridge');
+    game.__spy27AdvanceDriving(ticks);
+  }, frames);
+
+  await page.keyboard.down('z');
+  await advance(3);
+  await expect(page.locator('#drive-gear')).toHaveText('HIGH');
+  await advance(100);
+  await expect(page.locator('#drive-gear')).toHaveText('HIGH');
+  await page.keyboard.up('z');
+  await advance(2);
+  await page.keyboard.down('z');
+  await advance(2);
+  await expect(page.locator('#drive-gear')).toHaveText('LOW');
+  await page.keyboard.up('z');
+
+  await page.reload();
+  await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
+  await expect(page.locator('[data-action="gear"] strong')).toHaveText('Z');
   expect(errors).toEqual([]);
 });

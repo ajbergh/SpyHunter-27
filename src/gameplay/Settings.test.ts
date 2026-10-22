@@ -20,6 +20,8 @@ describe('durable graphics and audio preferences', () => {
     const changed = assignBinding(DEFAULT_BINDINGS, 'fire', 'KeyZ');
     expect(changed?.fire).toBe('KeyZ');
     expect(assignBinding(DEFAULT_BINDINGS, 'fire', 'KeyW')).toBeNull();
+    expect(assignBinding(DEFAULT_BINDINGS, 'fire', 'KeyG')).toBeNull();
+    expect(assignBinding(DEFAULT_BINDINGS, 'gear', 'KeyZ')?.gear).toBe('KeyZ');
     expect(assignBinding(DEFAULT_BINDINGS, 'fire', 'Escape')).toBeNull();
     expect(assignBinding(DEFAULT_BINDINGS, 'fire', 'Delete')).toBeNull();
     expect(assignBinding(DEFAULT_BINDINGS, 'fire', 'KeyM')).toBeNull();
@@ -31,10 +33,13 @@ describe('durable graphics and audio preferences', () => {
     expect(preferences.bindings.fire).toBe('KeyZ');
     expect(preferences.bindings.missile).toBe('KeyQ');
     expect(preferences.bindings.pause).toBe('KeyP');
+    expect(preferences.bindings.gear).toBe('KeyG');
   });
   it('validates Gamepad API standard button mappings and blocks duplicate actions', () => {
     expect(assignGamepadBinding(DEFAULT_GAMEPAD_BINDINGS, 'fire', 14)?.fire).toBe(14);
     expect(assignGamepadBinding(DEFAULT_GAMEPAD_BINDINGS, 'fire', 1)).toBeNull();
+    expect(assignGamepadBinding(DEFAULT_GAMEPAD_BINDINGS, 'gear', 5)?.gear).toBe(5);
+    expect(assignGamepadBinding(DEFAULT_GAMEPAD_BINDINGS, 'fire', 5)).toBeNull();
     expect(assignGamepadBinding(DEFAULT_GAMEPAD_BINDINGS, 'fire', -1)).toBeNull();
     expect(assignGamepadBinding(DEFAULT_GAMEPAD_BINDINGS, 'fire', 22)).toBeNull();
     expect(assignGamepadBinding(DEFAULT_GAMEPAD_BINDINGS, 'fire', 4.5)).toBeNull();
@@ -44,6 +49,7 @@ describe('durable graphics and audio preferences', () => {
     expect(p.gamepadBindings.fire).toBe(12);
     expect(p.gamepadBindings.missile).toBe(1);
     expect(p.gamepadBindings.oil).toBe(2);
+    expect(p.gamepadBindings.gear).toBe(5);
   });
 
 });

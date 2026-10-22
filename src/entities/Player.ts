@@ -5,6 +5,7 @@ import { makeInterceptor, makeSpeedboat } from './VehicleModels';
 import { VehicleMotionRig } from './VehicleMotion';
 import type { Biome } from '../world/WorldPlan';
 import { drivingTargetZ, DRIVE_Z_NEUTRAL } from '../gameplay/LongitudinalDriving';
+import { INITIAL_GEAR, nextGear, transmissionResponse, type DriveGear } from '../gameplay/Transmission';
 
 export class Player {
   readonly mesh = new THREE.Group();
@@ -12,6 +13,7 @@ export class Player {
   private readonly carMotion = new VehicleMotionRig(this.car);
   private readonly boat = makeSpeedboat(false);
   isBoat = false;
+  gear: DriveGear = INITIAL_GEAR;
   private elapsed = 0;
   private lateralVelocity = 0;
   x = 0;
@@ -30,6 +32,7 @@ export class Player {
     this.x = 0;
     this.z = DRIVE_Z_NEUTRAL;
     this.speed = 25;
+    this.gear = INITIAL_GEAR;
     this.invulnerability = 0;
     this.mesh.visible = true;
     this.elapsed = 0;
@@ -41,17 +44,26 @@ export class Player {
   }
 
   setBoat(enabled: boolean): void {
+    if (enabled) this.gear = INITIAL_GEAR;
     this.isBoat = enabled;
     this.car.visible = !enabled;
     this.boat.visible = enabled;
   }
 
+  shiftGear(): DriveGear | null {
+    if (this.isBoat) return null;
+    this.gear = nextGear(this.gear);
+    return this.gear;
+  }
+
   step(dt: number, controls: Controls, surface: Biome = 'forest', speedScale = 1, reducedMotion = false): void {
     this.elapsed += dt;
-    const desired = this.isBoat
-      ? controls.brake ? 13 : controls.throttle ? 46 : 29
-      : controls.brake ? 10 : controls.throttle ? 54 : 30;
-    this.speed = approach(this.speed, desired * speedScale, controls.brake ? 4.2 : 1.6, dt);
+    const response = this.isBoat
+      ? { targetSpeed: controls.brake ? 13 : controls.throttle ? 46 : 29,
+          responseRate: controls.brake ? 4.2 : 1.6 }
+      : transmissionResponse(this.gear, this.speed / Math.max(0.2, speedScale),
+        controls.throttle, controls.brake);
+    this.speed = approach(this.speed, response.targetSpeed * speedScale, response.responseRate, dt);
     // The original arcade feel: accelerating climbs toward the screen horizon;
     // braking drops the actual vehicle back. Hitboxes/weapons use this same Z.
     this.z = approach(this.z, drivingTargetZ(this.speed, this.isBoat, speedScale), 2.6, dt);
