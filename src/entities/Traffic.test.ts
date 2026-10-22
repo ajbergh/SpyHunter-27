@@ -217,4 +217,33 @@ describe('enforcer AI', () => {
     tail.dispose(scene);
   });
 
+
+  it('maintains an open center when an assigned rear attacker holds the outer lane', () => {
+    const scene = new THREE.Scene();
+    const front = new TrafficVehicle(scene, -6.4, -79, true, 2, 0x793248, 11);
+    const tail = new TrafficVehicle(scene, 6.4, 36, true, 0, 0xe7a840, 47.5,
+      null, false, true);
+    for (let i = 0; i < 110; i++) {
+      front.step(1 / 60, 30, 0, undefined, 8);
+      tail.step(1 / 60, 30, 0, { type: 'hold-lane', targetX: 6.4 }, 8);
+    }
+    expect(tail.state).toBe('pressuring');
+    expect(front.role).toBe('blocker');
+    expect(tail.x).toBeCloseTo(6.4);
+    expect(front.x).toBeCloseTo(-6.4);
+    expect(tail.z).toBeLessThan(8); // overtook the player's depth
+    expect(front.z).toBeLessThan(8); // forward blocker approaches
+    expect(Math.abs(front.x) - front.halfWidth).toBeGreaterThan(3.0);
+    expect(Math.abs(tail.x) - tail.halfWidth).toBeGreaterThan(3.0);
+    const before = tail.x;
+    tail.disrupt(0.3);
+    for (let i = 0; i < 8; i++)
+      tail.step(1 / 60, 30, -6.4, { type: 'hold-lane', targetX: 6.4 }, 8);
+    expect(tail.state).toBe('disrupted');
+    expect(tail.x).toBeCloseTo(before);
+    front.dispose(scene);
+    tail.dispose(scene);
+    expect(scene.children).toHaveLength(0);
+  });
+
 });
