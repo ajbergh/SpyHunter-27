@@ -243,3 +243,11 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [x] Introduce separate, rotated head-on hostile vehicles with opposing relative velocity, advance warning, fair low-frequency spawn gating, forward attacks, and no mixed pincer formations.
 - [x] Unit tests for depth bounds, acceleration/braking/boat transitions, frontal encounter planning and AI; Playwright screenshots prove actual W/S vertical travel and head-on presentation.
 - [ ] Authentic gear-shifting mechanics, front/rear tactical chase choreography, authored threat-specific vehicle behaviors, target-device play sessions, collision-fairness balancing and visual QA under all aspect ratios.
+
+### Gameplay fidelity — Low / High manual transmission (2026-10-21)
+
+- [x] Original-style Low/High gear selection with deliberate fast-launch/lower-ceiling versus slower-launch/higher-ceiling torque response; fixed 60 Hz simulation, bounded speed and smoother downshifts.
+- [x] Remappable keyboard **G** and gamepad **Button 5** (standard right shoulder) with duplicate binding validation, backwards-compatible stored settings and single-action edge triggering.
+- [x] Distinct HUD gear indicator, shift notification and explicit **BOAT** transmission mode; gear resets safely on restart and boat transformation.
+- [x] Unit gearbox, Player integration, settings migration and Chromium keyboard/gear persistence tests, including actual forward/rearward depth after shifting.
+- [ ] Verify original-cabinet speed curves/gear ratios, independent engine pitch and shift audio, gamepad hardware mappings, frame-time profiling, and manual collision/resupply balance across modes.
