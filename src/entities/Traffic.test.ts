@@ -175,4 +175,40 @@ describe('enforcer AI', () => {
     tail.dispose(scene);
   });
 
+
+  it('commits to a vacant overtaking lane, then screens gradually only after clearing the nose', () => {
+    const scene = new THREE.Scene();
+    const tail = new TrafficVehicle(scene, 0, 34, true, 0, 0xc58235, 48, null, false, true);
+    tail.step(1 / 60, 30, 0, { type: 'overtake', targetX: -6.4 }, 8);
+    expect(tail.state).toBe('overtaking');
+    expect(tail.x).toBeLessThan(0);
+
+    // The original pass lane remains locked even if the player changes lanes
+    // and another plan attempts to retarget it.
+    for (let i = 0; i < 60; i++)
+      tail.step(1 / 60, 30, 6.4, { type: 'overtake', targetX: 6.4 }, 8);
+    expect(tail.x).toBeLessThan(-5);
+    expect(tail.state).toBe('overtaking');
+    for (let i = 0; i < 60; i++) tail.step(1 / 60, 30, 0, undefined, 8);
+    expect(tail.z).toBeLessThan(8 - 18);
+    expect(tail.state).toBe('screening');
+    expect(tail.x).toBeGreaterThan(-6.4);
+    const screeningX = tail.x;
+    tail.disrupt(0.4);
+    for (let i = 0; i < 12; i++) tail.step(1 / 60, 30, 0, undefined, 8);
+    expect(tail.state).toBe('disrupted');
+    expect(tail.x).toBeCloseTo(screeningX);
+    tail.dispose(scene);
+  });
+
+  it('keeps legacy rear tracking if no safe overtaking order is available', () => {
+    const scene = new THREE.Scene();
+    const tail = new TrafficVehicle(scene, 0, 33, true, 0, 0xc58235, 48, null, false, true);
+    for (let i = 0; i < 30; i++) tail.step(1 / 60, 32, 6.4, undefined, 8);
+    expect(tail.state).toBe('pursuing');
+    expect(tail.x).toBeGreaterThan(0);
+    expect(tail.x).toBeLessThan(6.4);
+    tail.dispose(scene);
+  });
+
 });
