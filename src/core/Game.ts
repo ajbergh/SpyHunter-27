@@ -165,6 +165,7 @@ export class Game {
       type TestWindow = Window & {
         __spy27AdvanceDriving?: (frames: number) => {
           z: number; speed: number; screen: Screen;
+          rear: { x: number; z: number; state: string } | null;
         };
       };
       (window as TestWindow).__spy27AdvanceDriving = (frames: number) => {
@@ -172,7 +173,9 @@ export class Game {
           Math.min(360, Math.max(0, Math.floor(frames))) : 0;
         for (let i = 0; i < count; i++) this.update(1 / 60);
         this.renderer.domElement.dataset.playerZ = this.player.z.toFixed(2);
-        return { z: this.player.z, speed: this.player.speed, screen: this.screen };
+        const rear = this.traffic.find(car => car.rearPursuer);
+        return { z: this.player.z, speed: this.player.speed, screen: this.screen,
+          rear: rear ? { x: rear.x, z: rear.z, state: rear.state } : null };
       };
     }
     this.loop.start();
