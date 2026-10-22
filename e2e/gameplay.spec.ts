@@ -494,6 +494,14 @@ test('classic speed control moves interceptor forward and backward inside the ro
   }, frames);
   const initial = Number(await car.getAttribute('data-player-z'));
   await page.keyboard.down('w');
+  const low = await advance(150);
+  expect(low.speed).toBeGreaterThan(38);
+  expect(low.speed).toBeLessThan(42);
+  await expect(page.locator('#drive-gear')).toHaveText('LOW');
+  await page.keyboard.down('g');
+  await advance(1);
+  await page.keyboard.up('g');
+  await expect(page.locator('#drive-gear')).toHaveText('HIGH');
   const accelerated = await advance(210);
   await page.keyboard.up('w');
   expect(accelerated.screen).toBe('playing');
