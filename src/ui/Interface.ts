@@ -316,12 +316,15 @@ export class Interface {
     this.get('enemy-round-count').textContent = String(enemyRounds).padStart(2, '0');
   }
 
-  tactics(pincer: boolean, retreat = false): void {
-    this.get('tactic-status').hidden = !(pincer || retreat);
+  tactics(pincer: boolean, retreat = false, rearPursuit = false): void {
     const label = this.get('tactic-status');
-    label.querySelector('b')!.textContent = pincer ? 'PINCER' : 'RETREAT';
-    label.querySelector('small')!.textContent = pincer
-      ? 'OPEN CENTER CORRIDOR' : 'SURVIVORS BREAKING OFF';
+    label.hidden = !(pincer || retreat || rearPursuit);
+    label.querySelector('b')!.textContent =
+      pincer ? 'PINCER' : rearPursuit ? 'REAR PURSUIT' : 'RETREAT';
+    label.querySelector('small')!.textContent =
+      pincer ? 'OPEN CENTER CORRIDOR'
+        : rearPursuit ? 'SHIFT HIGH OR CHANGE LANES'
+          : 'SURVIVORS BREAKING OFF';
   }
 
   route(side: RouteSide | null, leftCompleted: number, rightCompleted: number): void {

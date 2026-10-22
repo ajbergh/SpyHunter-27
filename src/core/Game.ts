@@ -22,6 +22,7 @@ import { SkidTrails } from '../rendering/SkidTrails';
 import { CAMERA_FRAME, cinematicFov } from '../rendering/CameraFraming';
 import { Player } from '../entities/Player';
 import { TrafficVehicle } from '../entities/Traffic';
+import { planRearPursuit } from '../gameplay/RearPursuitDirector';
 import { Projectiles } from '../combat/Projectiles';
 import { SpecialWeapons, type WeaponKind } from '../combat/SpecialWeapons';
 import { AirThreats, Helicopter } from '../combat/AirThreats';
@@ -92,6 +93,7 @@ export class Game {
   private distance = 0;
   private spawnClock = 0;
   private airSpawnClock = 9;
+  private tailSpawnClock = 15;
   private shotClock = 0;
   private grace = 0;
   private dockingTimer = 0;
@@ -270,6 +272,9 @@ export class Game {
       if (new URLSearchParams(window.location.search).get('testHeadOn') === '1') {
         this.traffic.push(new TrafficVehicle(this.scene, 0, -47, true, 0, 0xb93d53, 26, null, true));
       }
+      if (new URLSearchParams(window.location.search).get('testTail') === '1') {
+        this.traffic.push(new TrafficVehicle(this.scene, 0, 34, true, 0, 0xc58235, 48, null, false, true));
+      }
     }
     this.lives = GAME_MODES[mode].lives;
     this.grace = mode === 'modern' ? 5 : 3;
@@ -284,12 +289,14 @@ export class Game {
     this.splitClean = true;
     this.spawnClock = 0.8;
     this.airSpawnClock = 9;
+    this.tailSpawnClock = 15;
     if (import.meta.env.DEV &&
         new URLSearchParams(window.location.search).get('testDrive') === '1') {
       // Isolate throttle/brake acceptance from randomly timed enemy collisions.
       // Normal release builds and every other test retain full encounter AI.
       this.spawnClock = 999;
       this.airSpawnClock = 999;
+      this.tailSpawnClock = 999;
     }
     this.shotClock = 0;
     this.toastClock = 0;
@@ -483,6 +490,27 @@ export class Game {
       this.airSpawnClock = 17 + this.random() * 8;
     }
     this.grace = Math.max(0, this.grace - dt);
+    this.tailSpawnClock -= dt;
+    if (this.tailSpawnClock <= 0) {
+      const pursuit = planRearPursuit(
+        this.traffic, this.distance, this.player.x, this.player.isBoat,
+        splitMedianHalfWidth(this.distance + 42) > 0.1 || this.routes.side !== null,
+        this.van.mesh.visible || this.dockingTimer > 0,
+        this.random,
+      );
+      if (pursuit) {
+        this.traffic.push(new TrafficVehicle(
+          this.scene, pursuit.x, pursuit.z, true, 0, 0xd7a64e,
+          pursuit.speed, null, false, true,
+        ));
+        this.announce('REAR PURSUIT — SHIFT HIGH OR EVADE');
+        this.audio.warning();
+        this.tailSpawnClock = 22 + this.random() * 8;
+      } else {
+        // Retry after transient terrain/traffic restrictions without flooding.
+        this.tailSpawnClock = 3;
+      }
+    }
     this.spawnClock -= dt;
     if (this.spawnClock <= 0) {
       this.spawnEncounter();
@@ -545,7 +573,8 @@ export class Game {
       this.player.isBoat || splitMedianHalfWidth(this.distance) > 0.1);
     const pincerActive = [...squadOrders.values()].some(order => order.type === 'pincer');
     const retreatActive = [...squadOrders.values()].some(order => order.type === 'retreat');
-    this.ui.tactics(pincerActive, retreatActive);
+    this.ui.tactics(pincerActive, retreatActive,
+      this.traffic.some(car => car.role === 'rear-pursuer' && car.z > this.player.z - 8));
     for (const car of this.traffic) {
       const wasRetreating = car.state === 'retreating';
       car.step(dt, this.player.speed, this.player.x, squadOrders.get(car), this.player.z);
@@ -596,7 +625,12 @@ export class Game {
 
     for (let i = this.traffic.length - 1; i >= 0; i--) {
       const car = this.traffic[i];
-      if (car.z > 55 || (car.state === 'retreating' && car.z < -108)) {
+      if (car.z > 55 || car.z < -120) {
+        if (car.role === 'rear-pursuer' && car.z > 55) {
+          const points = this.scoring.bonus(125);
+          if (points > 0) this.announce('TAIL SHAKEN — +125');
+          else this.announce('TAIL SHAKEN — ESCAPE CONFIRMED');
+        }
         this.removeVehicle(i);
         continue;
       }
@@ -750,6 +784,7 @@ export class Game {
       // moving-hitbox coverage. No debug DOM updates ship in production.
       this.renderer.domElement.dataset.playerZ = this.player.z.toFixed(2);
       this.renderer.domElement.dataset.headOn = this.traffic.some(car => car.oncoming) ? '1' : '0';
+      this.renderer.domElement.dataset.rearPursuit = this.traffic.some(car => car.rearPursuer) ? '1' : '0';
     }
     const center = (z: number): number => this.road.centerAt(z);
     // Road tiles scroll around a stable reference Z. The interceptor itself

@@ -127,4 +127,52 @@ describe('enforcer AI', () => {
     gun.dispose(scene);
   });
 
+
+  it('lets faster highway traffic pull away during braking instead of advancing artificially', () => {
+    const scene = new THREE.Scene();
+    const civilian = new TrafficVehicle(scene, 0, -25, false, 0, 0x778899, 20);
+    const initial = civilian.z;
+    civilian.step(1, 10, 0);
+    expect(civilian.z).toBeCloseTo(initial - 10);
+    civilian.step(1, 40, 0);
+    expect(civilian.z).toBeCloseTo(initial + 10);
+    civilian.dispose(scene);
+  });
+
+  it('rear pursuit closes on Low, can be outrun in High, and allows steering escape', () => {
+    const scene = new THREE.Scene();
+    const tail = new TrafficVehicle(scene, 0, 34, true, 0, 0xd7a64e, 48, null, false, true);
+    expect(tail.role).toBe('rear-pursuer');
+    expect(tail.oncoming).toBe(false);
+    expect(tail.rearPursuer).toBe(true);
+    expect(tail.hitbox().halfWidth).toBeGreaterThan(1);
+    const start = tail.z;
+    tail.step(1, 41, 6.4, undefined, -1);
+    expect(tail.z).toBeCloseTo(start - 7);
+    expect(tail.state).toBe('pursuing');
+    expect(tail.x).toBeGreaterThan(0);
+    expect(tail.x).toBeLessThan(3);
+    const close = tail.z;
+    tail.step(1, 58, -6.4, undefined, -10);
+    expect(tail.z).toBeCloseTo(close + 10);
+    expect(tail.x).toBeGreaterThan(-2);
+    expect(tail.tryFire(0, -10)).toBe(false);
+    tail.dispose(scene);
+    expect(scene.children).toHaveLength(0);
+  });
+
+  it('smoke disrupts rear pursuit and temporarily interrupts lane tracking', () => {
+    const scene = new THREE.Scene();
+    const tail = new TrafficVehicle(scene, 0, 29, true, 0, 0xd7a64e, 48, null, false, true);
+    tail.disrupt(0.65);
+    const initialX = tail.x;
+    for (let i = 0; i < 20; i++) tail.step(1 / 60, 34, 6.4, undefined, 8);
+    expect(tail.state).toBe('disrupted');
+    expect(tail.x).toBe(initialX);
+    for (let i = 0; i < 50; i++) tail.step(1 / 60, 34, 6.4, undefined, 8);
+    expect(tail.state).toBe('pursuing');
+    expect(tail.x).toBeGreaterThan(initialX);
+    tail.dispose(scene);
+  });
+
 });
