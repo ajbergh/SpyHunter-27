@@ -24,6 +24,7 @@ import { Player } from '../entities/Player';
 import { TrafficVehicle } from '../entities/Traffic';
 import { planRearPursuit } from '../gameplay/RearPursuitDirector';
 import { planRearFlank } from '../gameplay/RearFlankDirector';
+import { planCrossPressure, type CrossPressurePlan } from '../gameplay/CrossPressureDirector';
 import { Projectiles } from '../combat/Projectiles';
 import { SpecialWeapons, type WeaponKind } from '../combat/SpecialWeapons';
 import { AirThreats, Helicopter } from '../combat/AirThreats';
@@ -95,6 +96,9 @@ export class Game {
   private spawnClock = 0;
   private airSpawnClock = 9;
   private tailSpawnClock = 15;
+  private crossPressureClock = 22;
+  private crossStaging = 0;
+  private crossPressure: { front: TrafficVehicle; rear: TrafficVehicle; rearLane: number } | null = null;
   private shotClock = 0;
   private grace = 0;
   private dockingTimer = 0;
@@ -234,6 +238,7 @@ export class Game {
     for (const car of this.traffic) car.dispose(this.scene);
     this.traffic.length = 0;
     this.nextSquadId = 1;
+    this.crossPressure = null;
     this.ui.tactics(false);
     this.clearExplosions();
     this.bullets.reset();
@@ -279,6 +284,11 @@ export class Game {
       if (new URLSearchParams(window.location.search).get('testTail') === '1') {
         this.traffic.push(new TrafficVehicle(this.scene, 0, 34, true, 0, 0xc58235, 48, null, false, true));
       }
+      if (new URLSearchParams(window.location.search).get('testCrossPressure') === '1') {
+        const plan = planCrossPressure([], this.distance, this.player.x,
+          this.player.isBoat, false, false, () => 0);
+        if (plan) this.deployCrossPressure(plan);
+      }
     }
     this.lives = GAME_MODES[mode].lives;
     this.grace = mode === 'modern' ? 5 : 3;
@@ -294,6 +304,8 @@ export class Game {
     this.spawnClock = 0.8;
     this.airSpawnClock = 9;
     this.tailSpawnClock = 15;
+    this.crossPressureClock = 22;
+    this.crossStaging = 0;
     if (import.meta.env.DEV &&
         new URLSearchParams(window.location.search).get('testDrive') === '1') {
       // Isolate throttle/brake acceptance from randomly timed enemy collisions.
@@ -483,7 +495,7 @@ export class Game {
     }
     this.scoring.tick(dt, distancePoints(this.player.speed, dt));
     this.airSpawnClock -= dt;
-    if (!this.player.isBoat && this.distance > 260 && this.airSpawnClock <= 0) {
+    if (!this.player.isBoat && !this.crossPressure && this.distance > 260 && this.airSpawnClock <= 0) {
       if (this.air.helicopters.length === 0) {
         const profile = chooseHelicopterProfile(this.distance, this.random);
         this.air.spawn((this.random() - 0.5) * 9, profile);
@@ -494,8 +506,18 @@ export class Game {
       this.airSpawnClock = 17 + this.random() * 8;
     }
     this.grace = Math.max(0, this.grace - dt);
+    this.crossPressureClock -= dt;
+    if (this.crossStaging > 0) this.crossStaging -= dt;
+    if (this.crossPressureClock <= 0 && this.crossStaging === 0 &&
+        this.crossPressure === null && this.distance > 1150 && !this.player.isBoat &&
+        splitMedianHalfWidth(this.distance + 42) <= 0.1 && this.routes.side === null &&
+        !this.van.mesh.visible) {
+      // A quiet approach interval gives the preceding wave room to clear.
+      // It also makes the two-direction formation an intentional set piece.
+      this.crossStaging = 5.2;
+    }
     this.tailSpawnClock -= dt;
-    if (this.tailSpawnClock <= 0) {
+    if (this.tailSpawnClock <= 0 && this.crossStaging <= 0 && !this.crossPressure) {
       const pursuit = planRearPursuit(
         this.traffic, this.distance, this.player.x, this.player.isBoat,
         splitMedianHalfWidth(this.distance + 42) > 0.1 || this.routes.side !== null,
@@ -582,13 +604,16 @@ export class Game {
       splitMedianHalfWidth(this.distance + 30) > 0.1 || this.routes.side !== null ||
       this.van.mesh.visible || this.dockingTimer > 0;
     const flank = rear ? planRearFlank(
-      this.traffic, rear, this.player.x, this.player.z, forbidFlank,
+      this.traffic, rear, this.player.x, this.player.z,
+      forbidFlank || this.crossPressure !== null,
     ) : null;
     for (const car of this.traffic) {
       const wasRetreating = car.state === 'retreating';
-      const order = car === rear && flank
-        ? { type: 'overtake' as const, targetX: flank.targetX }
-        : squadOrders.get(car);
+      const order = this.crossPressure && car === this.crossPressure.rear
+        ? { type: 'hold-lane' as const, targetX: this.crossPressure.rearLane }
+        : car === rear && flank
+          ? { type: 'overtake' as const, targetX: flank.targetX }
+          : squadOrders.get(car);
       car.step(dt, this.player.speed, this.player.x, order, this.player.z);
       if (!wasRetreating && car.state === 'retreating')
         this.announce('ENEMY SQUAD BROKEN — SURVIVOR DISENGAGING');
@@ -606,7 +631,8 @@ export class Game {
     // screening boundary without waiting for an additional rendered frame.
     this.ui.tactics(pincerActive, retreatActive,
       rear !== undefined && rear.hp > 0 && rear.z > this.player.z - 55,
-      rear?.state === 'overtaking', rear?.state === 'screening');
+      rear?.state === 'overtaking', rear?.state === 'screening',
+      this.crossPressure !== null);
     if (this.enemyShots.step(dt, this.player.speed, this.player.hitbox()) > 0) {
       this.damagePlayer('ENFORCER WEAPON IMPACT');
     }
@@ -680,6 +706,10 @@ export class Game {
         if (this.lives <= 0) break;
       }
     }
+    if (this.crossPressure && (!this.traffic.includes(this.crossPressure.front) ||
+        !this.traffic.includes(this.crossPressure.rear))) {
+      this.crossPressure = null;
+    }
     if (this.lives <= 0) return;
     const extraLives = this.scoring.checkExtraLives();
     if (extraLives > 0) {
@@ -709,7 +739,34 @@ export class Game {
     if (smoke) attempt('smoke');
   }
 
+  private deployCrossPressure(plan: CrossPressurePlan): void {
+    const front = new TrafficVehicle(this.scene, plan.front.x, plan.front.z,
+      true, 2, 0x793248, plan.front.speed);
+    const rear = new TrafficVehicle(this.scene, plan.rear.x, plan.rear.z,
+      true, 0, 0xe7a840, plan.rear.speed, null, false, true);
+    this.traffic.push(front, rear);
+    this.crossPressure = { front, rear, rearLane: plan.rear.x };
+    this.tailSpawnClock = Math.max(this.tailSpawnClock, 12);
+    this.announce('CROSS PRESSURE — CENTER LANE OPEN');
+    this.audio.warning();
+  }
+
   private spawnEncounter(): void {
+    if (this.crossPressure || this.crossStaging > 0) return;
+    if (this.crossStaging < 0) {
+      this.crossStaging = 0;
+      this.crossPressureClock = 26;
+      const plan = planCrossPressure(
+        this.traffic, this.distance, this.player.x, this.player.isBoat,
+        splitMedianHalfWidth(this.distance + 90) > 0.1 ||
+          this.routes.side !== null,
+        this.van.mesh.visible || this.dockingTimer > 0, this.random,
+      );
+      if (plan) {
+        this.deployCrossPressure(plan);
+        return;
+      }
+    }
     const route = this.routes.side;
     // Vehicles spawned during the fork are reserved to the chosen corridor.
     // Avoid placing new traffic on the impassable middle median.
