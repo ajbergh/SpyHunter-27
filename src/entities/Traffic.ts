@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { approach, clamp, PLAYER_Z, type RectHitbox } from '../core/logic';
 import { makeTrafficVehicle } from './VehicleModels';
 import { VehicleMotionRig } from './VehicleMotion';
+import { VehicleDamageFeedback } from './VehicleDamageFeedback';
 import type { SquadOrder } from '../gameplay/SquadTactics';
 
 export type EnemyRole = 'civilian' | 'interceptor' | 'weaver' | 'blocker' | 'enforcer' | 'motorcycle' | 'boat' | 'switchblade' | 'head-on' | 'rear-pursuer';
@@ -10,6 +11,9 @@ export type EnemyState = 'approach' | 'intercept' | 'disrupted' | 'spinning' | '
 export class TrafficVehicle {
   readonly mesh: THREE.Group;
   private readonly motion: VehicleMotionRig;
+  readonly damageFeedback: VehicleDamageFeedback;
+  private lastHp: number;
+  private readonly maxHp: number;
   readonly hostile: boolean;
   readonly oncoming: boolean;
   readonly rearPursuer: boolean;
@@ -43,6 +47,8 @@ export class TrafficVehicle {
     this.halfWidth = variant === 6 ? 1.82 : variant === 5 ? 1.1 : variant === 4 ? 0.63 : variant === 2 ? 1.4 : variant === 1 ? 0.95 : 1.13;
     this.halfLength = variant === 5 ? 2.52 : variant === 4 ? 1.65 : variant === 3 ? 3.32 : variant === 2 ? 3.05 : variant === 1 ? 1.98 : 2.37;
     this.hp = hostile && variant === 2 ? 4 : hostile && variant === 4 ? 1 : hostile ? 2 : 1;
+    this.maxHp = this.hp;
+    this.lastHp = this.hp;
     const vehicle = makeTrafficVehicle(hostile, color, variant);
     if (this.oncoming) {
       // Rotate the real model (not the AI steering group) 180 degrees toward
@@ -55,8 +61,15 @@ export class TrafficVehicle {
       this.mesh.add(facing);
     } else this.mesh = vehicle;
     this.motion = new VehicleMotionRig(this.mesh);
+    this.damageFeedback = new VehicleDamageFeedback(this.mesh);
     this.mesh.position.set(x, 0.12, z);
     scene.add(this.mesh);
+  }
+
+  recordImpact(): void {
+    this.lastHp = this.hp;
+    this.damageFeedback.hit();
+    this.damageFeedback.step(0, this.hp, this.maxHp);
   }
 
   disrupt(seconds: number): void { this.disruption = Math.max(this.disruption, seconds); }
@@ -67,6 +80,9 @@ export class TrafficVehicle {
   }
 
   step(dt: number, playerSpeed: number, playerX: number, order?: SquadOrder, playerZ = PLAYER_Z): void {
+    if (this.hp < this.lastHp) this.damageFeedback.hit();
+    this.lastHp = this.hp;
+    this.damageFeedback.step(dt, this.hp, this.maxHp);
     const previousX = this.x;
     this.spinTimer = Math.max(0, this.spinTimer - dt);
     this.disruption = Math.max(0, this.disruption - dt);
