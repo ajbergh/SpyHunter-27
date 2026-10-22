@@ -1,5 +1,6 @@
 import type { WeaponCounts } from '../combat/SpecialWeapons';
 import { GAME_MODES, type GameMode } from '../gameplay/GameModes';
+import { transmissionLabel, type DriveGear } from '../gameplay/Transmission';
 import { ROUTE_CHOICES, type RouteSide } from '../gameplay/RouteDirector';
 import type { Biome } from '../world/WorldPlan';
 import { formatMissionDistance, formatMissionTime } from '../gameplay/SessionMetrics';
@@ -35,7 +36,7 @@ export class Interface {
         <div class="scanlines" aria-hidden="true"></div>
         <header class="hud" id="hud">
           <div class="hud-block"><span class="micro">SCORE</span><strong id="score">000000</strong><span class="micro">HI <span id="best">000000</span></span></div>
-          <div class="hud-block hud-right"><span class="micro">LIVES <span id="lives">●●●</span></span><strong><span id="speed">025</span><small> MPH</small></strong><span class="micro">DUAL CANNONS // <b class="ready">ARMED</b></span></div>
+          <div class="hud-block hud-right"><span class="micro">LIVES <span id="lives">●●●</span></span><strong><span id="speed">025</span><small> MPH</small></strong><span class="micro">GEAR <b id="drive-gear" aria-live="polite">LOW</b> · CANNONS <b class="ready">ARMED</b></span></div>
         </header>
         <div class="toast" id="toast" aria-live="polite"></div>
         <div class="environment-name" id="environment-name">FOREST HIGHWAY</div>
@@ -178,7 +179,7 @@ export class Interface {
     const labels: Record<BindingAction, string> = {
       left: 'LEFT', right: 'RIGHT', throttle: 'ACCELERATE', brake: 'BRAKE',
       fire: 'MACHINE GUNS', missile: 'MISSILE', oil: 'OIL / FLAME',
-      smoke: 'SMOKE', van: 'RESUPPLY VAN', pause: 'PAUSE',
+      smoke: 'SMOKE', van: 'RESUPPLY VAN', pause: 'PAUSE', gear: 'SHIFT LOW / HIGH',
     };
     const grid = this.get<HTMLDivElement>('bindings-grid');
     for (const action of BINDING_ACTIONS) {
@@ -223,7 +224,7 @@ export class Interface {
     const gamepadLabels: Record<GamepadAction, string> = {
       fire: 'MACHINE GUNS', missile: 'MISSILE', oil: 'OIL / FLAME',
       smoke: 'SMOKE', van: 'SUPPORT VAN', pause: 'PAUSE',
-      throttle: 'THROTTLE', brake: 'BRAKE',
+      throttle: 'THROTTLE', brake: 'BRAKE', gear: 'SHIFT LOW / HIGH',
     };
     const padGrid = this.get<HTMLDivElement>('gamepad-grid');
     for (const action of GAMEPAD_ACTIONS) {
@@ -277,7 +278,8 @@ export class Interface {
       this.displayKey(b.missile) + ' MISSILE · ' +
       this.displayKey(b.oil) + ' OIL · ' +
       this.displayKey(b.smoke) + ' SMOKE · ' +
-      this.displayKey(b.van) + ' RESUPPLY';
+      this.displayKey(b.van) + ' RESUPPLY · ' +
+      this.displayKey(b.gear) + ' SHIFT GEAR';
   }
 
   private get<T extends HTMLElement = HTMLElement>(id: string): T {
@@ -356,6 +358,10 @@ export class Interface {
     this.get('combo-counter').hidden = multiplier <= 1 || seconds <= 0;
     this.get('combo-value').textContent = '×' + multiplier;
     this.get('combo-time').textContent = seconds.toFixed(1) + 's';
+  }
+
+  gearStatus(gear: DriveGear, boat: boolean): void {
+    this.get('drive-gear').textContent = transmissionLabel(gear, boat);
   }
 
   stats(score: number, best: number, lives: number, speed: number): void {
