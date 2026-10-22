@@ -357,6 +357,13 @@ export class Game {
       direction: 'none', formationActive: false,
       centerClear: false, guideCenter: false,
     });
+    if (import.meta.env.DEV &&
+        new URLSearchParams(window.location.search).get('testImpact') === '1') {
+      // Collision presentation E2E uses the same guarded damage path as
+      // ordinary game collisions, not a camera-only synthetic animation.
+      this.grace = 0;
+      this.damagePlayer('TEST COLLISION');
+    }
     this.refreshHUD();
     this.audio.confirm();
   }
