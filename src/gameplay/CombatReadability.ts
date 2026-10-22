@@ -30,7 +30,7 @@ export function combatCue(
     if (car.hp <= 0) continue;
     const longitudinal = car.z - playerZ;
     if (car.hostile) {
-      if (longitudinal <= -4 && longitudinal >= -86) front = true;
+      if (longitudinal <= -4 && longitudinal >= -110) front = true;
       if (longitudinal >= 4 && longitudinal <= 52) rear = true;
     }
     // Even a civilian blocks the guide. Width-aware clearance prevents the
