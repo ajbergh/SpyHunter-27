@@ -297,3 +297,12 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [x] Handle immediate machine-gun impacts and deferred HP changes from special weapons.
 - [x] Unit and deterministic Chromium regression coverage, including real guarded collision and Reduced Motion.
 - [ ] Add directional collision-specific camera recoil, physical suspension loading, authored paint cracks/dent geometry, richer skid/audio mix and long-session hardware playtest.
+
+### Synthesized vehicle and surface audio (2026-10-22)
+
+- [x] Compute per-frame pure, bounded engine pitch and lowpass/gain targets from real throttle/brake state, speed, acceleration, and Low/High gear.
+- [x] Add a third long-lived oscillator and bandpass filter for original biome-specific tire/grit/propwash texture, with slip and deceleration emphasis but no physics changes.
+- [x] Use a distinct original synthesized gear-shift confirmation and smooth continuous WebAudio parameter transitions.
+- [x] Preserve all existing music, effects volume, mute, browser audio permission and pause behavior; ensure the surface layer also silences.
+- [x] Add deterministic unit-model tests, mocked persistent WebAudio chain tests, and browser acceptance tests on actual throttle/shift/brake/biome transitions.
+- [ ] Subjectively mix with player SFX, hand-test on mobile/headsets and throttle controllers, and consider optional stereo/spatial roadside ambience with dedicated volume sliders.
