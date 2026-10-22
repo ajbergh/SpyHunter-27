@@ -259,3 +259,12 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [x] Give rear attackers a distinctive traffic role, faster pursuing velocity, readable rear tactical indicator and warning, restrained lane tracking, smoke/oil disruption and High-gear escape.
 - [x] Award small points for outrunning a tail, prevent indefinite behind-camera entities, and supply deterministic tests for encounter selection, speed mechanics, and GPU rendering.
 - [ ] Balance real-time catch-up windows, add bespoke rear-facing attack behaviors and stronger overtaking choreography, stage rear pursuit dynamically with chase cinematics, perform device-based lane-fairness and GPU QA.
+
+### Rear overtaking choreography and safe lane screens (2026-10-21)
+
+- [x] Pure deterministic rear-flank lane planner chooses an adjacent passing lane while reserving the player's nearest lane; suppress dangerous maneuvers when lanes are blocked or the road is divided.
+- [x] Persist chosen flank lane within the attacker; player evasion does not produce unfair instant direction changes.
+- [x] Introduce two legible AI states: committed rear **overtaking** and delayed forward **screening**, separated by 18 units of longitudinal clearance.
+- [x] Update tactical HUD with distinct **REAR FLANK** and **CUT-IN AHEAD** warnings, retaining pincer/retreat prioritization.
+- [x] Unit and WebGL regression coverage for lane safety, collision separation, smoke disruption, and forward maneuver state.
+- [ ] Build more complete authored front/rear coordinated encounters, adjust screen-time warning thresholds, independently verify lane changes/collisions at high FPS and wide aspect ratios, and conduct manual feel/fairness testing.
