@@ -287,3 +287,13 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [x] Add distinct original synthesized threat-front/threat-rear signal patterns with mute, effect-volume and cooldown protection.
 - [x] Unit and Chromium regression scenarios for front/rear radar, dynamically blocked escape lane and reusable shader geometry.
 - [ ] Add spatialized vehicle-engine pitch, higher fidelity damaged-vehicle animation, reactive camera choreography, player-adjustable radar prominence and hardware-based legibility/performance acceptance.
+
+### Vehicle collision and damage presentation (2026-10-22)
+
+- [x] Add fixed-step hit-recoil to the camera with tightly bounded lift/roll, exponential decay and no impact on hitboxes, steering, frame-rate or projectile targeting.
+- [x] Fully disable camera recoil when Reduced Motion is enabled, and reset any active recoil on mission start.
+- [x] Add per-vehicle reusable paint feedback: hot material emissive flashes on hit and restrained persistent worn-panel coloring as HP drops.
+- [x] Ensure brake lamps/wheels/glass and existing vehicle models remain unmodified by the damage overlay.
+- [x] Handle immediate machine-gun impacts and deferred HP changes from special weapons.
+- [x] Unit and deterministic Chromium regression coverage, including real guarded collision and Reduced Motion.
+- [ ] Add directional collision-specific camera recoil, physical suspension loading, authored paint cracks/dent geometry, richer skid/audio mix and long-session hardware playtest.
