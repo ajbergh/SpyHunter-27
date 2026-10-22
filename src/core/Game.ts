@@ -177,6 +177,7 @@ export class Game {
           z: number; speed: number; screen: Screen;
           rear: { x: number; z: number; state: string } | null;
           cross: { frontX: number; frontZ: number; rearX: number; rearZ: number } | null;
+          beaconVisible: boolean;
         };
       };
       (window as TestWindow).__spy27AdvanceDriving = (frames: number) => {
@@ -189,7 +190,8 @@ export class Game {
         return { z: this.player.z, speed: this.player.speed, screen: this.screen,
           rear: rear ? { x: rear.x, z: rear.z, state: rear.state } : null,
           cross: cross ? { frontX: cross.front.x, frontZ: cross.front.z,
-            rearX: cross.rear.x, rearZ: cross.rear.z } : null };
+            rearX: cross.rear.x, rearZ: cross.rear.z } : null,
+          beaconVisible: this.escapeLane.mesh.visible };
       };
     }
     this.loop.start();
@@ -300,6 +302,14 @@ export class Game {
         const plan = planCrossPressure([], this.distance, this.player.x,
           this.player.isBoat, false, false, () => 0);
         if (plan) this.deployCrossPressure(plan);
+      }
+      if (new URLSearchParams(window.location.search).get('testCenterBlocked') === '1' &&
+          this.crossPressure) {
+        // Dev-only regression fixture: civilian briefly occupies the marked
+        // lane after a formation begins, so HUD and shader must retract it.
+        this.traffic.push(new TrafficVehicle(
+          this.scene, 0, -10, false, 0, 0x647c73, 0,
+        ));
       }
     }
     this.lives = GAME_MODES[mode].lives;
