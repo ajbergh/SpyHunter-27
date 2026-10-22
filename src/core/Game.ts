@@ -359,6 +359,13 @@ export class Game {
       return;
     }
 
+    if (controls.gearPressed) {
+      const gear = this.player.shiftGear();
+      if (gear !== null) {
+        this.announce(gear === 'high' ? 'HIGH GEAR ENGAGED — FULL SPEED' : 'LOW GEAR ENGAGED — FAST ACCELERATION');
+        this.audio.confirm();
+      }
+    }
     this.player.step(dt, controls, this.road.biome, GAME_MODES[this.mode].speedScale,
       this.preferences.reducedMotion);
     const targetFov = cinematicFov(this.player.speed, this.preferences.reducedMotion);
@@ -710,6 +717,7 @@ export class Game {
 
   private refreshHUD(): void {
     this.ui.stats(this.scoring.score, Math.max(this.best, this.scoring.score), this.lives, this.player.speed);
+    this.ui.gearStatus(this.player.gear, this.player.isBoat);
     this.ui.armory(this.specials.counts, this.player.isBoat ? 'NO VAN / WATER' : this.van.status, this.scoring.lockoutRemaining);
     this.ui.threats(this.air.helicopters.length, this.enemyShots.activeCount);
     this.ui.combo(this.scoring.comboMultiplier, this.scoring.comboRemaining);
