@@ -198,6 +198,12 @@ describe('enforcer AI', () => {
     for (let i = 0; i < 12; i++) tail.step(1 / 60, 30, 0, undefined, 8);
     expect(tail.state).toBe('disrupted');
     expect(tail.x).toBeCloseTo(screeningX);
+    // After the temporary disruption, an overtaken rear flanker must not
+    // silently become a generic front interceptor when it gets far ahead.
+    for (let i = 0; i < 210; i++) tail.step(1 / 60, 30, 0, undefined, 8);
+    expect(tail.z).toBeLessThan(8 - 52);
+    expect(tail.state).toBe('screening');
+    expect(tail.hitbox().z).toBe(tail.z);
     tail.dispose(scene);
   });
 
