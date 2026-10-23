@@ -86,4 +86,73 @@ describe('surface-dependent interceptor handling', () => {
     expect(player.chassisHeave).toBe(0);
   });
 
+
+  it('retains side-specific car and boat dents plus headlamp failure across impacts, but repairs on new run', () => {
+    const scene = new THREE.Scene();
+    const player = new Player(scene);
+    const car = player.mesh.children[0] as THREE.Group;
+    const boat = player.mesh.children[1] as THREE.Group;
+    const carBody = car.children[0] as THREE.Mesh;
+    const boatBody = boat.children[0] as THREE.Mesh;
+    const carPosition = carBody.geometry.getAttribute('position') as THREE.BufferAttribute;
+    const boatPosition = boatBody.geometry.getAttribute('position') as THREE.BufferAttribute;
+    const originalCarY = carPosition.getY(1);
+    const originalBoatY = boatPosition.getY(1);
+    const originalCarVersion = carPosition.version;
+    const carNodes = car.children.length;
+    const boatNodes = boat.children.length;
+    const left = car.getObjectByName('FrontHeadlampLeft') as THREE.Mesh;
+    const right = car.getObjectByName('FrontHeadlampRight') as THREE.Mesh;
+    const leftMaterial = left.material as THREE.MeshStandardMaterial;
+    const rightMaterial = right.material as THREE.MeshStandardMaterial;
+    const originalLamp = leftMaterial.emissiveIntensity;
+    const initialHitbox = player.hitbox();
+
+    expect(player.damageStage).toBe(0);
+    expect(player.carDamagedPanelCount).toBeGreaterThan(0);
+    expect(player.boatDamagedPanelCount).toBeGreaterThan(0);
+    player.takeImpact(-1);
+    expect(player.damageStage).toBe(1);
+    expect(player.damageSide).toBe(-1);
+    expect(carPosition.getY(1)).toBeLessThan(originalCarY);
+    expect(boatPosition.getY(1)).toBeLessThan(originalBoatY);
+    expect(leftMaterial.emissiveIntensity).toBeCloseTo(originalLamp * 0.78);
+    expect(rightMaterial.emissiveIntensity).toBe(originalLamp);
+    const postHitVersion = carPosition.version;
+    const coast = { ...controls, steer: 0, throttle: false };
+    for (let i = 0; i < 80; i++) player.step(1 / 60, coast, 'forest', 1, true);
+    expect(player.damageStage).toBe(1);
+    expect(carPosition.version).toBe(postHitVersion);
+    expect(player.hitbox().halfWidth).toBe(initialHitbox.halfWidth);
+    expect(player.hitbox().halfLength).toBe(initialHitbox.halfLength);
+
+    player.setBoat(true);
+    expect(boat.visible).toBe(true);
+    expect(car.visible).toBe(false);
+    player.takeImpact(1);
+    expect(player.damageStage).toBe(2);
+    expect(player.damageSide).toBe(1);
+    expect(rightMaterial.emissiveIntensity).toBeCloseTo(originalLamp * 0.46);
+    expect(leftMaterial.emissiveIntensity).toBe(originalLamp);
+    player.setBoat(false);
+    expect(car.visible).toBe(true);
+    player.takeImpact(1);
+    player.takeImpact(1);
+    expect(player.damageStage).toBe(3);
+    expect(rightMaterial.emissiveIntensity).toBeCloseTo(originalLamp * 0.18);
+    expect(car.children).toHaveLength(carNodes);
+    expect(boat.children).toHaveLength(boatNodes);
+    expect((car.children[0] as THREE.Mesh).geometry).toBe(carBody.geometry);
+
+    player.reset();
+    expect(player.damageStage).toBe(0);
+    expect(player.damageSide).toBe(0);
+    expect(carPosition.getY(1)).toBe(originalCarY);
+    expect(boatPosition.getY(1)).toBe(originalBoatY);
+    expect(carPosition.version).toBeGreaterThan(originalCarVersion);
+    expect(leftMaterial.emissiveIntensity).toBe(originalLamp);
+    expect(rightMaterial.emissiveIntensity).toBe(originalLamp);
+    expect(player.hitbox()).toEqual(initialHitbox);
+  });
+
 });
