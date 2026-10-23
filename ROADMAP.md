@@ -350,3 +350,14 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [x] Test repeated hits, restoration, cache invariants and Low/Reduced Motion; add live Chromium fixture for two-hit armored damage.
 - [ ] Art-direct dent localization/texture wear on real GPUs for multiple traffic classes and tune size against gameplay camera.
 - [ ] Consider hero interceptor persistent wear/livery only after visual design and readability QA.
+
+### Interceptor resilience visualization (2026-10-23)
+
+- [x] Reuse existing physically painted hero car and boat hull geometry for cumulative three-stage collision damage without extra meshes or draw calls
+- [x] Apply localized crumple/roughness/clearcoat wear on actual life-loss collisions; keep all game scoring, hitbox and invulnerability rules identical
+- [x] Preserve visual damage across respawns, extra lives, and car/boat transitions; fully repair models at the start of a new mission
+- [x] Attenuate the original physical headlamp emissive material and the two independently projected shader beams on the impacted side
+- [x] Retain Low quality/no-projection and marine mode requirements while supporting static damage in Reduced Motion
+- [x] Regression tests for lamp factors, materials, indexed geometry uploads, unchanged collision box, reset, car/boat modes and real impact fixtures in Chromium
+- [ ] Art-direct headlamp attenuation and hero panel dents on hardware across all five environments; profile shader cost in Medium and High
+- [ ] Consider a restrained warning/cockpit damage-state treatment subject to visual clarity and accessibility review
