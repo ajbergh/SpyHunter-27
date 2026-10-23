@@ -86,8 +86,12 @@ describe('reused WebAudio road / engine signal chain', () => {
   it('silences every continuous layer on mute and zero effects volume', async () => {
     vi.stubGlobal('AudioContext', FakeAudioContext);
     const audio = new AudioManager();
+    // Disable reactive music so its legitimate short note oscillators do not
+    // enter assertions about the three permanent driving-audio gain nodes.
+    audio.configure(0, 0.7);
     await audio.unlock();
     const context = FakeAudioContext.current!;
+    expect(context.gains).toHaveLength(3);
     const drive = { gear: 'high' as const, throttle: true,
       brake: false, steer: 0, acceleration: 4 };
     audio.step(1 / 60, 42, 0, false, 'city', drive);
