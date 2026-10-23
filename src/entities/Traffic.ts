@@ -66,9 +66,9 @@ export class TrafficVehicle {
     scene.add(this.mesh);
   }
 
-  recordImpact(): void {
+  recordImpact(side = 0): void {
     this.lastHp = this.hp;
-    this.damageFeedback.hit();
+    this.damageFeedback.hit(side);
     this.damageFeedback.step(0, this.hp, this.maxHp);
   }
 
