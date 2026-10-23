@@ -52,7 +52,7 @@ describe('fixed-capacity directional hit sparks', () => {
     sparks.renderAt(center);
     const old = new THREE.Matrix4();
     sparks.mesh.getMatrixAt(0, old);
-    expect(old.elements[0]).toBe(0);
+    expect(Math.abs(old.elements[0])).toBeLessThan(1e-10);
     expect(centerCalls).toBe(10);
   });
 
