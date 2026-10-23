@@ -190,6 +190,9 @@ export class Game {
           audioTone: EngineToneProfile | null;
           sparksActive: number; sparksVisible: boolean;
           damageStage: number; damagedPanelCount: number; damageVisible: boolean;
+          heroWear: number; heroWearSide: number;
+          heroCarPanels: number; heroBoatPanels: number;
+          headlampLeft: number; headlampRight: number;
           frameP95Ms: number;
           impactHitboxStable: boolean;
           chassisPitch: number; chassisRoll: number; chassisHeave: number;
@@ -214,6 +217,12 @@ export class Game {
           damageStage: damagedCar?.damageFeedback.damageStage ?? 0,
           damagedPanelCount: damagedCar?.damageFeedback.sculptedPanelCount ?? 0,
           damageVisible: damagedCar?.damageFeedback.isDented ?? false,
+          heroWear: this.player.damageStage,
+          heroWearSide: this.player.damageSide,
+          heroCarPanels: this.player.carDamagedPanelCount,
+          heroBoatPanels: this.player.boatDamagedPanelCount,
+          headlampLeft: this.headlights.mesh.material.uniforms.uLeftLamp.value as number,
+          headlampRight: this.headlights.mesh.material.uniforms.uRightLamp.value as number,
           impactHitboxStable: this.impactFixtureHitboxStable,
           chassisPitch: this.player.chassisPitch, chassisRoll: this.player.chassisRoll,
           chassisHeave: this.player.chassisHeave,
@@ -388,6 +397,14 @@ export class Game {
     this.contactDirection = 'none';
     this.contactAlertClock = 0;
     this.impactFixtureHitboxStable = true;
+    if (import.meta.env.DEV) {
+      const wear = Number(new URLSearchParams(window.location.search).get('testHeroWear') ?? 0);
+      if (Number.isInteger(wear) && wear >= 1 && wear <= 3) {
+        // Purely visual gameplay damage fixture: exercise the same player
+        // damage path without silently changing remaining lives or scoring.
+        for (let i = 0; i < wear; i++) this.player.takeImpact(-1);
+      }
+    }
     this.ui.message('');
     this.screen = 'playing';
     this.ui.show(this.screen);
@@ -487,7 +504,8 @@ export class Game {
     this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, targetFov, Math.min(1, dt * 0.9));
     this.camera.updateProjectionMatrix();
     this.streaks.step(dt, this.player.speed);
-    this.headlights.step(this.road.biome, this.player.isBoat);
+    this.headlights.step(this.road.biome, this.player.isBoat,
+      this.player.damageStage, this.player.damageSide);
     this.skidTrails.step(dt, this.player.speed, this.player.x,
       controls.steer, controls.brake, this.road.biome, this.player.isBoat, this.player.z);
     this.boundaryCooldown = Math.max(0, this.boundaryCooldown - dt);
@@ -917,6 +935,7 @@ export class Game {
     this.impactSparks.emit(this.player.x, this.player.z, true, side);
     this.audio.explode();
     this.cameraImpact.hit(1, side);
+    this.player.takeImpact(side);
     this.lives--;
     this.scoring.resetCombo();
     if (this.lives <= 0) { this.gameOver(); return; }
