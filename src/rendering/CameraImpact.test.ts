@@ -47,4 +47,28 @@ describe('fixed-step impact camera', () => {
     camera.hit(Number.NaN);
     expect(camera.active).toBe(false);
   });
+
+  it('biases impact roll toward the struck side while preserving the original limits', () => {
+    const left = new CameraImpact();
+    const right = new CameraImpact();
+    left.hit(1, -1);
+    right.hit(1, 1);
+    left.step(1 / 60, false);
+    right.step(1 / 60, false);
+    expect(left.roll).toBeLessThan(0);
+    expect(right.roll).toBeGreaterThan(0);
+    expect(Math.abs(left.roll)).toBeLessThan(0.018);
+    expect(Math.abs(right.roll)).toBeLessThan(0.018);
+    expect(left.lift).toBe(right.lift);
+    for (let i = 0; i < 120; i++) {
+      left.step(1 / 60, false);
+      right.step(1 / 60, false);
+    }
+    expect(left.roll).toBe(0);
+    expect(right.roll).toBe(0);
+    right.hit(1, 1);
+    right.step(1 / 60, true);
+    expect(right.roll).toBe(0);
+  });
+
 });

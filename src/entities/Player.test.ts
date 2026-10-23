@@ -54,4 +54,36 @@ describe('surface-dependent interceptor handling', () => {
     player.step(1 / 60, controls, 'water');
     expect(front.rotation.x).toBe(0);
   });
+
+  it('loads visual chassis under throttle, brakes and steering without changing vehicle hitboxes', () => {
+    const player = new Player(new THREE.Scene());
+    const initial = player.hitbox();
+    const accelerate = { ...controls, steer: 0 };
+    for (let i = 0; i < 35; i++) player.step(1 / 60, accelerate);
+    expect(player.chassisPitch).toBeGreaterThan(0);
+    expect(player.chassisHeave).toBeLessThanOrEqual(0);
+    const steering = { ...controls, throttle: false, steer: 1 };
+    for (let i = 0; i < 30; i++) player.step(1 / 60, steering);
+    expect(player.chassisRoll).toBeLessThan(-0.01);
+    const braking = { ...controls, steer: 0, throttle: false, brake: true };
+    for (let i = 0; i < 45; i++) player.step(1 / 60, braking);
+    expect(player.chassisPitch).toBeLessThan(-0.01);
+    const movingHitbox = player.hitbox();
+    expect(movingHitbox.halfWidth).toBe(initial.halfWidth);
+    expect(movingHitbox.halfLength).toBe(initial.halfLength);
+    for (let i = 0; i < 10; i++) player.step(1 / 60, braking, 'forest', 1, true);
+    expect(player.chassisPitch).toBe(0);
+    expect(player.chassisRoll).toBe(0);
+    expect(player.chassisHeave).toBe(0);
+    player.step(1 / 60, accelerate);
+    player.setBoat(true);
+    expect(player.chassisPitch).toBe(0);
+    expect(player.chassisRoll).toBe(0);
+    expect(player.chassisHeave).toBe(0);
+    player.reset();
+    expect(player.chassisPitch).toBe(0);
+    expect(player.chassisRoll).toBe(0);
+    expect(player.chassisHeave).toBe(0);
+  });
+
 });

@@ -121,6 +121,7 @@ export class Game {
   private roundsHit = 0;
   private contactDirection: ThreatDirection = 'none';
   private contactAlertClock = 0;
+  private impactFixtureHitboxStable = true;
 
   constructor(host: HTMLElement) {
     this.ui = new Interface(host);
@@ -179,6 +180,8 @@ export class Game {
           z: number; speed: number; screen: Screen;
           rear: { x: number; z: number; state: string } | null;
           cameraLift: number; cameraRoll: number;
+          impactHitboxStable: boolean;
+          chassisPitch: number; chassisRoll: number; chassisHeave: number;
           cross: { frontX: number; frontZ: number; rearX: number; rearZ: number } | null;
           beaconVisible: boolean;
         };
@@ -192,6 +195,9 @@ export class Game {
         const cross = this.crossPressure;
         return { z: this.player.z, speed: this.player.speed, screen: this.screen,
           cameraLift: this.cameraImpact.lift, cameraRoll: this.cameraImpact.roll,
+          impactHitboxStable: this.impactFixtureHitboxStable,
+          chassisPitch: this.player.chassisPitch, chassisRoll: this.player.chassisRoll,
+          chassisHeave: this.player.chassisHeave,
           rear: rear ? { x: rear.x, z: rear.z, state: rear.state } : null,
           cross: cross ? { frontX: cross.front.x, frontZ: cross.front.z,
             rearX: cross.rear.x, rearZ: cross.rear.z } : null,
@@ -350,6 +356,7 @@ export class Game {
     this.roundsHit = 0;
     this.contactDirection = 'none';
     this.contactAlertClock = 0;
+    this.impactFixtureHitboxStable = true;
     this.ui.message('');
     this.screen = 'playing';
     this.ui.show(this.screen);
@@ -362,7 +369,15 @@ export class Game {
       // Collision presentation E2E uses the same guarded damage path as
       // ordinary game collisions, not a camera-only synthetic animation.
       this.grace = 0;
-      this.damagePlayer('TEST COLLISION');
+      const before = this.player.hitbox();
+      const side = new URLSearchParams(window.location.search).get('testImpactSide');
+      this.damagePlayer('TEST COLLISION', side === 'right' ? 1 : side === 'left' ? -1 : 0);
+      const after = this.player.hitbox();
+      // Snapshot synchronously across the real impact action: unlike comparing
+      // two separate page loads, this cannot race the browser's live game loop.
+      this.impactFixtureHitboxStable = before.x === after.x &&
+        before.z === after.z && before.halfWidth === after.halfWidth &&
+        before.halfLength === after.halfLength;
     }
     this.refreshHUD();
     this.audio.confirm();
@@ -448,7 +463,7 @@ export class Game {
       this.player.x, controls.steer, this.player.speed, this.player.isBoat
     )) {
       this.boundaryCooldown = 3;
-      this.damagePlayer(this.player.isBoat ? 'RIVERBANK COLLISION' : 'GUARDRAIL COLLISION');
+      this.damagePlayer(this.player.isBoat ? 'RIVERBANK COLLISION' : 'GUARDRAIL COLLISION', Math.sign(this.player.x));
     }
     if (this.lives <= 0) return;
     this.camera.position.x = approach(this.camera.position.x, this.player.x * 0.13, 3.2, dt);
@@ -456,7 +471,7 @@ export class Game {
     if (biomeChanged) {
       const transfer = gradeBoathouseEntry(this.player.x, this.player.speed);
       if (transfer === 'scrape') {
-        this.damagePlayer('BOATHOUSE WALL COLLISION');
+        this.damagePlayer('BOATHOUSE WALL COLLISION', Math.sign(this.player.x));
         if (this.lives <= 0) return;
         this.player.x = 0;
         this.player.mesh.position.x = 0;
@@ -510,7 +525,7 @@ export class Game {
     }
     if (splitDangerous(this.distance, this.player.x)) {
       this.splitClean = false;
-      this.damagePlayer('DIVIDED HIGHWAY CENTER MEDIAN IMPACT');
+      this.damagePlayer('DIVIDED HIGHWAY CENTER MEDIAN IMPACT', -Math.sign(this.player.x));
       if (this.lives <= 0) return;
       this.player.x = escapeFromMedian(this.player.x, this.distance);
       this.player.mesh.position.x = this.player.x;
@@ -762,8 +777,9 @@ export class Game {
       }
       if (this.player.invulnerability <= 0 && this.grace <= 0 && intersects(this.player.hitbox(), car.hitbox())) {
         if (!car.hostile) this.scoring.civilianDestroyed();
+        const collisionSide = Math.sign(car.x - this.player.x);
         this.removeVehicle(i);
-        this.damagePlayer('VEHICLE COLLISION');
+        this.damagePlayer('VEHICLE COLLISION', collisionSide);
         if (this.lives <= 0) break;
       }
     }
@@ -858,12 +874,12 @@ export class Game {
     vehicle.dispose(this.scene);
   }
 
-  private damagePlayer(reason: string): void {
+  private damagePlayer(reason: string, side = 0): void {
     if (this.player.invulnerability > 0 || this.grace > 0 || this.screen !== 'playing' || this.dockingTimer > 0) return;
     this.flash(this.player.x, this.player.z, 0.72, 0xffa342);
     this.debris.emit(this.player.x, this.player.z, true);
     this.audio.explode();
-    this.cameraImpact.hit();
+    this.cameraImpact.hit(1, side);
     this.lives--;
     this.scoring.resetCombo();
     if (this.lives <= 0) { this.gameOver(); return; }
