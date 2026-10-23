@@ -8,6 +8,41 @@ describe('performance-budgeted speed streaks', () => {
     expect(streakOpacity(40)).toBeGreaterThan(0);
     expect(streakOpacity(300)).toBeLessThanOrEqual(0.47);
   });
+  it('omits draw calls and uploads at cruising speeds, then resumes immediately', () => {
+    const streaks = new SpeedStreaks(new THREE.Scene());
+    let centerCalls = 0;
+    const center = (_z: number): number => { centerCalls++; return 0; };
+    const attr = streaks.lines.geometry.getAttribute('position') as THREE.BufferAttribute;
+    const initialVersion = attr.version;
+    streaks.setPreferences('high', false);
+    streaks.step(1 / 60, 20);
+    streaks.renderAt(center);
+    expect(streaks.lines.visible).toBe(false);
+    expect(attr.version).toBe(initialVersion);
+    expect(centerCalls).toBe(0);
+
+    streaks.step(1 / 60, 49);
+    streaks.renderAt(center);
+    expect(streaks.lines.visible).toBe(true);
+    expect(centerCalls).toBe(144);
+    expect(attr.version).toBeGreaterThan(initialVersion);
+
+    const activeVersion = attr.version;
+    streaks.step(1 / 60, 24);
+    streaks.renderAt(center);
+    expect(streaks.lines.visible).toBe(false);
+    expect(attr.version).toBe(activeVersion);
+    expect(centerCalls).toBe(144);
+
+    streaks.setPreferences('high', true);
+    streaks.step(1 / 60, 70);
+    streaks.renderAt(center);
+    expect(streaks.lines.visible).toBe(false);
+    expect(attr.version).toBe(activeVersion);
+    streaks.setPreferences('high', false);
+    expect(streaks.lines.visible).toBe(true);
+  });
+
   it('uses a single draw call and respects reduced motion and low quality', () => {
     const scene = new THREE.Scene();
     const streaks = new SpeedStreaks(scene);
