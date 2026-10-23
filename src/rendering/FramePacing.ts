@@ -28,8 +28,10 @@ export class FramePacing {
   get samples(): number { return this.count; }
   get p95Ms(): number {
     if (this.count === 0) return 0;
+    this.scratch.fill(Number.POSITIVE_INFINITY);
     for (let i = 0; i < this.count; i++) this.scratch[i] = this.history[i];
-    // Sort the existing backing array, with no per-read JS array allocation.
+    // The unused entries sort after the live samples, keeping the
+    // percentile correct even before the 120-frame window fills.
     this.scratch.sort();
     return this.scratch[Math.ceil(this.count * 0.95) - 1];
   }
