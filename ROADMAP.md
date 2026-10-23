@@ -339,3 +339,14 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [x] Add browser acceptance covering real contact fixture and Low-quality/diagnostic state.
 - [ ] Perform GPU timer-query or profiler-based measurement on real devices; capture consistent before/after runs by biome, traffic load and quality preset.
 - [ ] Explore per-panel paint gouges/heat bloom without increasing per-car draw-call count or material allocations.
+
+### Progressive physical panel damage (2026-10-23)
+
+- [x] Preserve existing enemy hit/spark feedback while introducing three successive visible structural-wear stages on sculpted physically painted hulls.
+- [x] Bend existing front-corner vertices toward the incoming impact side rather than adding per-vehicle scar meshes or new draw calls.
+- [x] Model matte/rough scratched paint via bounded roughness, clearcoat and bump changes in the existing material.
+- [x] Recompute GPU vertex buffers and normals only when the health stage or struck side changes; no per-frame mesh/geometry allocations.
+- [x] Keep glass, lights, tires, UV maps, scene graph identities, collision boxes, AI and score unchanged.
+- [x] Test repeated hits, restoration, cache invariants and Low/Reduced Motion; add live Chromium fixture for two-hit armored damage.
+- [ ] Art-direct dent localization/texture wear on real GPUs for multiple traffic classes and tune size against gameplay camera.
+- [ ] Consider hero interceptor persistent wear/livery only after visual design and readability QA.
