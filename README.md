@@ -228,6 +228,14 @@ Enemy road vehicles now briefly glow orange where their reusable paint materials
 
 Unit coverage checks impact caps/damping/determinism/reduced motion, material reuse, brake-light isolation, paint restoration, recurring hits, and unchanged traffic hitboxes. A deterministic Chromium browser test invokes the ordinary collision-damage path in development mode and verifies camera recoil, settling, and reduced-motion suppression. Manual hardware play and long-session comfort testing remain open.
 
+### Spring-loaded arcade suspension and directional impacts (2026-10-22)
+
+The interceptor now uses a small, **critically damped cosmetic suspension system**. Longitudinal acceleration loads the rear body, brakes induce a short nose-down pitch, steering produces speed-dependent lateral lean and combined inputs add a few centimeters of chassis compression. Three independent bounded springs operate on fixed simulation steps, so these movements remain smooth, deterministic and independent of WebGL frame rate. The system adjusts the existing car-body model only: road position, hitboxes, tires, propulsion, weapons and game rules are unchanged. Waterway boat mode, mission redeployment and **Reduced Motion** all reset the suspension to a steady neutral pose. The existing wheel hubs and brake lamps continue animating independently.
+
+Collision camera feedback now distinguishes **left and right impacts**: guardrails, median strikes and collisions against neighboring vehicles pass an impact-side signal to the pre-existing damped camera system. Neutral impacts (such as undirected explosions) retain centered recoil. Directional roll remains bounded below 0.018 radians, decays to zero, and is disabled under Reduced Motion. No new geometry, material, texture, input latency or runtime dependencies are introduced.
+
+Vitest covers chassis force-response directions, oscillation settling, clamp safety, replay determinism, boat/Reduced Motion resets and side-specific camera response. Chromium runs real acceleration, steering and braking input sequences and checks left/right impact fixtures for symmetric world/player state. Hand-on gamepad feel and physical GPU screenshots remain necessary to complete acceptance.
+
 ### Engine load and road-surface audio (2026-10-22)
 
 The driving sound system now tracks actual fixed-step throttle, braking, engine acceleration, steering and the interceptor's selected Low/High gear instead of merely mapping road speed to a fixed drone. Original **WebAudio synthesized engine sound** gains a richer throttle-dependent lowpass sweep, subdued gear-load response and distinctive shift confirmation tones. A single persistent, bandpass-filtered third oscillator layers environmental texture: forest asphalt hum, abrasive desert grit, snowy slip, higher-frequency city pavement and waterway propwash. Surface layers change with the road stage and temporary steering/braking load; they do **not** change handling or traction.
