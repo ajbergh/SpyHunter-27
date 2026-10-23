@@ -38,9 +38,12 @@ export function engineToneProfile(
   const accel = clamp(controls.acceleration, -30, 30);
   const steer = clamp(controls.steer, -1, 1);
   const load = controls.brake ? -1 : controls.throttle ? 1 : 0;
-  const gearOffset = boat ? 0 : controls.gear === 'low' ? 13 : -18;
+  // The tonal gear drop must remain audible during an actual upshift.
+  // High gear accelerates more rapidly at cruise, so an overly aggressive
+  // acceleration-based pitch term can cancel the lower RPM ratio entirely.
+  const gearOffset = boat ? 0 : controls.gear === 'low' ? 16 : -22;
   const engineHz = clamp(sound.engineBase + velocity * sound.engineRate +
-    gearOffset + load * (boat ? 16 : 26) + accel * 1.35, 45, 560);
+    gearOffset + load * (boat ? 16 : 26) + accel * 0.30, 45, 560);
   const surface = boat ? 'water' : biome;
   const texture: Record<Biome, readonly [number, number, number]> = {
     forest: [43, 0.8, 290],
