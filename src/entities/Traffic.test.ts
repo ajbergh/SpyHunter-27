@@ -265,4 +265,34 @@ describe('enforcer AI', () => {
     expect(scene.children).toHaveLength(0);
   });
 
+
+  it('keeps vehicle gameplay hitbox, AI velocity and mesh topology stable as panel damage progresses', () => {
+    const scene = new THREE.Scene();
+    const car = new TrafficVehicle(scene, -1.5, -25, true, 2, 0xa1544f, 12);
+    const hitbox = car.hitbox();
+    const shape = car.mesh.children[0] as THREE.Mesh;
+    const geometry = shape.geometry;
+    const position = geometry.getAttribute('position') as THREE.BufferAttribute;
+    const version = position.version;
+    const children = car.mesh.children.length;
+    car.hp -= 2;
+    car.recordImpact(1);
+    expect(car.damageFeedback.damageStage).toBe(2);
+    expect(car.damageFeedback.isDented).toBe(true);
+    expect(position.version).toBeGreaterThan(version);
+    expect(car.hitbox()).toEqual(hitbox);
+    expect(car.mesh.children).toHaveLength(children);
+    expect(shape.geometry).toBe(geometry);
+    car.step(1 / 60, 30, 0);
+    expect(car.hitbox().halfWidth).toBe(hitbox.halfWidth);
+    expect(car.hitbox().halfLength).toBe(hitbox.halfLength);
+    expect(car.z).toBeCloseTo(hitbox.z + (30 - 12) / 60);
+    const stage = car.damageFeedback.damageStage;
+    for (let i = 0; i < 120; i++) car.step(1 / 60, 30, 0);
+    expect(car.damageFeedback.damageStage).toBe(stage);
+    expect(car.damageFeedback.flashing).toBe(false);
+    car.dispose(scene);
+    expect(scene.children).toHaveLength(0);
+  });
+
 });

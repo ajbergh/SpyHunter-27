@@ -980,3 +980,44 @@ test('pooled collision sparks and frame-pacing diagnostics respect Low quality',
   await expect(page.locator('#fps-debug')).toContainText('TRIS');
   expect(errors).toEqual([]);
 });
+
+test('repeated hits leave persistent, side-localized panel dents without changing driving physics', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  const advance = (frames: number) => page.evaluate(count => {
+    const game = window as Window & {
+      __spy27AdvanceDriving?: (n: number) => {
+        screen: string; damageStage: number; damagedPanelCount: number;
+        damageVisible: boolean; sparksActive: number;
+      };
+    };
+    if (!game.__spy27AdvanceDriving) throw new Error('Driving bridge missing');
+    return game.__spy27AdvanceDriving(count);
+  }, frames);
+
+  await page.goto('/?testDrive=1&testDamage=1');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  const worn = await advance(1);
+  expect(worn.screen).toBe('playing');
+  expect(worn.damageStage).toBe(2);
+  expect(worn.damagedPanelCount).toBeGreaterThanOrEqual(1);
+  expect(worn.damageVisible).toBe(true);
+  await page.screenshot({ path: 'test-results/persistent-armored-panel-damage.png' });
+  const settled = await advance(58);
+  expect(settled.damageStage).toBe(2);
+  expect(settled.damageVisible).toBe(true);
+
+  // Persistent structural wear is static geometry, not motion animation:
+  // it remains visible in Low and Reduced Motion when cosmetic sparks do not.
+  await page.evaluate(() => localStorage.setItem('spyhunter27-settings',
+    JSON.stringify({ quality: 'low', reducedMotion: true })));
+  await page.reload();
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const low = await advance(1);
+  expect(low.screen).toBe('playing');
+  expect(low.damageStage).toBe(2);
+  expect(low.damageVisible).toBe(true);
+  expect(low.sparksActive).toBe(0);
+  expect(errors).toEqual([]);
+});
