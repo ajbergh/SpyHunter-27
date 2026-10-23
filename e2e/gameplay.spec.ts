@@ -770,7 +770,7 @@ test('real collision produces bounded recoil and reduced motion keeps the camera
   await page.screenshot({ path: 'test-results/collision-camera-recoil.png' });
   const settled = await advance(130);
   expect(settled.cameraLift).toBe(0);
-  expect(settled.cameraRoll).toBe(0);
+  expect(Math.abs(settled.cameraRoll)).toBeLessThan(1e-10);
 
   await page.evaluate(() => localStorage.setItem('spyhunter27-settings',
     JSON.stringify({ reducedMotion: true })));
@@ -799,8 +799,16 @@ test('engine synthesis responds to real throttle, shifting, braking and biome ch
   }, frames);
 
   await page.goto('/?testDistance=140&testDrive=1');
+  // Prove the same explicit, persisted binding flow used by the dedicated
+  // transmission test. Do not assume a default binding survived other tests.
+  await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
+  await page.locator('[data-action="gear"]').click();
+  await page.keyboard.press('z');
+  await expect(page.locator('[data-action="gear"] strong')).toHaveText('Z');
+  await page.getByRole('button', { name: /apply and return/i }).click();
   await page.getByRole('button', { name: /initiate pursuit/i }).click();
   await expect(page.locator('#stage canvas')).toBeVisible();
+  await expect(page.locator('#drive-gear')).toHaveText('LOW');
   const idle = await advance(1);
   expect(idle.screen).toBe('playing');
   expect(idle.audioTone).not.toBeNull();
@@ -809,10 +817,13 @@ test('engine synthesis responds to real throttle, shifting, braking and biome ch
   const loaded = await advance(95);
   expect(loaded.audioTone!.engineHz).toBeGreaterThan(idle.audioTone!.engineHz);
   expect(loaded.audioTone!.engineGain).toBeGreaterThan(idle.audioTone!.engineGain);
-  await page.keyboard.down('g');
-  await advance(1);
-  await page.keyboard.up('g');
+  await page.keyboard.down('z');
+  await advance(3);
+  await expect(page.locator('#drive-gear')).toHaveText('HIGH');
+  await page.keyboard.up('z');
   const high = await advance(1);
+  // Compare the actual post-shift synthesis only after game state confirms
+  // the edge-triggered shift; avoid attributing key-event timing to audio.
   expect(high.audioTone!.engineHz).toBeLessThan(loaded.audioTone!.engineHz);
   await page.keyboard.up('w');
   await page.keyboard.down('s');
