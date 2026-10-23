@@ -42,6 +42,8 @@ import { WeaponsVan } from '../gameplay/WeaponsVan';
 import { planEncounter } from '../gameplay/EncounterDirector';
 import { ExplosionEffects } from '../combat/ExplosionEffects';
 import { VehicleDebris } from '../combat/VehicleDebris';
+import { ImpactSparks } from '../combat/ImpactSparks';
+import { FramePacing } from '../rendering/FramePacing';
 import { accuracyPercent } from '../gameplay/SessionMetrics';
 import {
   challengeDate, challengeSeed, dailyRecordKey, seededGenerator, bestDailyScore,
@@ -65,6 +67,8 @@ export class Game {
   private preferences = loadPreferences();
   private renderTime = 0;
   private averageFps = 60;
+  private readonly framePacing = new FramePacing();
+  private lastDiagnosticsAt = 0;
   private readonly ui: Interface;
   private readonly input = new Input();
   private readonly audio = new AudioManager();
@@ -91,6 +95,7 @@ export class Game {
   private nextSquadId = 1;
   private readonly effects: ExplosionEffects;
   private readonly debris: VehicleDebris;
+  private readonly impactSparks: ImpactSparks;
   private screen: Screen = 'menu';
   private mode: GameMode = 'classic';
   private random: () => number = Math.random;
@@ -159,6 +164,7 @@ export class Game {
     this.enemyShots = new EnemyProjectiles(this.scene);
     this.effects = new ExplosionEffects(this.scene);
     this.debris = new VehicleDebris(this.scene);
+    this.impactSparks = new ImpactSparks(this.scene);
     this.van = new WeaponsVan(this.scene);
     try { this.best = Number(localStorage.getItem('spyhunter27-best') || 0) || 0; } catch { /* private browsing may deny storage */ }
     this.refreshHUD();
@@ -182,6 +188,8 @@ export class Game {
           rear: { x: number; z: number; state: string } | null;
           cameraLift: number; cameraRoll: number;
           audioTone: EngineToneProfile | null;
+          sparksActive: number; sparksVisible: boolean;
+          frameP95Ms: number;
           impactHitboxStable: boolean;
           chassisPitch: number; chassisRoll: number; chassisHeave: number;
           cross: { frontX: number; frontZ: number; rearX: number; rearZ: number } | null;
@@ -198,6 +206,9 @@ export class Game {
         return { z: this.player.z, speed: this.player.speed, screen: this.screen,
           cameraLift: this.cameraImpact.lift, cameraRoll: this.cameraImpact.roll,
           audioTone: this.audio.toneProfile,
+          sparksActive: this.impactSparks.activeCount,
+          sparksVisible: this.impactSparks.mesh.visible,
+          frameP95Ms: this.framePacing.p95Ms,
           impactHitboxStable: this.impactFixtureHitboxStable,
           chassisPitch: this.player.chassisPitch, chassisRoll: this.player.chassisRoll,
           chassisHeave: this.player.chassisHeave,
@@ -231,6 +242,7 @@ export class Game {
     this.streaks.setPreferences(settings.quality, settings.reducedMotion);
     this.headlights.setQuality(settings.quality);
     this.skidTrails.setQuality(settings.quality);
+    this.impactSparks.setPreferences(settings.quality, settings.reducedMotion);
     this.escapeLane.setPreferences(settings.quality, settings.reducedMotion);
     this.wake.setQuality(settings.quality);
     const ratio = settings.quality === 'low' ? 1 : settings.quality === 'high' ? 2 : 1.5;
@@ -279,6 +291,8 @@ export class Game {
     this.skidTrails.reset();
     this.escapeLane.reset();
     this.cameraImpact.reset();
+    this.framePacing.reset();
+    this.lastDiagnosticsAt = 0;
     this.camera.position.y = CAMERA_FRAME.height;
     this.camera.rotation.z = 0;
     this.headlights.step('forest', false);
@@ -760,6 +774,7 @@ export class Game {
       while (car.hp > 0 && this.bullets.hitTest(car.hitbox())) {
         car.hp--;
         if (car.hp > 0) car.recordImpact();
+        this.impactSparks.emit(car.x, car.z, car.hostile);
         this.roundsHit++;
         this.audio.impact();
         this.flash(car.x, car.z, 0.22, 0xffd57c);
@@ -885,6 +900,7 @@ export class Game {
     if (this.player.invulnerability > 0 || this.grace > 0 || this.screen !== 'playing' || this.dockingTimer > 0) return;
     this.flash(this.player.x, this.player.z, 0.72, 0xffa342);
     this.debris.emit(this.player.x, this.player.z, true);
+    this.impactSparks.emit(this.player.x, this.player.z, true, side);
     this.audio.explode();
     this.cameraImpact.hit(1, side);
     this.lives--;
@@ -901,10 +917,12 @@ export class Game {
   private stepExplosions(dt: number): void {
     this.effects.step(dt);
     this.debris.step(dt, this.player.speed);
+    this.impactSparks.step(dt, this.player.speed);
   }
   private clearExplosions(): void {
     this.effects.reset();
     this.debris.reset();
+    this.impactSparks.reset();
   }
 
   private announce(message: string): void { this.ui.message(message); this.toastClock = 1.6; }
@@ -960,6 +978,7 @@ export class Game {
     this.enemyShots.renderAt(center);
     this.effects.renderAt(center);
     this.debris.renderAt(center);
+    this.impactSparks.renderAt(center);
     this.wake.renderAt(center);
     this.waterHazards.renderAt(center);
     this.streaks.renderAt(center);
@@ -984,6 +1003,14 @@ export class Game {
       this.averageFps = this.averageFps * 0.92 + instantaneous * 0.08;
     }
     this.renderTime = now;
-    this.ui.diagnostics(this.averageFps, this.renderer.info.render.calls, this.traffic.length);
+    if (this.preferences.showFps) {
+      this.framePacing.sample(now);
+      if (now - this.lastDiagnosticsAt >= 350) {
+        this.lastDiagnosticsAt = now;
+        this.ui.diagnostics(this.averageFps, this.renderer.info.render.calls,
+          this.traffic.length, this.framePacing.p95Ms,
+          this.renderer.info.render.triangles);
+      }
+    }
   }
 }

@@ -384,10 +384,15 @@ export class Interface {
     }
   }
 
-  diagnostics(fps: number, drawCalls: number, vehicles: number): void {
+  diagnostics(fps: number, drawCalls: number, vehicles: number,
+    p95FrameMs = 0, triangles = 0): void {
     if (!this.preferences.showFps) return;
     this.get('fps-debug').textContent =
-      'FPS ' + Math.round(fps) + ' / DRAWS ' + drawCalls + ' / VEH ' + vehicles;
+      'FPS ' + Math.round(fps) +
+      ' / P95 ' + p95FrameMs.toFixed(1) + ' MS' +
+      ' / DRAWS ' + drawCalls +
+      ' / TRIS ' + triangles +
+      ' / VEH ' + vehicles;
   }
 
   environment(biome: Biome, boat: boolean): void {

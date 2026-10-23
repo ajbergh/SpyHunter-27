@@ -327,3 +327,15 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [x] Hoist immutable environment sound texture profiles out of 60 Hz engine-audio updates.
 - [x] Add GPU buffer-version, draw-culling, count/expiry/regrowth tests; preserve full Playwright visual suite.
 - [ ] Profile frame time and draw calls on representative integrated/discrete GPUs with High/Medium/Low quality and long-session memory monitoring.
+
+### Directional impacts and frame-pacing visibility (2026-10-23)
+
+- [x] Add a deterministic 72-particle pooled one-draw-call contact-spark effect triggered by real player collisions and gunfire hits, preserving existing explosions and debris.
+- [x] Differentiate hostile/civilian contact color and vary lateral spark direction with collision side.
+- [x] Suppress effect on Low preset and Reduced Motion; reset on redeploy and skip idle render uploads/draw calls.
+- [x] Extend optional Performance Diagnostics overlay with 120-sample exact P95 observed frame intervals and renderer triangle counts.
+- [x] Bound the frame-time recorder; exclude background-tab sleeps and throttle overlay DOM updates.
+- [x] Add tests for lifetime, recurrence/slot cleanup, quality access, deterministic trajectories and percentile calculations.
+- [x] Add browser acceptance covering real contact fixture and Low-quality/diagnostic state.
+- [ ] Perform GPU timer-query or profiler-based measurement on real devices; capture consistent before/after runs by biome, traffic load and quality preset.
+- [ ] Explore per-panel paint gouges/heat bloom without increasing per-car draw-call count or material allocations.

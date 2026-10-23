@@ -1,0 +1,85 @@
+import * as THREE from 'three';
+import { describe, expect, it } from 'vitest';
+import { ImpactSparks } from './ImpactSparks';
+
+describe('fixed-capacity directional hit sparks', () => {
+  it('emits visual-only sparks in one pool and tracks left/right impulse', () => {
+    const scene = new THREE.Scene();
+    const sparks = new ImpactSparks(scene);
+    sparks.setPreferences('high', false);
+    expect(scene.children).toEqual([sparks.mesh]);
+    expect(sparks.capacity).toBe(72);
+    expect(sparks.activeCount).toBe(0);
+    sparks.emit(2, -15, true, -1);
+    expect(sparks.activeCount).toBe(8);
+    expect(sparks.mesh.visible).toBe(true);
+    expect(sparks.mesh.instanceColor).not.toBeNull();
+    const version = sparks.mesh.instanceMatrix.version;
+    let centers = 0;
+    sparks.renderAt(z => { centers++; return z * 0.01; });
+    expect(centers).toBe(8);
+    expect(sparks.mesh.instanceMatrix.version).toBeGreaterThan(version);
+    const before = new THREE.Matrix4();
+    sparks.mesh.getMatrixAt(0, before);
+    sparks.step(1 / 60, 30);
+    sparks.renderAt(z => z * 0.01);
+    const after = new THREE.Matrix4();
+    sparks.mesh.getMatrixAt(0, after);
+    expect(after.elements[14]).toBeGreaterThan(before.elements[14]);
+    expect(after.elements[12]).not.toBe(before.elements[12]);
+  });
+
+  it('skips idle draw submissions and clears expired GPU slots at the next burst', () => {
+    const sparks = new ImpactSparks(new THREE.Scene());
+    sparks.setPreferences('medium', false);
+    let centerCalls = 0;
+    const center = (_z: number): number => { centerCalls++; return 0; };
+    const baseline = sparks.mesh.instanceMatrix.version;
+    sparks.renderAt(center);
+    expect(centerCalls).toBe(0);
+    expect(sparks.mesh.instanceMatrix.version).toBe(baseline);
+    sparks.emit(0, -12, false, 1);
+    expect(sparks.activeCount).toBe(5);
+    sparks.renderAt(center);
+    const version = sparks.mesh.instanceMatrix.version;
+    expect(centerCalls).toBe(5);
+    for (let i = 0; i < 40; i++) sparks.step(1 / 60, 25);
+    expect(sparks.activeCount).toBe(0);
+    expect(sparks.mesh.visible).toBe(false);
+    sparks.renderAt(center);
+    expect(sparks.mesh.instanceMatrix.version).toBe(version);
+    sparks.emit(1, -20, true);
+    sparks.renderAt(center);
+    const old = new THREE.Matrix4();
+    sparks.mesh.getMatrixAt(0, old);
+    expect(Math.abs(old.elements[0])).toBeLessThan(1e-10);
+    expect(centerCalls).toBe(10);
+  });
+
+  it('caps heavy impacts and suppresses animation at Low or Reduced Motion', () => {
+    const sparks = new ImpactSparks(new THREE.Scene());
+    sparks.setPreferences('high', false);
+    for (let i = 0; i < 60; i++) sparks.emit(i, -20, true, -1);
+    expect(sparks.activeCount).toBe(72);
+    sparks.step(Number.NaN, 100);
+    expect(sparks.activeCount).toBe(72);
+    sparks.step(1 / 60, Number.NaN);
+    expect(sparks.activeCount).toBe(72);
+    sparks.setPreferences('medium', true);
+    expect(sparks.activeCount).toBe(0);
+    expect(sparks.mesh.visible).toBe(false);
+    sparks.emit(1, -1, true);
+    expect(sparks.activeCount).toBe(0);
+    sparks.setPreferences('low', false);
+    sparks.emit(1, -1, true);
+    expect(sparks.activeCount).toBe(0);
+    sparks.setPreferences('medium', false);
+    sparks.emit(Number.NaN, -3, true);
+    expect(sparks.activeCount).toBe(0);
+    sparks.emit(1, -10, false);
+    expect(sparks.activeCount).toBe(5);
+    sparks.reset();
+    expect(sparks.activeCount).toBe(0);
+    expect(sparks.mesh.visible).toBe(false);
+  });
+});
