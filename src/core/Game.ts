@@ -189,6 +189,7 @@ export class Game {
           cameraLift: number; cameraRoll: number;
           audioTone: EngineToneProfile | null;
           sparksActive: number; sparksVisible: boolean;
+          damageStage: number; damagedPanelCount: number; damageVisible: boolean;
           frameP95Ms: number;
           impactHitboxStable: boolean;
           chassisPitch: number; chassisRoll: number; chassisHeave: number;
@@ -203,12 +204,16 @@ export class Game {
         this.renderer.domElement.dataset.playerZ = this.player.z.toFixed(2);
         const rear = this.traffic.find(car => car.rearPursuer);
         const cross = this.crossPressure;
+        const damagedCar = this.traffic.find(car => car.damageFeedback.damageStage > 0);
         return { z: this.player.z, speed: this.player.speed, screen: this.screen,
           cameraLift: this.cameraImpact.lift, cameraRoll: this.cameraImpact.roll,
           audioTone: this.audio.toneProfile,
           sparksActive: this.impactSparks.activeCount,
           sparksVisible: this.impactSparks.mesh.visible,
           frameP95Ms: this.framePacing.p95Ms,
+          damageStage: damagedCar?.damageFeedback.damageStage ?? 0,
+          damagedPanelCount: damagedCar?.damageFeedback.sculptedPanelCount ?? 0,
+          damageVisible: damagedCar?.damageFeedback.isDented ?? false,
           impactHitboxStable: this.impactFixtureHitboxStable,
           chassisPitch: this.player.chassisPitch, chassisRoll: this.player.chassisRoll,
           chassisHeave: this.player.chassisHeave,
@@ -327,6 +332,15 @@ export class Game {
       }
       if (new URLSearchParams(window.location.search).get('testTail') === '1') {
         this.traffic.push(new TrafficVehicle(this.scene, 0, 34, true, 0, 0xc58235, 48, null, false, true));
+      }
+      if (new URLSearchParams(window.location.search).get('testDamage') === '1') {
+        // Armored traffic model with a real two-hit health reduction.
+        // Deterministic dev-only visual fixture; no gameplay shortcut ships.
+        const armored = new TrafficVehicle(
+          this.scene, 0, -24, true, 2, 0xa1544f, 0);
+        armored.hp -= 2;
+        armored.recordImpact(1);
+        this.traffic.push(armored);
       }
       if (new URLSearchParams(window.location.search).get('testCrossPressure') === '1') {
         const plan = planCrossPressure([], this.distance, this.player.x,
@@ -773,7 +787,7 @@ export class Game {
       }
       while (car.hp > 0 && this.bullets.hitTest(car.hitbox())) {
         car.hp--;
-        if (car.hp > 0) car.recordImpact();
+        if (car.hp > 0) car.recordImpact(Math.sign(this.player.x - car.x));
         this.impactSparks.emit(car.x, car.z, car.hostile);
         this.roundsHit++;
         this.audio.impact();
