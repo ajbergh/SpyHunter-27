@@ -133,6 +133,9 @@ export class Road {
   private makeTile(anchor: number): THREE.Group {
     const biome = biomeAt(anchor);
     const group = new THREE.Group();
+    // Tile anchor is immutable until rebuilt on stream/seek/quality change;
+    // center its group once instead of recomputing curves every fixed step.
+    group.position.x = roadCenterAt(anchor);
     const earth = new THREE.Mesh(buildTerrain(anchor, biome),
       new THREE.MeshStandardMaterial({
         vertexColors: true, roughness: 0.97,
@@ -414,7 +417,6 @@ export class Road {
   private applyPositions(): void {
     this.root.position.x = -roadCenterAt(this.travelled - PLAYER_Z);
     for (const tile of this.tiles) {
-      tile.group.position.x = roadCenterAt(tile.anchor);
       tile.group.position.z = this.travelled - tile.anchor;
     }
   }
