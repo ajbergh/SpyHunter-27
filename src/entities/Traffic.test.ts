@@ -272,13 +272,14 @@ describe('enforcer AI', () => {
     const hitbox = car.hitbox();
     const shape = car.mesh.children[0] as THREE.Mesh;
     const geometry = shape.geometry;
-    const version = geometry.getAttribute('position').version;
+    const position = geometry.getAttribute('position') as THREE.BufferAttribute;
+    const version = position.version;
     const children = car.mesh.children.length;
     car.hp -= 2;
     car.recordImpact(1);
     expect(car.damageFeedback.damageStage).toBe(2);
     expect(car.damageFeedback.isDented).toBe(true);
-    expect(geometry.getAttribute('position').version).toBeGreaterThan(version);
+    expect(position.version).toBeGreaterThan(version);
     expect(car.hitbox()).toEqual(hitbox);
     expect(car.mesh.children).toHaveLength(children);
     expect(shape.geometry).toBe(geometry);
