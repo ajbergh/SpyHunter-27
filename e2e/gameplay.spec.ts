@@ -1021,3 +1021,62 @@ test('repeated hits leave persistent, side-localized panel dents without changin
   expect(low.sparksActive).toBe(0);
   expect(errors).toEqual([]);
 });
+
+test('interceptor keeps persistent collision wear and asymmetric road illumination across stages', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  const advance = (frames: number) => page.evaluate(count => {
+    const game = window as Window & {
+      __spy27AdvanceDriving?: (n: number) => {
+        screen: string; heroWear: number; heroWearSide: number;
+        heroCarPanels: number; heroBoatPanels: number;
+        headlampLeft: number; headlampRight: number;
+        impactHitboxStable: boolean;
+      };
+    };
+    if (!game.__spy27AdvanceDriving) throw new Error('Driving bridge missing');
+    return game.__spy27AdvanceDriving(count);
+  }, frames);
+
+  await page.goto('/?testDrive=1&testImpact=1&testImpactSide=right');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  const impact = await advance(1);
+  expect(impact.screen).toBe('playing');
+  expect(impact.impactHitboxStable).toBe(true);
+  expect(impact.heroWear).toBe(1);
+  expect(impact.heroWearSide).toBe(1);
+  expect(impact.heroCarPanels).toBeGreaterThan(0);
+  expect(impact.headlampLeft).toBe(1);
+  expect(impact.headlampRight).toBeCloseTo(0.78);
+  await page.screenshot({ path: 'test-results/interceptor-damaged-right-lamp.png' });
+
+  await page.goto('/?testDrive=1&testHeroWear=2');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const worn = await advance(1);
+  expect(worn.screen).toBe('playing');
+  expect(worn.heroWear).toBe(2);
+  expect(worn.heroWearSide).toBe(-1);
+  expect(worn.headlampLeft).toBeCloseTo(0.46);
+  expect(worn.headlampRight).toBe(1);
+  expect(worn.heroCarPanels).toBeGreaterThan(0);
+  const later = await advance(90);
+  expect(later.heroWear).toBe(2);
+  expect(later.headlampLeft).toBeCloseTo(0.46);
+  await page.screenshot({ path: 'test-results/interceptor-persistent-front-left-damage.png' });
+
+  await page.goto('/?testDrive=1&testHeroWear=2&testDistance=4350');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const water = await advance(1);
+  expect(water.heroWear).toBe(2);
+  expect(water.heroBoatPanels).toBeGreaterThan(0);
+  expect(water.headlampLeft).toBeCloseTo(0.46);
+  await page.goto('/?testDrive=1');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const reset = await advance(1);
+  expect(reset.heroWear).toBe(0);
+  expect(reset.heroWearSide).toBe(0);
+  expect(reset.headlampLeft).toBe(1);
+  expect(reset.headlampRight).toBe(1);
+  expect(errors).toEqual([]);
+});
