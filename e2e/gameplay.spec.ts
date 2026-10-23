@@ -941,3 +941,42 @@ test('engine synthesis responds to real throttle, shifting, braking and biome ch
   expect(water.audioTone!.textureGain).toBeGreaterThan(idle.audioTone!.textureGain);
   expect(errors).toEqual([]);
 });
+
+test('pooled collision sparks and frame-pacing diagnostics respect Low quality', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  const advance = (frames: number) => page.evaluate(count => {
+    const game = window as Window & {
+      __spy27AdvanceDriving?: (n: number) => {
+        screen: string; sparksActive: number; sparksVisible: boolean; frameP95Ms: number;
+      };
+    };
+    if (!game.__spy27AdvanceDriving) throw new Error('Driving bridge missing');
+    return game.__spy27AdvanceDriving(count);
+  }, frames);
+
+  await page.goto('/?testDrive=1&testImpact=1&testImpactSide=right');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  const impact = await advance(1);
+  expect(impact.screen).toBe('playing');
+  expect(impact.sparksActive).toBeGreaterThan(0);
+  expect(impact.sparksActive).toBeLessThanOrEqual(72);
+  expect(impact.sparksVisible).toBe(true);
+  await page.screenshot({ path: 'test-results/pooled-impact-sparks.png' });
+  const settled = await advance(60);
+  expect(settled.sparksActive).toBe(0);
+  expect(settled.sparksVisible).toBe(false);
+
+  await page.evaluate(() => localStorage.setItem('spyhunter27-settings',
+    JSON.stringify({ quality: 'low', showFps: true })));
+  await page.reload();
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const low = await advance(1);
+  expect(low.sparksActive).toBe(0);
+  expect(low.sparksVisible).toBe(false);
+  await expect(page.locator('#fps-debug')).toBeVisible();
+  await expect(page.locator('#fps-debug')).toContainText('P95');
+  await expect(page.locator('#fps-debug')).toContainText('TRIS');
+  expect(errors).toEqual([]);
+});
