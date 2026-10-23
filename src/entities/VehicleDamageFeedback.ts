@@ -85,6 +85,13 @@ export class VehicleDamageFeedback {
     this.impactSide = Number.isFinite(side) ? Math.sign(side) : 0;
   }
 
+  /** Restore pristine geometry and material state on a new mission. */
+  reset(): void {
+    this.flash = 0;
+    this.impactSide = 0;
+    this.step(0, 1, 1);
+  }
+
   private dentPanels(stage: number): void {
     for (const hull of this.hulls) {
       const { position, original, frontZ, length, geometry } = hull;
