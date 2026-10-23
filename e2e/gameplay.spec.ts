@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { SOUNDSCAPES } from '../src/audio/Soundscape';
 
 test('boots WebGL and plays the fundamental arcade loop', async ({ page }) => {
   const crashes: string[] = [];
@@ -867,5 +868,76 @@ test('left and right impact fixtures bias recoil without disturbing the player',
   await page.screenshot({ path: 'test-results/directional-collision-feedback.png' });
   const settled = await advance(140);
   expect(settled.cameraRoll).toBe(0);
+  expect(errors).toEqual([]);
+});
+
+test('engine synthesis responds to real throttle, shifting, braking and biome changes', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  const advance = (frames: number) => page.evaluate(n => {
+    const game = window as Window & {
+      __spy27AdvanceDriving?: (count: number) => {
+        screen: string; speed: number;
+        audioTone: { engineHz: number; textureHz: number; textureGain: number;
+          filterHz: number; engineGain: number } | null;
+      };
+    };
+    if (!game.__spy27AdvanceDriving) throw new Error('Driving test bridge missing');
+    return game.__spy27AdvanceDriving(n);
+  }, frames);
+
+  await page.goto('/?testDistance=140&testDrive=1');
+  // Prove the same explicit, persisted binding flow used by the dedicated
+  // transmission test. Do not assume a default binding survived other tests.
+  await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
+  await page.locator('[data-action="gear"]').click();
+  await page.keyboard.press('z');
+  await expect(page.locator('[data-action="gear"] strong')).toHaveText('Z');
+  await page.getByRole('button', { name: /apply and return/i }).click();
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  await expect(page.locator('#drive-gear')).toHaveText('LOW');
+  const idle = await advance(1);
+  expect(idle.screen).toBe('playing');
+  expect(idle.audioTone).not.toBeNull();
+
+  await page.keyboard.down('w');
+  const loaded = await advance(95);
+  expect(loaded.audioTone!.engineHz).toBeGreaterThan(idle.audioTone!.engineHz);
+  expect(loaded.audioTone!.engineGain).toBeGreaterThan(idle.audioTone!.engineGain);
+  await page.keyboard.down('z');
+  await advance(3);
+  await expect(page.locator('#drive-gear')).toHaveText('HIGH');
+  await page.keyboard.up('z');
+  const high = await advance(1);
+  // Software WebGL keeps the game loop running while browser interactions take
+  // real time. The interceptor can accelerate substantially between snapshots,
+  // raising absolute engine Hz even if an upshift lowers revs at equal speed.
+  // Remove the exact, modeled road-speed component from BOTH snapshots so the
+  // remaining tonal offset tests the real gearbox/load response rather than
+  // a timing-dependent speed comparison.
+  const speedRate = SOUNDSCAPES.forest.engineRate;
+  const loadedPitchAtZeroSpeed = loaded.audioTone!.engineHz - loaded.speed * speedRate;
+  const highPitchAtZeroSpeed = high.audioTone!.engineHz - high.speed * speedRate;
+  expect(highPitchAtZeroSpeed).toBeLessThan(loadedPitchAtZeroSpeed - 24);
+  await page.keyboard.up('w');
+  await page.keyboard.down('s');
+  const braking = await advance(35);
+  await page.keyboard.up('s');
+  expect(braking.audioTone!.engineHz).toBeLessThan(high.audioTone!.engineHz);
+  await page.screenshot({ path: 'test-results/engine-load-and-gear.png' });
+
+  await page.goto('/?testDistance=2350&testDrive=1');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const snow = await advance(1);
+  expect(snow.screen).toBe('playing');
+  expect(snow.audioTone!.textureHz).toBeGreaterThan(idle.audioTone!.textureHz);
+  expect(snow.audioTone!.textureGain).toBeGreaterThan(0);
+
+  await page.goto('/?testDistance=4350&testDrive=1');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const water = await advance(1);
+  expect(water.screen).toBe('playing');
+  expect(water.audioTone!.textureGain).toBeGreaterThan(idle.audioTone!.textureGain);
   expect(errors).toEqual([]);
 });

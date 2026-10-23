@@ -1,6 +1,8 @@
 import { SOUNDSCAPES, musicPace } from './Soundscape';
 import type { Biome } from '../world/WorldPlan';
 import type { ThreatDirection } from '../gameplay/CombatReadability';
+import { engineToneProfile, type DriveSoundControls, type EngineToneProfile } from './EngineResponse';
+import type { DriveGear } from '../gameplay/Transmission';
 
 /** Original synthesized espionage score, reactive engine drone and arcade SFX. */
 export class AudioManager {
@@ -9,6 +11,11 @@ export class AudioManager {
   private engineGain: GainNode | null = null;
   private overtone: OscillatorNode | null = null;
   private overtoneGain: GainNode | null = null;
+  private engineFilter: BiquadFilterNode | null = null;
+  private roadOscillator: OscillatorNode | null = null;
+  private roadGain: GainNode | null = null;
+  private roadFilter: BiquadFilterNode | null = null;
+  private lastTone: EngineToneProfile | null = null;
   private previousBiome: Biome = 'forest';
   private muted = false;
   private effectsLevel = 0.7;
@@ -24,11 +31,12 @@ export class AudioManager {
         this.engine = this.context.createOscillator();
         this.engine.type = 'sawtooth';
         this.engineGain = this.context.createGain();
-        const filter = this.context.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.value = 300;
+        this.engineFilter = this.context.createBiquadFilter();
+        this.engineFilter.type = 'lowpass';
+        this.engineFilter.frequency.value = 300;
         this.engineGain.gain.value = 0;
-        this.engine.connect(filter).connect(this.engineGain).connect(this.context.destination);
+        this.engine.connect(this.engineFilter)
+          .connect(this.engineGain).connect(this.context.destination);
         this.engine.start();
         this.overtone = this.context.createOscillator();
         this.overtone.type = 'triangle';
@@ -36,6 +44,18 @@ export class AudioManager {
         this.overtoneGain.gain.value = 0;
         this.overtone.connect(this.overtoneGain).connect(this.context.destination);
         this.overtone.start();
+        // One persistent oscillator and a reusable bandpass form the surface
+        // layer: no per-frame oscillators, textures or external audio assets.
+        this.roadOscillator = this.context.createOscillator();
+        this.roadOscillator.type = 'sawtooth';
+        this.roadGain = this.context.createGain();
+        this.roadGain.gain.value = 0;
+        this.roadFilter = this.context.createBiquadFilter();
+        this.roadFilter.type = 'bandpass';
+        this.roadFilter.Q.value = 0.62;
+        this.roadOscillator.connect(this.roadFilter)
+          .connect(this.roadGain).connect(this.context.destination);
+        this.roadOscillator.start();
       }
     } catch { /* Audio is optional when blocked by browser policy. */ }
   }
@@ -49,6 +69,14 @@ export class AudioManager {
     this.muted = !this.muted;
     if (this.muted) this.silence();
     return this.muted;
+  }
+
+  /** Pure fixed-step telemetry is available in development without requiring an audio device. */
+  get toneProfile(): EngineToneProfile | null { return this.lastTone; }
+
+  shift(gear: DriveGear): void {
+    if (gear === 'high') this.tone(640, 0.13, 'triangle', 0.07, -210);
+    else this.tone(340, 0.13, 'triangle', 0.065, 130);
   }
 
   fire(): void { this.tone(170, 0.045, 'sawtooth', 0.038, -90); }
@@ -82,7 +110,12 @@ export class AudioManager {
   }
 
   /** Fixed-step original five-environment adaptive music and engine layers. */
-  step(dt: number, speed: number, danger: number, inBoat = false, biome: Biome = 'forest'): void {
+  step(dt: number, speed: number, danger: number, inBoat = false, biome: Biome = 'forest',
+    drive: DriveSoundControls = {
+      gear: 'low', throttle: false, brake: false, steer: 0, acceleration: 0,
+    }): void {
+    const profile = engineToneProfile(biome, speed, drive, inBoat);
+    this.lastTone = profile;
     if (!this.context || this.context.state !== 'running') return;
     const currentBiome = inBoat ? 'water' : biome;
     if (currentBiome !== this.previousBiome) {
@@ -92,13 +125,22 @@ export class AudioManager {
     }
     const sound = SOUNDSCAPES[currentBiome];
     const now = this.context.currentTime;
-    if (this.engine && this.engineGain) {
-      this.engine.frequency.setTargetAtTime(sound.engineBase + speed * sound.engineRate, now, 0.07);
-      this.engineGain.gain.setTargetAtTime(this.muted ? 0 : 0.014 * this.effectsLevel, now, 0.08);
+    if (this.engine && this.engineGain && this.engineFilter) {
+      this.engine.frequency.setTargetAtTime(profile.engineHz, now, 0.075);
+      this.engineFilter.frequency.setTargetAtTime(profile.filterHz, now, 0.075);
+      this.engineGain.gain.setTargetAtTime(
+        this.muted ? 0 : profile.engineGain * this.effectsLevel, now, 0.065);
     }
     if (this.overtone && this.overtoneGain) {
-      this.overtone.frequency.setTargetAtTime(sound.undercurrent + speed * 0.82, now, 0.1);
-      this.overtoneGain.gain.setTargetAtTime(this.muted ? 0 : 0.006 * this.effectsLevel, now, 0.08);
+      this.overtone.frequency.setTargetAtTime(profile.overtoneHz, now, 0.10);
+      this.overtoneGain.gain.setTargetAtTime(
+        this.muted ? 0 : profile.overtoneGain * this.effectsLevel, now, 0.085);
+    }
+    if (this.roadOscillator && this.roadFilter && this.roadGain) {
+      this.roadOscillator.frequency.setTargetAtTime(profile.textureHz, now, 0.10);
+      this.roadFilter.frequency.setTargetAtTime(profile.textureFilterHz, now, 0.13);
+      this.roadGain.gain.setTargetAtTime(
+        this.muted ? 0 : profile.textureGain * this.effectsLevel, now, 0.12);
     }
     this.beatClock -= dt;
     if (this.beatClock <= 0) {
@@ -123,6 +165,7 @@ export class AudioManager {
     if (this.context && this.engineGain) {
       this.engineGain.gain.setTargetAtTime(0, this.context.currentTime, 0.025);
       this.overtoneGain?.gain.setTargetAtTime(0, this.context.currentTime, 0.025);
+      this.roadGain?.gain.setTargetAtTime(0, this.context.currentTime, 0.025);
     }
     this.beatClock = 0;
   }
