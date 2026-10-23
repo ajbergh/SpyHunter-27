@@ -18,6 +18,7 @@ export class SpeedStreaks {
   });
   private distance = 0;
   private quality: Quality = 'medium';
+  private reducedMotion = false;
 
   constructor(scene: THREE.Scene) {
     this.geometry.setAttribute('position', new THREE.BufferAttribute(this.positions, 3)
@@ -31,12 +32,17 @@ export class SpeedStreaks {
 
   setPreferences(quality: Quality, reducedMotion: boolean): void {
     this.quality = quality;
-    this.lines.visible = quality !== 'low' && !reducedMotion;
+    this.reducedMotion = reducedMotion;
+    this.lines.visible = quality !== 'low' && !reducedMotion && this.material.opacity > 0;
   }
 
   step(dt: number, speed: number): void {
     this.distance = (this.distance + speed * Math.max(0, dt)) % 165;
     this.material.opacity = streakOpacity(speed);
+    // Fully transparent streaks still cost geometry updates and a draw call
+    // if left visible. Skip them completely until their threshold is crossed.
+    this.lines.visible = this.quality !== 'low' &&
+      !this.reducedMotion && this.material.opacity > 0;
   }
 
   renderAt(center: (z: number) => number): void {
