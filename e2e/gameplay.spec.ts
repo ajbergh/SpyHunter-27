@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { SOUNDSCAPES } from '../src/audio/Soundscape';
 
 test('boots WebGL and plays the fundamental arcade loop', async ({ page }) => {
   const crashes: string[] = [];
@@ -876,7 +877,7 @@ test('engine synthesis responds to real throttle, shifting, braking and biome ch
   const advance = (frames: number) => page.evaluate(n => {
     const game = window as Window & {
       __spy27AdvanceDriving?: (count: number) => {
-        screen: string;
+        screen: string; speed: number;
         audioTone: { engineHz: number; textureHz: number; textureGain: number;
           filterHz: number; engineGain: number } | null;
       };
@@ -909,9 +910,16 @@ test('engine synthesis responds to real throttle, shifting, braking and biome ch
   await expect(page.locator('#drive-gear')).toHaveText('HIGH');
   await page.keyboard.up('z');
   const high = await advance(1);
-  // Compare the actual post-shift synthesis only after game state confirms
-  // the edge-triggered shift; avoid attributing key-event timing to audio.
-  expect(high.audioTone!.engineHz).toBeLessThan(loaded.audioTone!.engineHz);
+  // Software WebGL keeps the game loop running while browser interactions take
+  // real time. The interceptor can accelerate substantially between snapshots,
+  // raising absolute engine Hz even if an upshift lowers revs at equal speed.
+  // Remove the exact, modeled road-speed component from BOTH snapshots so the
+  // remaining tonal offset tests the real gearbox/load response rather than
+  // a timing-dependent speed comparison.
+  const speedRate = SOUNDSCAPES.forest.engineRate;
+  const loadedPitchAtZeroSpeed = loaded.audioTone!.engineHz - loaded.speed * speedRate;
+  const highPitchAtZeroSpeed = high.audioTone!.engineHz - high.speed * speedRate;
+  expect(highPitchAtZeroSpeed).toBeLessThan(loadedPitchAtZeroSpeed - 24);
   await page.keyboard.up('w');
   await page.keyboard.down('s');
   const braking = await advance(35);
