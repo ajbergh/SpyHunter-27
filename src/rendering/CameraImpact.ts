@@ -23,7 +23,7 @@ export class CameraImpact {
     this.phase += duration * 19;
   }
 
-  get lift(): number { return Math.sin(this.phase) * this.intensity * 0.20; }
+  get lift(): number { return this.intensity === 0 ? 0 : Math.sin(this.phase) * this.intensity * 0.20; }
   get roll(): number { return this.intensity === 0 ? 0 : this.intensity * (Math.cos(this.phase) * 0.005 + this.contactSide * 0.006); }
   get active(): boolean { return this.intensity > 0; }
 
