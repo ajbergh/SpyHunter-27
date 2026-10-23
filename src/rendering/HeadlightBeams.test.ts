@@ -27,4 +27,28 @@ describe('cinematic headlight road projection', () => {
     beams.step('city', false);
     expect(beams.mesh.visible).toBe(false);
   });
+
+  it('dims only the impacted side in existing projected beams without changing draw count', () => {
+    const scene = new THREE.Scene();
+    const beams = new HeadlightBeams(scene);
+    beams.setQuality('high');
+    const material = beams.mesh.material;
+    const geometry = beams.mesh.geometry;
+    beams.step('city', false, 2, -1);
+    expect(beams.mesh.visible).toBe(true);
+    expect(material.uniforms.uLeftLamp.value).toBe(0.46);
+    expect(material.uniforms.uRightLamp.value).toBe(1);
+    beams.step('snow', false, 3, 1);
+    expect(material.uniforms.uLeftLamp.value).toBe(1);
+    expect(material.uniforms.uRightLamp.value).toBe(0.18);
+    beams.step('water', true, 3, 1);
+    expect(beams.mesh.visible).toBe(false);
+    beams.step('forest', false, 0, 0);
+    expect(material.uniforms.uLeftLamp.value).toBe(1);
+    expect(material.uniforms.uRightLamp.value).toBe(1);
+    expect(beams.mesh.material).toBe(material);
+    expect(beams.mesh.geometry).toBe(geometry);
+    expect(scene.children).toEqual([beams.mesh]);
+  });
+
 });
