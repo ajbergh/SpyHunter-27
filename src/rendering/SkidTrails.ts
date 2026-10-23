@@ -22,6 +22,10 @@ export class SkidTrails {
     () => ({ x: 0, z: 0, life: 0 }));
   private readonly dummy = new THREE.Object3D();
   private readonly shade = new THREE.Color();
+  // Only live or previously rendered marks need matrix uploads. Inactive
+  // instances stay hidden without calling roadCenterAt or touching the GPU.
+  private readonly rendered = new Uint8Array(POOL_SIZE);
+  private liveCount = 0;
   private quality: Quality = 'medium';
   private cursor = 0;
   private clock = 0;
@@ -42,17 +46,18 @@ export class SkidTrails {
     this.reset();
   }
 
-  get activeCount(): number { return this.marks.filter(m => m.life > 0).length; }
+  get activeCount(): number { return this.liveCount; }
   get capacity(): number { return POOL_SIZE; }
 
   setQuality(quality: Quality): void {
     this.quality = quality;
-    this.mesh.visible = quality !== 'low';
+    this.mesh.visible = quality !== 'low' && this.liveCount > 0;
     if (quality === 'low') this.reset();
   }
 
   private mark(x: number, z: number, biome: Biome): void {
     const entry = this.marks[this.cursor];
+    if (entry.life <= 0) this.liveCount++;
     entry.x = x; entry.z = z; entry.life = DURATION;
     const color = biome === 'snow' ? 0x8293a7 : biome === 'desert' ? 0x534439 : 0x131d20;
     this.mesh.setColorAt(this.cursor, this.shade.setHex(color));
@@ -64,12 +69,16 @@ export class SkidTrails {
     braking: boolean, biome: Biome, isBoat: boolean, playerZ = PLAYER_Z,
   ): void {
     const d = Math.max(0, dt);
-    for (const m of this.marks) {
-      if (m.life <= 0) continue;
-      m.z += speed * d;
-      m.life = Math.max(0, m.life - d);
-      if (m.z > 65) m.life = 0;
+    if (this.liveCount > 0) {
+      for (const m of this.marks) {
+        if (m.life <= 0) continue;
+        m.z += speed * d;
+        m.life = Math.max(0, m.life - d);
+        if (m.z > 65) m.life = 0;
+        if (m.life === 0) this.liveCount--;
+      }
     }
+    this.mesh.visible = this.quality !== 'low' && this.liveCount > 0;
     if (this.quality === 'low' || !skidCondition(speed, steer, braking, biome, isBoat)) {
       this.clock = 0;
       return;
@@ -82,16 +91,25 @@ export class SkidTrails {
       for (const side of [-1, 1]) this.mark(x + side * 0.85, playerZ + 1.64, biome);
     }
     if (this.mesh.instanceColor) this.mesh.instanceColor.needsUpdate = true;
+    this.mesh.visible = this.liveCount > 0;
   }
 
   renderAt(center: (z: number) => number): void {
     if (!this.mesh.visible) return;
+    this.dummy.rotation.set(-Math.PI / 2, 0, 0);
     for (let i = 0; i < POOL_SIZE; i++) {
       const mark = this.marks[i];
-      this.dummy.position.set(mark.x + center(mark.z), 0.051, mark.z);
-      this.dummy.rotation.set(-Math.PI / 2, 0, 0);
-      const fade = mark.life > 0 ? Math.min(1, mark.life * 2.6) : 0;
-      this.dummy.scale.set(1.0, fade, 1.0);
+      if (mark.life <= 0 && !this.rendered[i]) continue;
+      if (mark.life > 0) {
+        this.dummy.position.set(mark.x + center(mark.z), 0.051, mark.z);
+        this.dummy.scale.set(1, Math.min(1, mark.life * 2.6), 1);
+        this.rendered[i] = 1;
+      } else {
+        // Clear an expired GPU instance exactly once before any future batch
+        // becomes visible. Avoid leaving stale black trails after quiet time.
+        this.dummy.scale.setScalar(0);
+        this.rendered[i] = 0;
+      }
       this.dummy.updateMatrix();
       this.mesh.setMatrixAt(i, this.dummy.matrix);
     }
@@ -101,6 +119,9 @@ export class SkidTrails {
   reset(): void {
     this.cursor = 0;
     this.clock = 0;
+    this.liveCount = 0;
+    this.rendered.fill(0);
+    this.mesh.visible = false;
     for (const m of this.marks) m.life = 0;
     this.dummy.scale.setScalar(0);
     this.dummy.updateMatrix();
