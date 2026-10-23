@@ -34,6 +34,19 @@ describe('fixed-step impact camera', () => {
     expect(Math.abs(a.roll)).toBeLessThanOrEqual(0.018);
   });
 
+  it('reports positive zero after a negative half-wave has fully decayed', () => {
+    const impact = new CameraImpact();
+    impact.hit(1, -1);
+    for (let i = 0; i < 130; i++) impact.step(1 / 60, false);
+    expect(impact.active).toBe(false);
+    expect(Object.is(impact.lift, 0)).toBe(true);
+    expect(Object.is(impact.roll, 0)).toBe(true);
+    expect(Object.is(impact.lift, -0)).toBe(false);
+    impact.hit();
+    impact.reset();
+    expect(Object.is(impact.lift, 0)).toBe(true);
+  });
+
   it('fully suppresses camera movement in reduced motion and ignores invalid updates', () => {
     const camera = new CameraImpact();
     camera.hit();
