@@ -33,7 +33,8 @@ export class VehicleDamageFeedback {
   private readonly damaged = new THREE.Color(0x514b50);
   private flash = 0;
   private impactSide = 0;
-  private appliedStage = -1;
+  // New, undamaged meshes already match their original vertex snapshot.
+  private appliedStage = 0;
   private appliedSide = 0;
 
   constructor(vehicle: THREE.Group) {
