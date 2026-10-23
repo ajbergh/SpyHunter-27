@@ -316,3 +316,14 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [x] Preserve all existing music, effects volume, mute, browser audio permission and pause behavior; ensure the surface layer also silences.
 - [x] Add deterministic unit-model tests, mocked persistent WebAudio chain tests, and browser acceptance tests on actual throttle/shift/brake/biome transitions.
 - [ ] Subjectively mix with player SFX, hand-test on mobile/headsets and throttle controllers, and consider optional stereo/spatial roadside ambience with dedicated volume sliders.
+
+### Frame-pacing maintenance: zero-work idle effects (2026-10-23)
+
+- [x] Disable the 160-instance skid-trail draw entirely at zero active skid marks rather than updating all instance matrices each frame.
+- [x] Update only live or once-expired skid matrices, clearing stale transforms before a later mark batch is made visible.
+- [x] Track skid pool count without per-HUD allocation/filtering, retaining original bounded mark capacity and biome-dependent visuals.
+- [x] Suppress transparent speed-streak draw calls and dynamic position buffer uploads at cruising speed, Low graphics quality or Reduced Motion.
+- [x] Cache static roadside tile X coordinates at build/recycle/seek rather than recomputing ten roadway curve offsets every fixed update.
+- [x] Hoist immutable environment sound texture profiles out of 60 Hz engine-audio updates.
+- [x] Add GPU buffer-version, draw-culling, count/expiry/regrowth tests; preserve full Playwright visual suite.
+- [ ] Profile frame time and draw calls on representative integrated/discrete GPUs with High/Medium/Low quality and long-session memory monitoring.

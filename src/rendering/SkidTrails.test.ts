@@ -27,6 +27,56 @@ describe('pooled skidmark rendering', () => {
     skid.step(4, 30, 0, 0, false, 'forest', false);
     expect(skid.activeCount).toBe(0);
   });
+  it('does not render or upload inactive skid instances, and clears previously painted tracks on reuse', () => {
+    const trail = new SkidTrails(new THREE.Scene());
+    trail.setQuality('high');
+    let centerCalls = 0;
+    const center = (_z: number): number => { centerCalls++; return 0; };
+    const initialVersion = trail.mesh.instanceMatrix.version;
+    expect(trail.mesh.visible).toBe(false);
+    trail.renderAt(center);
+    expect(centerCalls).toBe(0);
+    expect(trail.mesh.instanceMatrix.version).toBe(initialVersion);
+
+    trail.step(0.26, 44, 0, 1, false, 'forest', false);
+    expect(trail.mesh.visible).toBe(true);
+    const active = trail.activeCount;
+    trail.renderAt(center);
+    expect(centerCalls).toBe(active);
+    expect(trail.mesh.instanceMatrix.version).toBeGreaterThan(initialVersion);
+
+    trail.step(4, 0, 0, 0, false, 'forest', false);
+    expect(trail.activeCount).toBe(0);
+    expect(trail.mesh.visible).toBe(false);
+    const idleVersion = trail.mesh.instanceMatrix.version;
+    trail.renderAt(center);
+    expect(centerCalls).toBe(active);
+    expect(trail.mesh.instanceMatrix.version).toBe(idleVersion);
+
+    // A later brake event revives only the next pool slots. Expired slots
+    // were already rendered and must have their stale matrices cleared.
+    trail.step(0.10, 38, 1, 0, true, 'city', false);
+    trail.renderAt(center);
+    const formerSlot = new THREE.Matrix4();
+    trail.mesh.getMatrixAt(0, formerSlot);
+    expect(formerSlot.elements[0]).toBe(0);
+    expect(trail.activeCount).toBeGreaterThan(0);
+    expect(centerCalls).toBe(active + trail.activeCount);
+  });
+
+  it('tracks a fixed 160-mark budget through overwrites and long idle intervals', () => {
+    const trail = new SkidTrails(new THREE.Scene());
+    trail.setQuality('high');
+    for (let i = 0; i < 250; i++)
+      trail.step(0.085, 42, 0, 1, false, 'forest', false);
+    expect(trail.activeCount).toBeLessThanOrEqual(trail.capacity);
+    expect(trail.activeCount).toBeGreaterThan(0);
+    trail.renderAt(() => 0);
+    trail.step(10, 0, 0, 0, false, 'forest', false);
+    expect(trail.activeCount).toBe(0);
+    expect(trail.mesh.visible).toBe(false);
+  });
+
   it('does not emit on Low, and resets when changing quality', () => {
     const trail = new SkidTrails(new THREE.Scene());
     trail.setQuality('low');

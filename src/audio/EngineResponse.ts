@@ -22,6 +22,15 @@ export interface EngineToneProfile {
   readonly textureFilterHz: number;
 }
 
+// Allocated once: EngineResponse runs at the 60 Hz simulation cadence.
+const TERRAIN_TEXTURE: Readonly<Record<Biome, readonly [number, number, number]>> = {
+  forest: [43, 0.8, 290],
+  desert: [58, 1.18, 560],
+  snow: [72, 0.56, 760],
+  city: [88, 0.68, 830],
+  water: [54, 1.25, 380],
+};
+
 const clamp = (n: number, min: number, max: number): number =>
   Math.max(min, Math.min(max, Number.isFinite(n) ? n : 0));
 
@@ -45,14 +54,8 @@ export function engineToneProfile(
   const engineHz = clamp(sound.engineBase + velocity * sound.engineRate +
     gearOffset + load * (boat ? 16 : 26) + accel * 0.30, 45, 560);
   const surface = boat ? 'water' : biome;
-  const texture: Record<Biome, readonly [number, number, number]> = {
-    forest: [43, 0.8, 290],
-    desert: [58, 1.18, 560],
-    snow: [72, 0.56, 760],
-    city: [88, 0.68, 830],
-    water: [54, 1.25, 380],
-  };
-  const [baseTexture, intensity, filter] = texture[surface];
+
+  const [baseTexture, intensity, filter] = TERRAIN_TEXTURE[surface];
   const slip = boat ? Math.abs(steer) * 0.1 :
     surface === 'snow' ? Math.abs(steer) * 0.43 :
       surface === 'desert' ? Math.abs(steer) * 0.19 : Math.abs(steer) * 0.10;
