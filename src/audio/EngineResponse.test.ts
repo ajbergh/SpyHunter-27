@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { engineToneProfile, type DriveSoundControls } from './EngineResponse';
 import { BIOMES } from '../world/WorldPlan';
+import { transmissionResponse } from '../gameplay/Transmission';
 
 const cruising: DriveSoundControls = {
   gear: 'low', throttle: false, brake: false, steer: 0, acceleration: 0,
@@ -23,6 +24,23 @@ describe('continuous engine/load and road texture model', () => {
     expect(braking.engineGain).toBeLessThan(coast.engineGain);
     expect(high.engineHz).toBeLessThan(coast.engineHz);
     expect(high.textureGain).toBe(coast.textureGain);
+  });
+
+  it('keeps an upshift audibly lower despite higher acceleration toward High-gear target speed', () => {
+    for (const speed of [25, 29, 35, 40, 48, 58]) {
+      const low = transmissionResponse('low', speed, true, false);
+      const high = transmissionResponse('high', speed, true, false);
+      const before = engineToneProfile('forest', speed, {
+        ...cruising, throttle: true, gear: 'low',
+        acceleration: (low.targetSpeed - speed) * low.responseRate,
+      });
+      const after = engineToneProfile('forest', speed, {
+        ...cruising, throttle: true, gear: 'high',
+        acceleration: (high.targetSpeed - speed) * high.responseRate,
+      });
+      expect(after.engineHz, `upshift at speed ${speed}`)
+        .toBeLessThan(before.engineHz - 24);
+    }
   });
 
   it('distinguishes road, desert grit, snow slip, city pavement and water propwash', () => {
