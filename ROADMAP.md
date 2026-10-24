@@ -372,3 +372,14 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [x] Add unit buffer-version tests and live WebGL collision/missile lifecycle acceptance
 - [ ] Benchmark median and P95 frame pacing and observed draw submissions with and without a crowded combat scene on representative hardware
 - [ ] Evaluate directional road-contact lighting / subtle metal glints in high preset after verifying frame budget
+
+### Biome-sensitive headlight road sheen (2026-10-23)
+
+- [x] Enhance existing dual headlight projection with soft, near-field road-contact reflections in its original single fragment pass, avoiding extra draws
+- [x] Grade city wet asphalt, snowy surface, forest asphalt and desert road differently without external assets or frame-loop allocations
+- [x] Respect directional broken-headlamp ratios when projecting left/right reflective pools
+- [x] Keep waterway and Low quality at zero sheen; Medium gets bounded lower intensity than High
+- [x] Use deterministic static road-film microstriations rather than animated brightness flicker, including with Reduced Motion
+- [x] Unit-test grade outputs, shader shared-instance topology and material uniforms; add real city/water Chromium tests
+- [ ] Compare screenshots across forest/desert/snow/city with normal and damaged headlights and refine sheen after human art review
+- [ ] Benchmark GPU fragment cost with representative integrated GPU, high-resolution display and effects on/off
