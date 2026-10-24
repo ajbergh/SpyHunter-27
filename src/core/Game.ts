@@ -195,6 +195,7 @@ export class Game {
           heroWear: number; heroWearSide: number;
           heroCarPanels: number; heroBoatPanels: number;
           headlampLeft: number; headlampRight: number;
+          roadSheenStrength: number; roadSheenStretch: number;
           frameP95Ms: number;
           impactHitboxStable: boolean;
           chassisPitch: number; chassisRoll: number; chassisHeave: number;
@@ -229,6 +230,8 @@ export class Game {
           heroBoatPanels: this.player.boatDamagedPanelCount,
           headlampLeft: this.headlights.mesh.material.uniforms.uLeftLamp.value as number,
           headlampRight: this.headlights.mesh.material.uniforms.uRightLamp.value as number,
+          roadSheenStrength: this.headlights.mesh.material.uniforms.uSheenStrength.value as number,
+          roadSheenStretch: this.headlights.mesh.material.uniforms.uSheenStretch.value as number,
           impactHitboxStable: this.impactFixtureHitboxStable,
           chassisPitch: this.player.chassisPitch, chassisRoll: this.player.chassisRoll,
           chassisHeave: this.player.chassisHeave,
