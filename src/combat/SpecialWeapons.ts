@@ -26,6 +26,7 @@ export class SpecialWeapons {
 
   get counts(): WeaponCounts { return { ...this.ammo }; }
   get activeMissileTrails(): number { return this.contrails.activeCount; }
+  get missileTrailsVisible(): boolean { return this.contrails.mesh.visible; }
 
   reset(): void {
     for (const missile of this.missiles) this.destroyObject(missile.mesh);
