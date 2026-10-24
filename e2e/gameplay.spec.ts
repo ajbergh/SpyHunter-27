@@ -1104,3 +1104,60 @@ test('a fresh mission initializes pristine interceptor body and symmetric headli
   expect(reset.headlampRight).toBe(1);
   expect(errors).toEqual([]);
 });
+
+test('collision debris fades to a dormant zero-draw batch in live WebGL', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  const advance = (frames: number) => page.evaluate(count => {
+    const game = window as Window & {
+      __spy27AdvanceDriving?: (n: number) => {
+        screen: string; debrisActive: number; debrisVisible: boolean;
+      };
+    };
+    if (!game.__spy27AdvanceDriving) throw new Error('Driving bridge missing');
+    return game.__spy27AdvanceDriving(count);
+  }, frames);
+  await page.goto('/?testDrive=1&testImpact=1&testImpactSide=left');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  const blast = await advance(1);
+  expect(blast.screen).toBe('playing');
+  expect(blast.debrisActive).toBeGreaterThan(0);
+  expect(blast.debrisActive).toBeLessThanOrEqual(96);
+  expect(blast.debrisVisible).toBe(true);
+  const settled = await advance(110);
+  expect(settled.debrisActive).toBe(0);
+  expect(settled.debrisVisible).toBe(false);
+  expect(errors).toEqual([]);
+});
+
+test('missile smoke uses one pooled draw only while puffs are live', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  const advance = (frames: number) => page.evaluate(count => {
+    const game = window as Window & {
+      __spy27AdvanceDriving?: (n: number) => {
+        screen: string; smokeActive: number; smokeVisible: boolean;
+      };
+    };
+    if (!game.__spy27AdvanceDriving) throw new Error('Driving bridge missing');
+    return game.__spy27AdvanceDriving(count);
+  }, frames);
+  await page.goto('/?testDrive=1');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  const quiet = await advance(1);
+  expect(quiet.screen).toBe('playing');
+  expect(quiet.smokeActive).toBe(0);
+  expect(quiet.smokeVisible).toBe(false);
+  await page.keyboard.down('q');
+  const firing = await advance(3);
+  await page.keyboard.up('q');
+  expect(firing.smokeActive).toBeGreaterThan(0);
+  expect(firing.smokeActive).toBeLessThanOrEqual(128);
+  expect(firing.smokeVisible).toBe(true);
+  const faded = await advance(190);
+  expect(faded.smokeActive).toBe(0);
+  expect(faded.smokeVisible).toBe(false);
+  expect(errors).toEqual([]);
+});
