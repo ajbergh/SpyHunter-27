@@ -872,6 +872,9 @@ test('left and right impact fixtures bias recoil without disturbing the player',
 });
 
 test('engine synthesis responds to real throttle, shifting, braking and biome changes', async ({ page }) => {
+  // Software WebGL initialization and three environment transitions can
+  // exceed the default 45-second budget even when all assertions pass.
+  test.setTimeout(90000);
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   const advance = (frames: number) => page.evaluate(n => {
@@ -1019,5 +1022,85 @@ test('repeated hits leave persistent, side-localized panel dents without changin
   expect(low.damageStage).toBe(2);
   expect(low.damageVisible).toBe(true);
   expect(low.sparksActive).toBe(0);
+  expect(errors).toEqual([]);
+});
+
+type HeroTelemetry = {
+  screen: string;
+  heroWear: number; heroWearSide: number;
+  heroCarPanels: number; heroBoatPanels: number;
+  headlampLeft: number; headlampRight: number;
+  impactHitboxStable: boolean;
+};
+const heroState = (page: import('@playwright/test').Page, frames = 1) =>
+  page.evaluate(count => {
+    const game = window as Window & {
+      __spy27AdvanceDriving?: (n: number) => HeroTelemetry;
+    };
+    if (!game.__spy27AdvanceDriving) throw new Error('Driving bridge missing');
+    return game.__spy27AdvanceDriving(count);
+  }, frames);
+
+test('a real interceptor collision dents the correct side without altering its hitbox', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/?testDrive=1&testImpact=1&testImpactSide=right');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  const impact = await heroState(page);
+  expect(impact.screen).toBe('playing');
+  expect(impact.impactHitboxStable).toBe(true);
+  expect(impact.heroWear).toBe(1);
+  expect(impact.heroWearSide).toBe(1);
+  expect(impact.heroCarPanels).toBeGreaterThan(0);
+  expect(impact.headlampLeft).toBe(1);
+  expect(impact.headlampRight).toBeCloseTo(0.78);
+  await page.screenshot({ path: 'test-results/interceptor-damaged-right-lamp.png' });
+  expect(errors).toEqual([]);
+});
+
+test('stage-two interceptor dents and asymmetric headlights persist after the impact', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/?testDrive=1&testHeroWear=2');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const worn = await heroState(page);
+  expect(worn.screen).toBe('playing');
+  expect(worn.heroWear).toBe(2);
+  expect(worn.heroWearSide).toBe(-1);
+  expect(worn.headlampLeft).toBeCloseTo(0.46);
+  expect(worn.headlampRight).toBe(1);
+  expect(worn.heroCarPanels).toBeGreaterThan(0);
+  const later = await heroState(page, 90);
+  expect(later.heroWear).toBe(2);
+  expect(later.headlampLeft).toBeCloseTo(0.46);
+  await page.screenshot({ path: 'test-results/interceptor-persistent-front-left-damage.png' });
+  expect(errors).toEqual([]);
+});
+
+test('waterway hero retains sculpted hull wear without enabling water road beams', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/?testDrive=1&testHeroWear=2&testDistance=4350');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const water = await heroState(page);
+  expect(water.screen).toBe('playing');
+  expect(water.heroWear).toBe(2);
+  expect(water.heroBoatPanels).toBeGreaterThan(0);
+  expect(water.headlampLeft).toBeCloseTo(0.46);
+  expect(errors).toEqual([]);
+});
+
+test('a fresh mission initializes pristine interceptor body and symmetric headlights', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/?testDrive=1');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  const reset = await heroState(page);
+  expect(reset.screen).toBe('playing');
+  expect(reset.heroWear).toBe(0);
+  expect(reset.heroWearSide).toBe(0);
+  expect(reset.headlampLeft).toBe(1);
+  expect(reset.headlampRight).toBe(1);
   expect(errors).toEqual([]);
 });

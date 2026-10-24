@@ -91,7 +91,8 @@ export function makeInterceptor(): THREE.Group {
     addWheelAssembly(group, side * 1.28, -1.79, 0.53);
     addWheelAssembly(group, side * 1.30, 1.66, 0.54);
     addDecalBar(group, [0.10, 0.07, 3.42], [side * 1.23, 0.91, -0.20], 0x238db0);
-    addDecalBar(group, [0.37, 0.16, 0.18], [side * 0.92, 0.67, -2.81], 0x9ecdda, true);
+    addDecalBar(group, [0.37, 0.16, 0.18], [side * 0.92, 0.67, -2.81], 0x9ecdda, true)
+      .name = side < 0 ? 'FrontHeadlampLeft' : 'FrontHeadlampRight';
     addDecalBar(group, [0.41, 0.17, 0.14], [side * 0.94, 0.66, 2.78], 0xc83c51, true).name = 'BrakeLamp';
     addDecalBar(group, [0.47, 0.10, 0.32], [side * 0.75, 0.93, -2.06], 0xbed9e2);
     addDecalBar(group, [0.07, 0.08, 1.2], [side * 0.45, 0.96, -1.67], 0x6d8b99);

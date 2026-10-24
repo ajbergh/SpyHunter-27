@@ -3,6 +3,8 @@ import type { Controls } from '../core/Input';
 import { approach, clamp, ROAD_HALF_WIDTH, type RectHitbox } from '../core/logic';
 import { makeInterceptor, makeSpeedboat } from './VehicleModels';
 import { VehicleMotionRig } from './VehicleMotion';
+import { VehicleDamageFeedback } from './VehicleDamageFeedback';
+import { damagedHeadlampFactors } from '../rendering/HeadlightDamage';
 import { SuspensionDynamics } from './SuspensionDynamics';
 import type { Biome } from '../world/WorldPlan';
 import { drivingTargetZ, DRIVE_Z_NEUTRAL } from '../gameplay/LongitudinalDriving';
@@ -14,6 +16,14 @@ export class Player {
   private readonly carMotion = new VehicleMotionRig(this.car);
   private readonly suspension = new SuspensionDynamics();
   private readonly boat = makeSpeedboat(false);
+  private readonly carWear = new VehicleDamageFeedback(this.car);
+  private readonly boatWear = new VehicleDamageFeedback(this.boat);
+  private readonly headlampLeft: THREE.MeshStandardMaterial;
+  private readonly headlampRight: THREE.MeshStandardMaterial;
+  private readonly headlampLeftOriginal: number;
+  private readonly headlampRightOriginal: number;
+  private wear = 0;
+  private impactSide = 0;
   isBoat = false;
   gear: DriveGear = INITIAL_GEAR;
   private elapsed = 0;
@@ -24,6 +34,16 @@ export class Player {
   invulnerability = 0;
 
   constructor(scene: THREE.Scene) {
+    const left = this.car.getObjectByName('FrontHeadlampLeft');
+    const right = this.car.getObjectByName('FrontHeadlampRight');
+    if (!(left instanceof THREE.Mesh) || !(right instanceof THREE.Mesh) ||
+        !(left.material instanceof THREE.MeshStandardMaterial) ||
+        !(right.material instanceof THREE.MeshStandardMaterial))
+      throw new Error('Interceptor headlamp model must expose independent emissive materials');
+    this.headlampLeft = left.material;
+    this.headlampRight = right.material;
+    this.headlampLeftOriginal = this.headlampLeft.emissiveIntensity;
+    this.headlampRightOriginal = this.headlampRight.emissiveIntensity;
     this.mesh.add(this.car, this.boat);
     this.setBoat(false);
     this.mesh.position.set(0, 0.12, DRIVE_Z_NEUTRAL);
@@ -37,6 +57,11 @@ export class Player {
     this.gear = INITIAL_GEAR;
     this.invulnerability = 0;
     this.mesh.visible = true;
+    this.wear = 0;
+    this.impactSide = 0;
+    this.carWear.reset();
+    this.boatWear.reset();
+    this.updateHeadlamps();
     this.elapsed = 0;
     this.lateralVelocity = 0;
     this.carMotion.reset();
@@ -60,6 +85,31 @@ export class Player {
     this.car.visible = !enabled;
     this.boat.visible = enabled;
   }
+
+  /** Visual-only cumulative wear per impact, independent of remaining lives.
+   *  Extra-life pickups do not magically repair the original bodywork; a new
+   *  run restores pristine paint and geometry.
+   */
+  takeImpact(side = 0): void {
+    this.wear = Math.min(3, this.wear + 1);
+    this.impactSide = Number.isFinite(side) ? Math.sign(side) : 0;
+    this.carWear.hit(this.impactSide);
+    this.boatWear.hit(this.impactSide);
+    this.carWear.step(0, 3 - this.wear, 3);
+    this.boatWear.step(0, 3 - this.wear, 3);
+    this.updateHeadlamps();
+  }
+
+  private updateHeadlamps(): void {
+    const lamps = damagedHeadlampFactors(this.wear, this.impactSide);
+    this.headlampLeft.emissiveIntensity = this.headlampLeftOriginal * lamps.left;
+    this.headlampRight.emissiveIntensity = this.headlampRightOriginal * lamps.right;
+  }
+
+  get damageStage(): number { return this.wear; }
+  get damageSide(): number { return this.impactSide; }
+  get carDamagedPanelCount(): number { return this.carWear.sculptedPanelCount; }
+  get boatDamagedPanelCount(): number { return this.boatWear.sculptedPanelCount; }
 
   shiftGear(): DriveGear | null {
     if (this.isBoat) return null;
@@ -107,6 +157,10 @@ export class Player {
       this.car.rotation.x = 0;
       this.car.rotation.z = 0;
       this.car.position.y = 0;
+    }
+    if (this.wear > 0 || this.carWear.flashing || this.boatWear.flashing) {
+      this.carWear.step(dt, 3 - this.wear, 3);
+      this.boatWear.step(dt, 3 - this.wear, 3);
     }
     this.invulnerability = Math.max(0, this.invulnerability - dt);
     this.mesh.visible = this.invulnerability === 0 || Math.floor(this.invulnerability * 12) % 2 === 0;

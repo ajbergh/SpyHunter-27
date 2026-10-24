@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { Quality } from '../gameplay/Settings';
 import type { Biome } from '../world/WorldPlan';
 import { PLAYER_Z } from '../core/logic';
+import { damagedHeadlampFactors } from './HeadlightDamage';
 
 export function beamStrength(biome: Biome, quality: Quality, boat: boolean): number {
   if (boat || quality === 'low') return 0;
@@ -29,6 +30,8 @@ export class HeadlightBeams {
       uniforms: {
         uStrength: { value: 0 },
         uColor: { value: new THREE.Color(0xa5daff) },
+        uLeftLamp: { value: 1 },
+        uRightLamp: { value: 1 },
       },
       vertexShader: `
         varying vec2 vUv;
@@ -41,6 +44,8 @@ export class HeadlightBeams {
         varying vec2 vUv;
         uniform float uStrength;
         uniform vec3 uColor;
+        uniform float uLeftLamp;
+        uniform float uRightLamp;
         void main() {
           float distanceAhead = vUv.y;
           float spread = mix(0.027, 0.32, pow(distanceAhead, 0.85));
@@ -50,7 +55,8 @@ export class HeadlightBeams {
           float rightFeather = 1.0 - smoothstep(0.43, 1.0, rightBeam);
           float attenuation = smoothstep(0.0, 0.06, distanceAhead) *
             (1.0 - smoothstep(0.24, 1.0, distanceAhead));
-          float hotspot = pow(max(leftFeather, rightFeather), 1.65);
+          float hotspot = pow(max(leftFeather * uLeftLamp,
+            rightFeather * uRightLamp), 1.65);
           float brightness = hotspot * attenuation * uStrength;
           gl_FragColor = vec4(uColor * brightness, brightness);
         }
@@ -70,10 +76,13 @@ export class HeadlightBeams {
     this.mesh.visible = quality !== 'low';
   }
 
-  step(biome: Biome, boat: boolean): void {
+  step(biome: Biome, boat: boolean, wearStage = 0, impactSide = 0): void {
     const intensity = beamStrength(biome, this.quality, boat);
     this.mesh.visible = intensity > 0;
     this.mesh.material.uniforms.uStrength.value = intensity;
+    const factors = damagedHeadlampFactors(wearStage, impactSide);
+    this.mesh.material.uniforms.uLeftLamp.value = factors.left;
+    this.mesh.material.uniforms.uRightLamp.value = factors.right;
     const color = biome === 'city' ? 0x96dfff : biome === 'snow' ? 0xe0f5ff : 0xffe4ae;
     (this.mesh.material.uniforms.uColor.value as THREE.Color).copy(this.tint.setHex(color));
   }
