@@ -361,3 +361,14 @@ The highway and river are continuous and curved, but do not yet have interactive
 - [x] Regression tests for lamp factors, materials, indexed geometry uploads, unchanged collision box, reset, car/boat modes and real impact fixtures in Chromium
 - [ ] Art-direct headlamp attenuation and hero panel dents on hardware across all five environments; profile shader cost in Medium and High
 - [ ] Consider a restrained warning/cockpit damage-state treatment subject to visual clarity and accessibility review
+
+### Dormant particle pool culling and metallic fragments (2026-10-23)
+
+- [x] Replace full 96-instance debris matrix upload with active/once-expired updates and completely cull empty draws
+- [x] Give original single-draw metallic debris more varied reflected silhouettes through irregular nonuniform scales
+- [x] Replace full 128-instance missile contrail upload with active/once-expired updates and cull empty smoke draws
+- [x] Maintain O(1) live counts across overwrites, resets, expiration and malformed calls, without allocating new objects at emission time
+- [x] Prevent stale GPU instance transforms from appearing on a later explosion or missile launch
+- [x] Add unit buffer-version tests and live WebGL collision/missile lifecycle acceptance
+- [ ] Benchmark median and P95 frame pacing and observed draw submissions with and without a crowded combat scene on representative hardware
+- [ ] Evaluate directional road-contact lighting / subtle metal glints in high preset after verifying frame budget
