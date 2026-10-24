@@ -3,6 +3,7 @@ import type { Quality } from '../gameplay/Settings';
 import type { Biome } from '../world/WorldPlan';
 import { PLAYER_Z } from '../core/logic';
 import { damagedHeadlampFactors } from './HeadlightDamage';
+import { ROAD_SHEEN, roadSheenStrength } from './RoadSheen';
 
 export function beamStrength(biome: Biome, quality: Quality, boat: boolean): number {
   if (boat || quality === 'low') return 0;
@@ -20,6 +21,7 @@ export class HeadlightBeams {
   readonly mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
   private quality: Quality = 'medium';
   private readonly tint = new THREE.Color();
+  private readonly contactTint = new THREE.Color();
 
   constructor(scene: THREE.Scene) {
     const geometry = new THREE.PlaneGeometry(13, 25);
@@ -32,6 +34,9 @@ export class HeadlightBeams {
         uColor: { value: new THREE.Color(0xa5daff) },
         uLeftLamp: { value: 1 },
         uRightLamp: { value: 1 },
+        uSheenStrength: { value: 0 },
+        uSheenTint: { value: new THREE.Color(0xffd7a1) },
+        uSheenStretch: { value: 0.8 },
       },
       vertexShader: `
         varying vec2 vUv;
@@ -46,6 +51,9 @@ export class HeadlightBeams {
         uniform vec3 uColor;
         uniform float uLeftLamp;
         uniform float uRightLamp;
+        uniform float uSheenStrength;
+        uniform vec3 uSheenTint;
+        uniform float uSheenStretch;
         void main() {
           float distanceAhead = vUv.y;
           float spread = mix(0.027, 0.32, pow(distanceAhead, 0.85));
@@ -58,7 +66,23 @@ export class HeadlightBeams {
           float hotspot = pow(max(leftFeather * uLeftLamp,
             rightFeather * uRightLamp), 1.65);
           float brightness = hotspot * attenuation * uStrength;
-          gl_FragColor = vec4(uColor * brightness, brightness);
+
+          // Near-road specular contact response for the existing two headlamps:
+          // feathered, non-physical glints stretched along road travel.
+          // These share this same fragment pass and respect broken-side lamps.
+          vec2 leftContact = vec2((vUv.x - 0.405) / 0.090,
+            (vUv.y - 0.13) / (0.125 * uSheenStretch));
+          vec2 rightContact = vec2((vUv.x - 0.595) / 0.090,
+            (vUv.y - 0.13) / (0.125 * uSheenStretch));
+          float leftGloss = exp(-2.0 * dot(leftContact, leftContact)) * uLeftLamp;
+          float rightGloss = exp(-2.0 * dot(rightContact, rightContact)) * uRightLamp;
+          // Static microstriations suggest uneven asphalt film without adding
+          // animated flicker or a time uniform, including in Reduced Motion.
+          float micro = 0.86 + 0.14 * sin(vUv.y * 81.0 + vUv.x * 29.0);
+          float sheen = max(leftGloss, rightGloss) * micro * uSheenStrength;
+          float alpha = max(brightness, sheen);
+          vec3 lit = uColor * brightness + uSheenTint * sheen;
+          gl_FragColor = vec4(lit, alpha);
         }
       `,
     });
@@ -83,6 +107,12 @@ export class HeadlightBeams {
     const factors = damagedHeadlampFactors(wearStage, impactSide);
     this.mesh.material.uniforms.uLeftLamp.value = factors.left;
     this.mesh.material.uniforms.uRightLamp.value = factors.right;
+    const grade = ROAD_SHEEN[biome];
+    this.mesh.material.uniforms.uSheenStrength.value =
+      roadSheenStrength(biome, this.quality, boat);
+    this.mesh.material.uniforms.uSheenStretch.value = grade.stretch;
+    (this.mesh.material.uniforms.uSheenTint.value as THREE.Color)
+      .copy(this.contactTint.setHex(grade.tint));
     const color = biome === 'city' ? 0x96dfff : biome === 'snow' ? 0xe0f5ff : 0xffe4ae;
     (this.mesh.material.uniforms.uColor.value as THREE.Color).copy(this.tint.setHex(color));
   }
