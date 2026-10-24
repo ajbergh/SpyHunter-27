@@ -1161,3 +1161,48 @@ test('missile smoke uses one pooled draw only while puffs are live', async ({ pa
   expect(faded.smokeVisible).toBe(false);
   expect(errors).toEqual([]);
 });
+
+test('wet city roads show stronger headlight contact sheen without new WebGL exceptions', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/?testDrive=1&testDistance=3350&testHeroWear=2');
+  await page.getByRole('button', { name: /settings \/ audio \/ graphics/i }).click();
+  await page.locator('#quality-select').selectOption('high');
+  await page.getByRole('button', { name: /apply and return/i }).click();
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  const grade = await page.evaluate(() => {
+    const w = window as Window & {
+      __spy27AdvanceDriving?: (n: number) => {
+        screen: string; roadSheenStrength: number; roadSheenStretch: number;
+        headlampLeft: number; headlampRight: number;
+      };
+    };
+    if (!w.__spy27AdvanceDriving) throw new Error('Driving bridge missing');
+    return w.__spy27AdvanceDriving(2);
+  });
+  expect(grade.screen).toBe('playing');
+  expect(grade.roadSheenStrength).toBeCloseTo(0.34);
+  expect(grade.roadSheenStretch).toBeCloseTo(1.15);
+  expect(grade.headlampLeft).toBeCloseTo(0.46);
+  expect(grade.headlampRight).toBe(1);
+  await page.screenshot({ path: 'test-results/neon-road-contact-sheen.png' });
+  expect(errors).toEqual([]);
+});
+
+test('waterway culls road contact sheen in live WebGL', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/?testDrive=1&testDistance=4350');
+  await page.getByRole('button', { name: /initiate pursuit/i }).click();
+  await expect(page.locator('#stage canvas')).toBeVisible();
+  const strength = await page.evaluate(() => {
+    const w = window as Window & {
+      __spy27AdvanceDriving?: (n: number) => { roadSheenStrength: number };
+    };
+    if (!w.__spy27AdvanceDriving) throw new Error('Driving bridge missing');
+    return w.__spy27AdvanceDriving(1).roadSheenStrength;
+  });
+  expect(strength).toBe(0);
+  expect(errors).toEqual([]);
+});
