@@ -189,6 +189,8 @@ export class Game {
           cameraLift: number; cameraRoll: number;
           audioTone: EngineToneProfile | null;
           sparksActive: number; sparksVisible: boolean;
+          debrisActive: number; debrisVisible: boolean;
+          smokeActive: number; smokeVisible: boolean;
           damageStage: number; damagedPanelCount: number; damageVisible: boolean;
           heroWear: number; heroWearSide: number;
           heroCarPanels: number; heroBoatPanels: number;
@@ -213,6 +215,10 @@ export class Game {
           audioTone: this.audio.toneProfile,
           sparksActive: this.impactSparks.activeCount,
           sparksVisible: this.impactSparks.mesh.visible,
+          debrisActive: this.debris.activeCount,
+          debrisVisible: this.debris.mesh.visible,
+          smokeActive: this.specials.activeMissileTrails,
+          smokeVisible: this.specials.missileTrailsVisible,
           frameP95Ms: this.framePacing.p95Ms,
           damageStage: damagedCar?.damageFeedback.damageStage ?? 0,
           damagedPanelCount: damagedCar?.damageFeedback.sculptedPanelCount ?? 0,
