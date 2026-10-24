@@ -51,4 +51,38 @@ describe('cinematic headlight road projection', () => {
     expect(scene.children).toEqual([beams.mesh]);
   });
 
+
+  it('adds soft biome-specific road sheen to the same draw without extra scene lights', () => {
+    const scene = new THREE.Scene();
+    const beams = new HeadlightBeams(scene);
+    beams.setQuality('high');
+    const mesh = beams.mesh, geometry = mesh.geometry, material = mesh.material;
+    beams.step('city', false, 2, 1);
+    expect(mesh.visible).toBe(true);
+    expect(material.uniforms.uSheenStrength.value).toBeCloseTo(0.34);
+    expect(material.uniforms.uSheenStretch.value).toBeCloseTo(1.15);
+    expect((material.uniforms.uSheenTint.value as THREE.Color).getHex()).toBe(0x78d9f3);
+    expect(material.uniforms.uLeftLamp.value).toBe(1);
+    expect(material.uniforms.uRightLamp.value).toBe(0.46);
+    expect(material.fragmentShader).toContain('leftGloss');
+    expect(material.fragmentShader).toContain('rightGloss');
+    expect(material.fragmentShader).toContain('uSheenStrength');
+    beams.step('snow', false);
+    expect(material.uniforms.uSheenStrength.value).toBeCloseTo(0.22);
+    beams.setQuality('medium');
+    beams.step('desert', false);
+    expect(material.uniforms.uSheenStrength.value).toBeCloseTo(0.06 * 0.57);
+    beams.setQuality('low');
+    beams.step('city', false);
+    expect(mesh.visible).toBe(false);
+    expect(material.uniforms.uSheenStrength.value).toBe(0);
+    beams.setQuality('high');
+    beams.step('water', true);
+    expect(mesh.visible).toBe(false);
+    expect(material.uniforms.uSheenStrength.value).toBe(0);
+    expect(scene.children).toEqual([mesh]);
+    expect(mesh.geometry).toBe(geometry);
+    expect(mesh.material).toBe(material);
+  });
+
 });
